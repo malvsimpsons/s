@@ -20,8 +20,12 @@ public class MultiplayerExosuit : MultiplayerVehicleControl
         WheelPitchSetter = value => exosuit.steeringWheelPitch = value;
         base.Awake();
         SmoothRotation = new ExosuitSmoothRotation(gameObject.transform.rotation);
-
+#if SUBNAUTICA
         this.Resolve<FMODWhitelist>().TryGetSoundData(exosuit.loopingJetSound.asset.path, out SoundData jetSoundData);
+#elif BELOWZERO
+        exosuit.boostSound.EventDescription.getPath(out var path);
+        this.Resolve<FMODWhitelist>().TryGetSoundData(path, out SoundData jetSoundData);
+#endif
         jetLoopingSoundDistance = jetSoundData.Radius;
     }
 
@@ -37,7 +41,13 @@ public class MultiplayerExosuit : MultiplayerVehicleControl
     {
         GetComponent<Rigidbody>().freezeRotation = true;
         exosuit.SetIKEnabled(false);
+#if SUBNAUTICA
         exosuit.loopingJetSound.Stop();
+#elif BELOWZERO
+        //TODO: Check which of these or both we need to activate
+        exosuit.jumpJetsSound.Stop();
+        exosuit.boostSound.Stop();
+#endif
         exosuit.fxcontrol.Stop(0);
         base.Exit();
     }
@@ -50,13 +60,21 @@ public class MultiplayerExosuit : MultiplayerVehicleControl
             lastThrottle = isOn;
             if (isOn)
             {
+#if SUBNAUTICA
                 exosuit.loopingJetSound.Play();
+#elif BELOWZERO
+                exosuit.boostSound.Play();
+#endif
                 exosuit.fxcontrol.Play(0);
                 exosuit.areFXPlaying = true;
             }
             else
             {
-                exosuit.loopingJetSound.Stop();
+#if SUBNAUTICA
+                exosuit.loopingJetSound.Play();
+#elif BELOWZERO
+                exosuit.boostSound.Play();
+#endif
                 exosuit.fxcontrol.Stop(0);
                 exosuit.areFXPlaying = false;
             }
@@ -65,6 +83,7 @@ public class MultiplayerExosuit : MultiplayerVehicleControl
 
     private void Update()
     {
+#if SUBNAUTICA
         if (exosuit.loopingJetSound.playing)
         {
             if (exosuit.loopingJetSound.evt.hasHandle())
@@ -81,6 +100,24 @@ public class MultiplayerExosuit : MultiplayerVehicleControl
                 exosuit.loopingJetSound.evtStop.setVolume(volume);
             }
         }
+#elif BELOWZERO
+        if (exosuit.boostSound.IsPlaying())
+        {
+            if (exosuit.boostSound.EventInstance.hasHandle())
+            {
+                float volume = FMODSystem.CalculateVolume(transform.position, Player.main.transform.position, jetLoopingSoundDistance, 1f);
+                exosuit.boostSound.EventInstance.setVolume(volume);
+            }
+        }
+        else
+        {
+            if (exosuit.boostSound.EventInstance.hasHandle())
+            {
+                float volume = FMODSystem.CalculateVolume(transform.position, Player.main.transform.position, jetLoopingSoundDistance, 1f);
+                exosuit.boostSound.EventInstance.setVolume(volume);
+            }
+        }
+#endif
     }
 
     internal override void SetArmPositions(Vector3 leftArmPosition, Vector3 rightArmPosition)

@@ -1,3 +1,4 @@
+#if SUBNAUTICA
 using System.Reflection;
 using NitroxClient.GameLogic;
 using NitroxModel.Helper;
@@ -23,3 +24,4 @@ public sealed partial class SeaMoth_OnUpgradeModuleUse_Patch : NitroxPatch, IDyn
         return true;
     }
 }
+#endif

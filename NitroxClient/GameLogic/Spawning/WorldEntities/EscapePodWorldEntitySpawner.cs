@@ -1,3 +1,4 @@
+#if SUBNAUTICA
 using System.Collections;
 using NitroxClient.GameLogic.Spawning.Metadata;
 using NitroxClient.MonoBehaviours;
@@ -102,3 +103,4 @@ namespace NitroxClient.GameLogic.Spawning.WorldEntities
     }
 
 }
+#endif

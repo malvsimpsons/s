@@ -31,7 +31,9 @@ public class PlayerPositionInitialSyncProcessor : InitialSyncProcessor
         // We freeze the player so that he doesn't fall before the cells around him have loaded
         Player.main.cinematicModeActive = true;
 
+#if SUBNAUTICA
         AttachPlayerToEscapePod(packet.AssignedEscapePodId);
+#endif
 
         Vector3 position = packet.PlayerSpawnData.ToUnity();
         Quaternion rotation = packet.PlayerSpawnRotation.ToUnity();
@@ -41,11 +43,13 @@ public class PlayerPositionInitialSyncProcessor : InitialSyncProcessor
         }
         Player.main.SetPosition(position, rotation);
 
+#if SUBNAUTICA
         // Player.Update is setting SubRootID to null after Player position is set
         using (PacketSuppressor<EscapePodChanged>.Suppress())
         {
             Player.main.ValidateEscapePod();
         }
+#endif
 
         // Player position is relative to a subroot if in a subroot
         Optional<NitroxId> subRootId = packet.PlayerSubRootId;
@@ -70,7 +74,11 @@ public class PlayerPositionInitialSyncProcessor : InitialSyncProcessor
             yield break;
         }
 
+#if SUBNAUTICA
         Player.main.SetCurrentSub(subRoot, true);
+#elif BELOWZERO
+        Player.main.SetCurrentSub(subRoot);
+#endif
         if (subRoot.isBase)
         {
             // If the player's in a base, we don't need to wait for the world to load
@@ -87,6 +95,7 @@ public class PlayerPositionInitialSyncProcessor : InitialSyncProcessor
         Player.main.UpdateIsUnderwater();
     }
 
+#if SUBNAUTICA
     private void AttachPlayerToEscapePod(NitroxId escapePodId)
     {
         GameObject escapePod = NitroxEntity.RequireObjectFrom(escapePodId);
@@ -99,5 +108,6 @@ public class PlayerPositionInitialSyncProcessor : InitialSyncProcessor
 
         Player.main.currentEscapePod = escapePod.GetComponent<EscapePod>();
     }
+#endif
 
 }

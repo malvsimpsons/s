@@ -1,3 +1,4 @@
+#if SUBNAUTICA
 using System.Reflection;
 using NitroxClient.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
@@ -19,3 +20,4 @@ public sealed partial class EscapePod_OnRepair_Patch : NitroxPatch, IDynamicPatc
         }
     }
 }
+#endif

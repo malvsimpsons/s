@@ -25,8 +25,9 @@ public class WorldEntitySpawnerResolver
     public WorldEntitySpawnerResolver(EntityMetadataManager entityMetadataManager, PlayerManager playerManager, ILocalNitroxPlayer localPlayer, Entities entities, SimulationOwnership simulationOwnership)
     {
         customSpawnersByTechType[TechType.Crash] = new CrashEntitySpawner();
+#if SUBNAUTICA
         customSpawnersByTechType[TechType.EscapePod] = new EscapePodWorldEntitySpawner(entityMetadataManager);
-
+#endif
         vehicleWorldEntitySpawner = new(entities);
         prefabPlaceholderEntitySpawner = new(defaultEntitySpawner);
         placeholderGroupWorldEntitySpawner = new PlaceholderGroupWorldEntitySpawner(entities, this, defaultEntitySpawner, entityMetadataManager, prefabPlaceholderEntitySpawner);

@@ -15,7 +15,7 @@ public class RepairedComponentMetadataProcessor : EntityMetadataProcessor<Repair
             radio.liveMixin.health = radio.liveMixin.maxHealth;
             radio.repairNotification.Play();
         }
-
+#if SUBNAUTICA
         EscapePod pod = gameObject.GetComponent<EscapePod>();
 
         if (pod)
@@ -25,5 +25,6 @@ public class RepairedComponentMetadataProcessor : EntityMetadataProcessor<Repair
             pod.fixPanelGoal.Trigger();
             pod.fixPanelPowerUp.Play();
         }
+#endif
     }
 }

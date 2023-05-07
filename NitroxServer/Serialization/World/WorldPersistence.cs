@@ -218,8 +218,14 @@ namespace NitroxServer.Serialization.World
                 Seed = seed
             };
 
+
             world.TimeKeeper = new(world.PlayerManager, pWorldData.WorldData.GameData.StoryTiming.ElapsedSeconds, pWorldData.WorldData.GameData.StoryTiming.RealTimeElapsed);
+#if SUBNAUTICA
             world.StoryManager = new(world.PlayerManager, pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, world.TimeKeeper, seed, pWorldData.WorldData.GameData.StoryTiming.AuroraCountdownTime, pWorldData.WorldData.GameData.StoryTiming.AuroraWarningTime, pWorldData.WorldData.GameData.StoryTiming.AuroraRealExplosionTime);
+#elif BELOWZERO
+            world.StoryManager = new(world.PlayerManager, pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, world.TimeKeeper, seed);
+#endif
+
             world.ScheduleKeeper = new ScheduleKeeper(pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, world.TimeKeeper, world.PlayerManager);
 
             world.BatchEntitySpawner = new BatchEntitySpawner(

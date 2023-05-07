@@ -10,7 +10,11 @@ public sealed partial class VehicleDockingBay_OnUndockingComplete_Patch : Nitrox
 
     public static void Prefix(VehicleDockingBay __instance, Player player)
     {
+#if SUBNAUTICA
         Vehicle vehicle = __instance.GetDockedVehicle();
+#elif BELOWZERO
+        Vehicle vehicle = __instance.GetDockedObject().vehicle;
+#endif
         Resolve<Vehicles>().BroadcastVehicleUndocking(__instance, vehicle, false);
     }
 }

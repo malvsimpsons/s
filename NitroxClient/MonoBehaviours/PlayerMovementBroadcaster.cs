@@ -116,12 +116,16 @@ public class PlayerMovementBroadcaster : MonoBehaviour
             // So, we need to hack in and try to figure out when thrust needs to be applied.
             if (AvatarInputHandler.main.IsEnabled())
             {
+#if SUBNAUTICA
                 if (techType == TechType.Seamoth)
                 {
                     bool flag = position.y < Ocean.GetOceanLevel() && position.y < vehicle.worldForces.waterDepth && !vehicle.precursorOutOfWater;
                     appliedThrottle = flag && GameInput.GetMoveDirection().sqrMagnitude > .1f;
                 }
                 else if (techType == TechType.Exosuit)
+#elif BELOWZERO
+                if (techType == TechType.Exosuit)
+#endif
                 {
                     Exosuit exosuit = vehicle as Exosuit;
                     if (exosuit)

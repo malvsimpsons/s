@@ -20,7 +20,9 @@ public class StoryGoalInitialSyncProcessor : InitialSyncProcessor
         AddStep(SetTimeData);
         AddStep(SetupStoryGoalManager);
         AddStep(SetupTrackers);
+#if SUBNAUTICA
         AddStep(SetupAuroraAndSunbeam);
+#endif
         AddStep(SetScheduledGoals);
         AddStep(RefreshStoryWithLatestData);
     }
@@ -93,6 +95,7 @@ public class StoryGoalInitialSyncProcessor : InitialSyncProcessor
         yield break;
     }
 
+#if SUBNAUTICA
     // Must happen after CompletedGoals
     private static IEnumerator SetupAuroraAndSunbeam(InitialPlayerSync packet)
     {
@@ -118,6 +121,7 @@ public class StoryGoalInitialSyncProcessor : InitialSyncProcessor
 
         yield break;
     }
+#endif
 
     // Must happen after CompletedGoals
     private static IEnumerator SetScheduledGoals(InitialPlayerSync packet)
@@ -164,6 +168,8 @@ public class StoryGoalInitialSyncProcessor : InitialSyncProcessor
     {
         timeManager.ProcessUpdate(packet.TimeData.TimePacket);
         timeManager.InitRealTimeElapsed(packet.TimeData.TimePacket.RealTimeElapsed, packet.TimeData.TimePacket.UpdateTime, packet.IsFirstPlayer);
+#if SUBNAUTICA
         timeManager.AuroraRealExplosionTime = packet.TimeData.AuroraEventData.AuroraRealExplosionTime;
+#endif
     }
 }

@@ -1,4 +1,4 @@
-﻿using FMOD.Studio;
+using FMOD.Studio;
 using NitroxModel.GameLogic.FMOD;
 using UnityEngine;
 

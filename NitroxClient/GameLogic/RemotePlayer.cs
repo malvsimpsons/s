@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using FMODUnity;
 using NitroxClient.GameLogic.HUD;
 using NitroxClient.GameLogic.PlayerLogic;
 using NitroxClient.GameLogic.PlayerLogic.PlayerModel;
@@ -40,7 +41,9 @@ public class RemotePlayer : INitroxPlayer
 
     public Vehicle Vehicle { get; private set; }
     public SubRoot SubRoot { get; private set; }
+#if SUBNAUTICA
     public EscapePod EscapePod { get; private set; }
+#endif
     public PilotingChair PilotingChair { get; private set; }
 
     public readonly Event<RemotePlayer> PlayerDeathEvent = new();
@@ -195,7 +198,7 @@ public class RemotePlayer : INitroxPlayer
             SubRoot = newSubRoot;
         }
     }
-
+#if SUBNAUTICA
     public void SetEscapePod(EscapePod newEscapePod)
     {
         if (EscapePod != newEscapePod)
@@ -212,6 +215,7 @@ public class RemotePlayer : INitroxPlayer
             EscapePod = newEscapePod;
         }
     }
+#endif
 
     public void SetVehicle(Vehicle newVehicle)
     {
@@ -240,9 +244,11 @@ public class RemotePlayer : INitroxPlayer
                 // Therefore we need to make sure that the MultiplayerVehicleControl component exists before using it
                 switch (newVehicle)
                 {
+#if SUBNAUTICA
                     case SeaMoth:
                         newVehicle.gameObject.EnsureComponent<MultiplayerSeaMoth>().Enter();
                         break;
+#endif
                     case Exosuit:
                         newVehicle.gameObject.EnsureComponent<MultiplayerExosuit>().Enter();
                         break;
@@ -253,7 +259,9 @@ public class RemotePlayer : INitroxPlayer
 
             Vehicle = newVehicle;
 
+#if SUBNAUTICA
             AnimationController["in_seamoth"] = newVehicle is SeaMoth;
+#endif
             AnimationController["in_exosuit"] = AnimationController["using_mechsuit"] = newVehicle is Exosuit;
         }
     }
@@ -356,20 +364,36 @@ public class RemotePlayer : INitroxPlayer
         remotePlayerSoundsRoot.transform.SetParent(Body.transform);
         FMODEmitterController emitterController = Body.AddComponent<FMODEmitterController>();
 
-        static void CopyEmitter(FMOD_CustomEmitter src, FMOD_CustomEmitter dst)
+        static void CopyFMOD_CustomEmitter(FMOD_CustomEmitter src, FMOD_CustomEmitter dst)
         {
             dst.asset = src.asset;
             dst.playOnAwake = src.playOnAwake;
+#if SUBNAUTICA
             dst.stopImmediatelyOnDisable = src.stopImmediatelyOnDisable;
+#endif
             dst.followParent = src.followParent;
             dst.restartOnPlay = src.restartOnPlay;
         }
 
+        static void CopyStudioEventEmitter(StudioEventEmitter src, StudioEventEmitter dst)
+        {
+            src.AllowFadeout = dst.AllowFadeout;
+            src.TriggerOnce = dst.TriggerOnce;
+            src.Preload = dst.Preload;
+            src.OverrideAttenuation = dst.OverrideAttenuation;
+        }
+
         // Bubbles
         PlayerBreathBubbles localPlayerBubbles = Player.main.GetComponentInChildren<PlayerBreathBubbles>(true);
+#if SUBNAUTICA
         FMOD_CustomEmitter bubblesCustomEmitter = remotePlayerSoundsRoot.AddComponent<FMOD_CustomEmitter>();
-        CopyEmitter(localPlayerBubbles.bubbleSound, bubblesCustomEmitter);
-
+        CopyFMOD_CustomEmitter(localPlayerBubbles.bubbleSound, bubblesCustomEmitter);
+#elif BELOWZERO
+        StudioEventEmitter bubblesCustomEmitter = remotePlayerSoundsRoot.AddComponent<StudioEventEmitter>();
+        CopyStudioEventEmitter(localPlayerBubbles.bubbleSound, bubblesCustomEmitter);
+#endif
+        //TODO: check if correct asset path due to StudioEventEmitter switch
+#if SUBNAUTICA
         if (fmodWhitelist.IsWhitelisted(bubblesCustomEmitter.asset.path, out float bubblesSoundRadius))
         {
             emitterController.AddEmitter(bubblesCustomEmitter.asset.path, bubblesCustomEmitter, bubblesSoundRadius);
@@ -378,6 +402,18 @@ public class RemotePlayer : INitroxPlayer
         {
             Log.Error($"[{nameof(RemotePlayer)}] Manual created FMOD emitter for {nameof(PlayerBreathBubbles)} but linked sound is not whitelisted: ({bubblesCustomEmitter.asset.path})");
         }
+#elif BELOWZERO
+        bubblesCustomEmitter.EventDescription.getPath(out var path);
+        if (fmodWhitelist.IsWhitelisted(path, out float bubblesSoundRadius))
+        {
+            emitterController.AddEmitter(path, bubblesCustomEmitter, bubblesSoundRadius);
+        }
+        else
+        {
+            Log.Error($"[{nameof(RemotePlayer)}] Manual created FMOD emitter for {nameof(PlayerBreathBubbles)} but linked sound is not whitelisted: ({path})");
+        }
+
+#endif
 
         // Breathing
         BreathingSound breathingSound = Player.main.GetComponentInChildren<BreathingSound>(true);
@@ -396,7 +432,7 @@ public class RemotePlayer : INitroxPlayer
         // Diving
         WaterAmbience waterAmbience = Player.main.GetComponentInChildren<WaterAmbience>(true);
         FMOD_CustomEmitter diveStartCustomEmitter = remotePlayerSoundsRoot.AddComponent<FMOD_CustomEmitter>();
-        CopyEmitter(waterAmbience.diveStartSplash, diveStartCustomEmitter);
+        CopyFMOD_CustomEmitter(waterAmbience.diveStartSplash, diveStartCustomEmitter);
 
         if (fmodWhitelist.IsWhitelisted(diveStartCustomEmitter.asset.path, out float diveSoundRadius))
         {
