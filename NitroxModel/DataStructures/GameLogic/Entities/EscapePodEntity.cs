@@ -1,3 +1,4 @@
+#if SUBNAUTICA
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -50,3 +51,4 @@ public class EscapePodWorldEntity : GlobalRootEntity
         return $"[EscapePodWorldEntity Damaged: {Damaged} {base.ToString()}]";
     }
 }
+#endif

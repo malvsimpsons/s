@@ -66,8 +66,8 @@ public class LiveMixinManager
                 vehicleDockingBay.interpolatingVehicle == dealerVehicle ||
                 vehicleDockingBay.nearbyVehicle == dealerVehicle)
 #elif BELOWZERO
-            if (vehicleDockingBay.GetDockedObject() == dealerVehicle ||
-                vehicleDockingBay.interpolatingDockable == dealerVehicle ||
+            if (vehicleDockingBay.GetDockedObject().vehicle == dealerVehicle || 
+                vehicleDockingBay.interpolatingDockable.vehicle == dealerVehicle || 
                 vehicleDockingBay.nearbyDockable.vehicle == dealerVehicle)
 #endif
             {

@@ -13,7 +13,9 @@ namespace NitroxModel.Packets
     [Serializable]
     public class InitialPlayerSync : Packet
     {
+#if SUBNAUTICA
         public NitroxId AssignedEscapePodId { get; }
+#endif
         public List<EquippedItemData> EquippedItems { get; }
         public List<NitroxTechType> UsedItems { get; }
         public Optional<NitroxId>[] QuickSlotsBindingIds { get; }
@@ -37,7 +39,9 @@ namespace NitroxModel.Packets
 
         public InitialPlayerSync(NitroxId playerGameObjectId,
             bool firstTimeConnecting,
+#if SUBNAUTICA
             NitroxId assignedEscapePodId,
+#endif
             IEnumerable<EquippedItemData> equipment,
             IEnumerable<NitroxTechType> usedItems,
             Optional<NitroxId>[] quickSlotsBindingIds,
@@ -57,7 +61,9 @@ namespace NitroxModel.Packets
             bool isFirstPlayer,
             Dictionary<NitroxId, int> buildOperationIds)
         {
+#if SUBNAUTICA
             AssignedEscapePodId = assignedEscapePodId;
+#endif
             PlayerGameObjectId = playerGameObjectId;
             FirstTimeConnecting = firstTimeConnecting;
             EquippedItems = equipment.ToList();
@@ -82,7 +88,9 @@ namespace NitroxModel.Packets
 
         /// <remarks>Used for deserialization</remarks>
         public InitialPlayerSync(
+#if SUBNAUTICA
             NitroxId assignedEscapePodId,
+#endif
             List<EquippedItemData> equippedItems,
             List<NitroxTechType> usedItems,
             Optional<NitroxId>[] quickSlotsBindingIds,
@@ -104,7 +112,9 @@ namespace NitroxModel.Packets
             bool isFirstPlayer,
             Dictionary<NitroxId, int> buildOperationIds)
         {
+#if SUBNAUTICA
             AssignedEscapePodId = assignedEscapePodId;
+#endif
             PlayerGameObjectId = playerGameObjectId;
             FirstTimeConnecting = firstTimeConnecting;
             EquippedItems = equippedItems;

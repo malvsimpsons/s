@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -35,70 +35,70 @@ namespace NitroxModel.Serialization
             {
                 Type type = GetType();
                 Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary();
-                using StreamReader reader = new(new FileStream(Path.Combine(saveDir, FileName), FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
+                    using StreamReader reader = new(new FileStream(Path.Combine(saveDir, FileName), FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
 
-                HashSet<MemberInfo> unserializedMembers = new(typeCachedDict.Values);
-                char[] lineSeparator = { '=' };
-                int lineNum = 0;
-                string readLine;
+                    HashSet<MemberInfo> unserializedMembers = new(typeCachedDict.Values);
+                    char[] lineSeparator = { '=' };
+                    int lineNum = 0;
+                    string readLine;
 
-                while ((readLine = reader.ReadLine()) != null)
-                {
-                    lineNum++;
-                    if (readLine.Length < 1 || readLine[0] == '#')
+                    while ((readLine = reader.ReadLine()) != null)
                     {
-                        continue;
-                    }
-
-                    if (readLine.Contains('='))
-                    {
-                        string[] keyValuePair = readLine.Split(lineSeparator, 2);
-                        // Ignore case for property names in file.
-                        if (!typeCachedDict.TryGetValue(keyValuePair[0].ToLowerInvariant(), out MemberInfo member))
+                        lineNum++;
+                        if (readLine.Length < 1 || readLine[0] == '#')
                         {
-                            Log.Warn($"Property or field {keyValuePair[0]} does not exist on type {type.FullName}!");
                             continue;
                         }
 
-                        unserializedMembers.Remove(member); // This member was serialized in the file 
-
-                        if (!SetMemberValue(this, member, keyValuePair[1]))
+                        if (readLine.Contains('='))
                         {
-                            (Type type, object value) data = member switch
+                            string[] keyValuePair = readLine.Split(lineSeparator, 2);
+                            // Ignore case for property names in file.
+                            if (!typeCachedDict.TryGetValue(keyValuePair[0].ToLowerInvariant(), out MemberInfo member))
                             {
-                                FieldInfo field => (field.FieldType, field.GetValue(this)),
-                                PropertyInfo prop => (prop.PropertyType, prop.GetValue(this)),
-                                _ => (typeof(string), "")
-                            };
-                            Log.Warn($@"Property ""({data.type.Name}) {member.Name}"" has an invalid value {StringifyValue(keyValuePair[1])} on line {lineNum}. Using default value: {StringifyValue(data.value)}");
+                                Log.Warn($"Property or field {keyValuePair[0]} does not exist on type {type.FullName}!");
+                                continue;
+                            }
+
+                            unserializedMembers.Remove(member); // This member was serialized in the file 
+
+                            if (!SetMemberValue(this, member, keyValuePair[1]))
+                            {
+                                (Type type, object value) data = member switch
+                                {
+                                    FieldInfo field => (field.FieldType, field.GetValue(this)),
+                                    PropertyInfo prop => (prop.PropertyType, prop.GetValue(this)),
+                                    _ => (typeof(string), "")
+                                };
+                                Log.Warn($@"Property ""({data.type.Name}) {member.Name}"" has an invalid value {StringifyValue(keyValuePair[1])} on line {lineNum}. Using default value: {StringifyValue(data.value)}");
+                            }
+                        }
+                        else
+                        {
+                            Log.Error($"Incorrect format detected on line {lineNum} in {Path.GetFullPath(Path.Combine(saveDir, FileName))}:{Environment.NewLine}{readLine}");
                         }
                     }
-                    else
+
+                    if (unserializedMembers.Any())
                     {
-                        Log.Error($"Incorrect format detected on line {lineNum} in {Path.GetFullPath(Path.Combine(saveDir, FileName))}:{Environment.NewLine}{readLine}");
+                        IEnumerable<string> unserializedProps = unserializedMembers.Select(m =>
+                        {
+                            object value = null;
+                            if (m is FieldInfo field)
+                            {
+                                value = field.GetValue(this);
+                            }
+                            else if (m is PropertyInfo prop)
+                            {
+                                value = prop.GetValue(this);
+                            }
+
+                            return $" - {m.Name}: {value}";
+                        });
+
+                        Log.Warn($@"{FileName} is using default values for the missing properties:{Environment.NewLine}{string.Join(Environment.NewLine, unserializedProps)}");
                     }
                 }
-
-                if (unserializedMembers.Any())
-                {
-                    IEnumerable<string> unserializedProps = unserializedMembers.Select(m =>
-                    {
-                        object value = null;
-                        if (m is FieldInfo field)
-                        {
-                            value = field.GetValue(this);
-                        }
-                        else if (m is PropertyInfo prop)
-                        {
-                            value = prop.GetValue(this);
-                        }
-
-                        return $" - {m.Name}: {value}";
-                    });
-
-                    Log.Warn($@"{FileName} is using default values for the missing properties:{Environment.NewLine}{string.Join(Environment.NewLine, unserializedProps)}");
-                }
-            }
         }
 
         public void Serialize(string saveDir)

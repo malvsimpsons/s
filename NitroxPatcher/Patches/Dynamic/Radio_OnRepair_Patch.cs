@@ -1,3 +1,4 @@
+#if SUBNAUTICA
 using System.Reflection;
 using NitroxClient.GameLogic;
 using NitroxModel.DataStructures;
@@ -19,3 +20,4 @@ public sealed partial class Radio_OnRepair_Patch : NitroxPatch, IDynamicPatch
         }
     }
 }
+#endif

@@ -71,6 +71,11 @@ public class RemotePlayer : INitroxPlayer
 
         // Get player
         PlayerModel = Body.RequireGameObject("player_view");
+#if SUBNAUTICA
+        PlayerModel = Body.RequireGameObject("player_view");
+#elif BELOWZERO
+        PlayerModel = Body.RequireGameObject("player_view_female");
+#endif
         // Move variables to keep player animations from mirroring and for identification
         ArmsController = PlayerModel.GetComponent<ArmsController>();
         ArmsController.smoothSpeedUnderWater = 0;
@@ -258,7 +263,6 @@ public class RemotePlayer : INitroxPlayer
             RigidBody.isKinematic = newVehicle;
 
             Vehicle = newVehicle;
-
 #if SUBNAUTICA
             AnimationController["in_seamoth"] = newVehicle is SeaMoth;
 #endif

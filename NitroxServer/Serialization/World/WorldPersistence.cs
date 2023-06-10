@@ -209,7 +209,9 @@ namespace NitroxServer.Serialization.World
                 SimulationOwnershipData = new SimulationOwnershipData(),
                 PlayerManager = new PlayerManager(pWorldData.PlayerData.GetPlayers(), config),
 
+#if SUBNAUTICA
                 EscapePodManager = new EscapePodManager(entityRegistry, randomStart, seed),
+#endif
 
                 EntityRegistry = entityRegistry,
 
