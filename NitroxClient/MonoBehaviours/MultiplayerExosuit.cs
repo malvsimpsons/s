@@ -1,4 +1,4 @@
-﻿using NitroxClient.GameLogic.FMOD;
+using NitroxClient.GameLogic.FMOD;
 using NitroxClient.Unity.Smoothing;
 using NitroxModel.GameLogic.FMOD;
 using UnityEngine;
@@ -20,6 +20,7 @@ public class MultiplayerExosuit : MultiplayerVehicleControl
         WheelPitchSetter = value => exosuit.steeringWheelPitch = value;
         base.Awake();
         SmoothRotation = new ExosuitSmoothRotation(gameObject.transform.rotation);
+
 #if SUBNAUTICA
         this.Resolve<FMODWhitelist>().TryGetSoundData(exosuit.loopingJetSound.asset.path, out SoundData jetSoundData);
 #elif BELOWZERO

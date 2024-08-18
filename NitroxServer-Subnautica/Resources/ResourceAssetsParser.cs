@@ -27,14 +27,13 @@ public static class ResourceAssetsParser
         }
         AssetParser.Dispose();
         
-        //ResourceAssets.ValidateMembers(resourceAssets);
+        ResourceAssets.ValidateMembers(resourceAssets);
         return resourceAssets;
     }
 
     public static string FindDirectoryContainingResourceAssets()
     {
         string subnauticaPath = NitroxUser.GamePath;
-        //subnauticaPath = "E:\\Program Files\\Steam\\steamapps\\common\\Subnautica";
 #if SUBNAUTICA
         if (string.IsNullOrEmpty(subnauticaPath))
         {

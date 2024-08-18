@@ -193,7 +193,6 @@ namespace NitroxClient.MonoBehaviours
 #elif BELOWZERO
             WaitScreen.main.Hide();
 #endif
-            
             WaitScreen.main.items.Clear();
 
             PlayerManager remotePlayerManager = NitroxServiceLocator.LocateService<PlayerManager>();

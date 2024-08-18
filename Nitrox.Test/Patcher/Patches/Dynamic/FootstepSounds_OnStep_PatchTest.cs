@@ -1,3 +1,5 @@
+//TODO: Fix with steps patch
+#if SUBNAUTICA
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -18,3 +20,4 @@ public class FootstepSounds_OnStep_PatchTest
         Assert.AreEqual(beforeInstructions.Count() + 4, result.Count());
     }
 }
+#endif

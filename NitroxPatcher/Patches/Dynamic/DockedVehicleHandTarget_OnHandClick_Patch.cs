@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using NitroxClient.GameLogic;
 using NitroxClient.GameLogic.Simulation;
 using NitroxModel.Core;
@@ -50,6 +50,7 @@ public sealed partial class DockedVehicleHandTarget_OnHandClick_Patch : NitroxPa
 #elif BELOWZERO
             NitroxServiceLocator.LocateService<Vehicles>().BroadcastVehicleUndocking(dockingBay, dockingBay.GetDockedObject().vehicle, true);
 #endif
+
             skipPrefix = true;
             context.Target.OnHandClick(context.GuiHand);
             skipPrefix = false;

@@ -94,6 +94,7 @@ namespace NitroxModel.Helper
                 {
                     return gamePath;
                 }
+
 #if SUBNAUTICA
                 List<GameFinderResult> finderResults = GameInstallationFinder.Instance.FindGame(GameInfo.Subnautica).TakeUntilInclusive(r => r is { IsOk: false }).ToList();
 #elif BELOWZERO
@@ -105,6 +106,7 @@ namespace NitroxModel.Helper
                     Log.Debug($"Game installation was found by {potentiallyValidResult.FinderName} at '{potentiallyValidResult.Installation.Path}'");
                     return gamePath = potentiallyValidResult.Installation.Path;
                 }
+
 #if SUBNAUTICA
                 Log.Error($"Could not locate Subnautica installation directory: {Environment.NewLine}{string.Join(Environment.NewLine, finderResults.Select(i => $"{i.FinderName}: {i.ErrorMessage}"))}");
 #elif BELOWZERO

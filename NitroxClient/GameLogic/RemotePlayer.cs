@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+#if BELOWZERO
 using FMODUnity;
+#endif
 using NitroxClient.GameLogic.HUD;
 using NitroxClient.GameLogic.PlayerLogic;
 using NitroxClient.GameLogic.PlayerLogic.PlayerModel;
@@ -70,7 +72,6 @@ public class RemotePlayer : INitroxPlayer
         NitroxEntity.SetNewId(Body, PlayerContext.PlayerNitroxId);
 
         // Get player
-        PlayerModel = Body.RequireGameObject("player_view");
 #if SUBNAUTICA
         PlayerModel = Body.RequireGameObject("player_view");
 #elif BELOWZERO
