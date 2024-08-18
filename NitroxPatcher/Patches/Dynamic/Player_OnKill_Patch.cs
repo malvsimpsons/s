@@ -1,49 +1,51 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using NitroxModel.Helper;
 
-namespace NitroxPatcher.Patches.Dynamic
+namespace NitroxPatcher.Patches.Dynamic;
+
+public sealed partial class Player_OnKill_Patch : NitroxPatch, IDynamicPatch
 {
-    public class Player_OnKill_Patch : NitroxPatch, IDynamicPatch
+    private static readonly MethodInfo TARGET_METHOD = Reflect.Method((Player t) => t.OnKill(default(DamageType)));
+
+#if SUBNAUTICA
+    private static readonly MethodInfo SKIP_METHOD = Reflect.Method(() => GameModeUtils.IsPermadeath());
+#elif BELOWZERO
+    private static readonly MethodInfo SKIP_METHOD = Reflect.Method(() => GameModeManager.GetOption<bool>(GameOption.PermanentDeath));
+#endif
+    public static IEnumerable<CodeInstruction> Transpiler(MethodBase original, IEnumerable<CodeInstruction> instructions)
     {
-        private static readonly MethodInfo TARGET_METHOD = Reflect.Method((Player t) => t.OnKill(default(DamageType)));
-
-        private static readonly MethodInfo SKIP_METHOD = Reflect.Method(() => GameModeUtils.IsPermadeath());
-        public static IEnumerable<CodeInstruction> Transpiler(MethodBase original, IEnumerable<CodeInstruction> instructions)
+        List<CodeInstruction> instructionList = instructions.ToList();
+        /**
+        * Skips
+        * if (GameModeUtils.IsPermadeath())
+        * {
+        *      SaveLoadManager.main.ClearSlotAsync(SaveLoadManager.main.GetCurrentSlot());
+        *      this.EndGame();
+        *      return;
+        * }
+        */
+        for (int i = 0; i < instructionList.Count; i++)
         {
-            List<CodeInstruction> instructionList = instructions.ToList();
-            /**
-            * Skips
-            * if (GameModeUtils.IsPermadeath())
-            * {
-            *      SaveLoadManager.main.ClearSlotAsync(SaveLoadManager.main.GetCurrentSlot());
-            *      this.EndGame();
-            *      return;
-            * }
-            */
-            for (int i = 0; i < instructionList.Count; i++)
+            CodeInstruction instr = instructionList[i];
+
+            if (instr.opcode == OpCodes.Call && instr.operand.Equals(SKIP_METHOD))
             {
-                CodeInstruction instr = instructionList[i];
-
-                if (instr.opcode == OpCodes.Call && instr.operand.Equals(SKIP_METHOD))
-                {
-                    CodeInstruction newInstr = new(OpCodes.Ldc_I4_0);
-                    newInstr.labels = instr.labels;
-                    yield return newInstr;
-                }
-                else
-                {
-                    yield return instr;
-                }
+#if SUBNAUTICA
+                CodeInstruction newInstr = new(OpCodes.Ldc_I4_0);
+                newInstr.labels = instr.labels;
+                yield return newInstr;
+#elif BELOWZERO
+                continue;
+#endif
             }
-        }
-
-        public override void Patch(Harmony harmony)
-        {
-            PatchTranspiler(harmony, TARGET_METHOD);
+            else
+            {
+                yield return instr;
+            }
         }
     }
 }

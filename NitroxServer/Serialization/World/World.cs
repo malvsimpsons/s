@@ -12,15 +12,17 @@ namespace NitroxServer.Serialization.World
         public ScheduleKeeper ScheduleKeeper { get; set; }
         public TimeKeeper TimeKeeper { get; set; }
         public SimulationOwnershipData SimulationOwnershipData { get; set; }
+#if SUBNAUTCIA
         public EscapePodManager EscapePodManager { get; set; }
+#endif
         public BatchEntitySpawner BatchEntitySpawner { get; set; }
         public EntitySimulation EntitySimulation { get; set; }
         public EntityRegistry EntityRegistry { get; set; }
         public WorldEntityManager WorldEntityManager { get; set; }
-        public BaseManager BaseManager { get; set; }
+        public BuildingManager BuildingManager { get; set; }
         public StoryManager StoryManager { get; set; }
         public GameData GameData { get; set; }
-        public ServerGameMode GameMode { get; set; }
+        public NitroxGameMode GameMode { get; set; }
         public string Seed { get; set; }
     }
 }

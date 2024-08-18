@@ -12,12 +12,13 @@ namespace NitroxModel.Packets
 {
     [Serializable]
     public class InitialPlayerSync : Packet
-    { 
+    {
+#if SUBNAUTICA
         public NitroxId AssignedEscapePodId { get; }
+#endif
         public List<EquippedItemData> EquippedItems { get; }
-        public List<BasePiece> BasePieces { get; }
         public List<NitroxTechType> UsedItems { get; }
-        public NitroxId[] QuickSlotsBindingIds { get; }
+        public Optional<NitroxId>[] QuickSlotsBindingIds { get; }
         public NitroxId PlayerGameObjectId { get; }
         public bool FirstTimeConnecting { get; }
         public InitialPDAData PDAData { get; }
@@ -28,19 +29,22 @@ namespace NitroxModel.Packets
         public PlayerStatsData PlayerStatsData { get; }
         public List<PlayerContext> OtherPlayers { get; }
         public List<Entity> GlobalRootEntities { get; }
-        public List<NitroxId> InitialSimulationOwnerships { get; }
-        public ServerGameMode GameMode { get; }
+        public List<SimulatedEntity> InitialSimulationOwnerships { get; }
+        public NitroxGameMode GameMode { get; }
         public Perms Permissions { get; }
         public SubnauticaPlayerPreferences Preferences { get; }
         public TimeData TimeData { get; }
+        public bool IsFirstPlayer { get; }
+        public Dictionary<NitroxId, int> BuildOperationIds { get; }
 
         public InitialPlayerSync(NitroxId playerGameObjectId,
             bool firstTimeConnecting,
+#if SUBNAUTICA
             NitroxId assignedEscapePodId,
+#endif
             IEnumerable<EquippedItemData> equipment,
-            IEnumerable<BasePiece> basePieces,
             IEnumerable<NitroxTechType> usedItems,
-            NitroxId[] quickSlotsBindingIds,
+            Optional<NitroxId>[] quickSlotsBindingIds,
             InitialPDAData pdaData,
             InitialStoryGoalData storyGoalData,
             NitroxVector3 playerSpawnData,
@@ -49,17 +53,20 @@ namespace NitroxModel.Packets
             PlayerStatsData playerStatsData,
             IEnumerable<PlayerContext> otherPlayers,
             IEnumerable<Entity> globalRootEntities,
-            IEnumerable<NitroxId> initialSimulationOwnerships,
-            ServerGameMode gameMode,
+            IEnumerable<SimulatedEntity> initialSimulationOwnerships,
+            NitroxGameMode gameMode,
             Perms perms,
             SubnauticaPlayerPreferences preferences,
-            TimeData timeData)
+            TimeData timeData,
+            bool isFirstPlayer,
+            Dictionary<NitroxId, int> buildOperationIds)
         {
+#if SUBNAUTICA
             AssignedEscapePodId = assignedEscapePodId;
+#endif
             PlayerGameObjectId = playerGameObjectId;
             FirstTimeConnecting = firstTimeConnecting;
             EquippedItems = equipment.ToList();
-            BasePieces = basePieces.ToList();
             UsedItems = usedItems.ToList();
             QuickSlotsBindingIds = quickSlotsBindingIds;
             PDAData = pdaData;
@@ -75,15 +82,18 @@ namespace NitroxModel.Packets
             Permissions = perms;
             Preferences = preferences;
             TimeData = timeData;
+            IsFirstPlayer = isFirstPlayer;
+            BuildOperationIds = buildOperationIds;
         }
 
         /// <remarks>Used for deserialization</remarks>
         public InitialPlayerSync(
+#if SUBNAUTICA
             NitroxId assignedEscapePodId,
+#endif
             List<EquippedItemData> equippedItems,
-            List<BasePiece> basePieces,
             List<NitroxTechType> usedItems,
-            NitroxId[] quickSlotsBindingIds,
+            Optional<NitroxId>[] quickSlotsBindingIds,
             NitroxId playerGameObjectId,
             bool firstTimeConnecting,
             InitialPDAData pdaData,
@@ -94,17 +104,20 @@ namespace NitroxModel.Packets
             PlayerStatsData playerStatsData,
             List<PlayerContext> otherPlayers,
             List<Entity> globalRootEntities,
-            List<NitroxId> initialSimulationOwnerships,
-            ServerGameMode gameMode,
+            List<SimulatedEntity> initialSimulationOwnerships,
+            NitroxGameMode gameMode,
             Perms permissions,
             SubnauticaPlayerPreferences preferences,
-            TimeData timeData)
+            TimeData timeData,
+            bool isFirstPlayer,
+            Dictionary<NitroxId, int> buildOperationIds)
         {
+#if SUBNAUTICA
             AssignedEscapePodId = assignedEscapePodId;
+#endif
             PlayerGameObjectId = playerGameObjectId;
             FirstTimeConnecting = firstTimeConnecting;
             EquippedItems = equippedItems;
-            BasePieces = basePieces;
             UsedItems = usedItems;
             QuickSlotsBindingIds = quickSlotsBindingIds;
             PDAData = pdaData;
@@ -120,6 +133,8 @@ namespace NitroxModel.Packets
             Permissions = permissions;
             Preferences = preferences;
             TimeData = timeData;
+            IsFirstPlayer = isFirstPlayer;
+            BuildOperationIds = buildOperationIds;
         }
     }
 }

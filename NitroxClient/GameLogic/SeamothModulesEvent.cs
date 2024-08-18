@@ -1,5 +1,5 @@
-﻿using NitroxClient.Communication.Abstract;
-using NitroxClient.MonoBehaviours;
+#if SUBNAUTICA
+using NitroxClient.Communication.Abstract;
 using NitroxModel.DataStructures;
 using NitroxModel.Packets;
 using NitroxModel_Subnautica.DataStructures;
@@ -18,7 +18,11 @@ namespace NitroxClient.GameLogic
 
         public void BroadcastTorpedoLaunch(TechType techType, int slotID, SeaMoth instance)
         {
-            NitroxId id = NitroxEntity.GetId(instance.gameObject);
+            if (!instance.TryGetIdOrWarn(out NitroxId id))
+            {
+                return;
+            }
+
             TorpedoType torpedoType = null;
             ItemsContainer storageInSlot = instance.GetStorageInSlot(slotID, TechType.SeamothTorpedoModule);
 
@@ -41,7 +45,11 @@ namespace NitroxClient.GameLogic
 
         public void BroadcastElectricalDefense(TechType techType, int slotID, SeaMoth instance)
         {
-            NitroxId id = NitroxEntity.GetId(instance.gameObject);
+            if (!instance.TryGetIdOrWarn(out NitroxId id))
+            {
+                return;
+            }
+
             if (techType == TechType.SeamothElectricalDefense)
             {
                 Transform aimingTransform = Player.main.camRoot.GetAimingTransform();
@@ -51,3 +59,4 @@ namespace NitroxClient.GameLogic
         }
     }
 }
+#endif

@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using NitroxModel.Discovery;
+using NitroxModel.Discovery.Models;
 using NitroxModel.Helper;
 using NitroxModel.Platforms.OS.Shared;
 using NitroxModel.Platforms.OS.Windows.Internal;
@@ -21,7 +21,12 @@ namespace NitroxModel.Platforms.Store
 
         public bool OwnsGame(string gameDirectory)
         {
+#if SUBNAUTICA
             return File.Exists(Path.Combine(gameDirectory, "Subnautica_Data", "Plugins", "x86_64", "steam_api64.dll"));
+#endif
+#if BELOWZERO
+            return File.Exists(Path.Combine(gameDirectory, "SubnauticaZero_Data", "Plugins", "x86_64", "steam_api64.dll"));
+#endif
         }
 
         public async Task<ProcessEx> StartPlatformAsync()

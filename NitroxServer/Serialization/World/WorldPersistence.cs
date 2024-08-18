@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using NitroxModel.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
@@ -15,6 +16,7 @@ using NitroxServer.GameLogic.Entities;
 using NitroxServer.GameLogic.Entities.Spawning;
 using NitroxServer.GameLogic.Players;
 using NitroxServer.GameLogic.Unlockables;
+using NitroxServer.Helper;
 using NitroxServer.Resources;
 using NitroxServer.Serialization.Upgrade;
 
@@ -29,14 +31,16 @@ namespace NitroxServer.Serialization.World
         private readonly ServerJsonSerializer jsonSerializer;
         private readonly ServerConfig config;
         private readonly RandomStartGenerator randomStart;
+        private readonly IWorldModifier worldModifier;
         private readonly SaveDataUpgrade[] upgrades;
 
-        public WorldPersistence(ServerProtoBufSerializer protoBufSerializer, ServerJsonSerializer jsonSerializer, ServerConfig config, RandomStartGenerator randomStart, SaveDataUpgrade[] upgrades)
+        public WorldPersistence(ServerProtoBufSerializer protoBufSerializer, ServerJsonSerializer jsonSerializer, ServerConfig config, RandomStartGenerator randomStart, IWorldModifier worldModifier, SaveDataUpgrade[] upgrades)
         {
             this.protoBufSerializer = protoBufSerializer;
             this.jsonSerializer = jsonSerializer;
             this.config = config;
             this.randomStart = randomStart;
+            this.worldModifier = worldModifier;
             this.upgrades = upgrades;
 
             UpdateSerializer(config.SerializerMode);
@@ -65,9 +69,9 @@ namespace NitroxServer.Serialization.World
                 }
 
                 Serializer.Serialize(Path.Combine(saveDir, $"Version{FileEnding}"), new SaveFileVersion());
-                Serializer.Serialize(Path.Combine(saveDir, $"BaseData{FileEnding}"), persistedData.BaseData);
                 Serializer.Serialize(Path.Combine(saveDir, $"PlayerData{FileEnding}"), persistedData.PlayerData);
                 Serializer.Serialize(Path.Combine(saveDir, $"WorldData{FileEnding}"), persistedData.WorldData);
+                Serializer.Serialize(Path.Combine(saveDir, $"GlobalRootData{FileEnding}"), persistedData.GlobalRootData);
                 Serializer.Serialize(Path.Combine(saveDir, $"EntityData{FileEnding}"), persistedData.EntityData);
 
                 using (config.Update(saveDir))
@@ -113,11 +117,11 @@ namespace NitroxServer.Serialization.World
             {
                 PersistedWorldData persistedData = new()
                 {
-                    BaseData = Serializer.Deserialize<BaseData>(Path.Combine(saveDir, $"BaseData{FileEnding}")),
                     PlayerData = Serializer.Deserialize<PlayerData>(Path.Combine(saveDir, $"PlayerData{FileEnding}")),
                     WorldData = Serializer.Deserialize<WorldData>(Path.Combine(saveDir, $"WorldData{FileEnding}")),
+                    GlobalRootData = Serializer.Deserialize<GlobalRootData>(Path.Combine(saveDir, $"GlobalRootData{FileEnding}")),
                     EntityData = Serializer.Deserialize<EntityData>(Path.Combine(saveDir, $"EntityData{FileEnding}"))
-                };
+            };
 
                 if (!persistedData.IsValid())
                 {
@@ -158,7 +162,6 @@ namespace NitroxServer.Serialization.World
         {
             PersistedWorldData pWorldData = new()
             {
-                BaseData = BaseData.From(new List<BasePiece>(), new List<BasePiece>()),
                 EntityData = EntityData.From(new List<Entity>()),
                 PlayerData = PlayerData.From(new List<Player>()),
                 WorldData = new WorldData()
@@ -171,13 +174,17 @@ namespace NitroxServer.Serialization.World
                     },
                     ParsedBatchCells = new List<NitroxInt3>(),
                     Seed = config.Seed
-                }
+                },
+                GlobalRootData = new()
             };
 
-            return CreateWorld(pWorldData, config.GameMode);
+            World newWorld = CreateWorld(pWorldData, config.GameMode);
+            worldModifier.ModifyWorld(newWorld);
+
+            return newWorld;
         }
 
-        public World CreateWorld(PersistedWorldData pWorldData, ServerGameMode gameMode)
+        public World CreateWorld(PersistedWorldData pWorldData, NitroxGameMode gameMode)
         {
             string seed = pWorldData.WorldData.Seed;
             if (string.IsNullOrWhiteSpace(seed))
@@ -188,20 +195,23 @@ namespace NitroxServer.Serialization.World
                 seed = StringHelper.GenerateRandomString(10);
 #endif
             }
+            // Initialized only once, just like UnityEngine.Random
+            XORRandom.InitSeed(seed.GetHashCode());
 
             Log.Info($"Loading world with seed {seed}");
 
             EntityRegistry entityRegistry = NitroxServiceLocator.LocateService<EntityRegistry>();
             entityRegistry.AddEntities(pWorldData.EntityData.Entities);
+            entityRegistry.AddEntitiesIgnoringDuplicate(pWorldData.GlobalRootData.Entities.OfType<Entity>().ToList());
 
             World world = new()
             {
                 SimulationOwnershipData = new SimulationOwnershipData(),
                 PlayerManager = new PlayerManager(pWorldData.PlayerData.GetPlayers(), config),
 
-                BaseManager = new BaseManager(pWorldData.BaseData.PartiallyConstructedPieces, pWorldData.BaseData.CompletedBasePieceHistory),
-
+#if SUBNAUTICA
                 EscapePodManager = new EscapePodManager(entityRegistry, randomStart, seed),
+#endif
 
                 EntityRegistry = entityRegistry,
 
@@ -210,25 +220,34 @@ namespace NitroxServer.Serialization.World
                 Seed = seed
             };
 
-            world.TimeKeeper = new(world.PlayerManager, pWorldData.WorldData.GameData.StoryTiming.ElapsedSeconds);
-            world.StoryManager = new(world.PlayerManager, pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, world.TimeKeeper, seed, pWorldData.WorldData.GameData.StoryTiming.AuroraCountdownTime, pWorldData.WorldData.GameData.StoryTiming.AuroraWarningTime);
+
+            world.TimeKeeper = new(world.PlayerManager, pWorldData.WorldData.GameData.StoryTiming.ElapsedSeconds, pWorldData.WorldData.GameData.StoryTiming.RealTimeElapsed);
+#if SUBNAUTICA
+            world.StoryManager = new(world.PlayerManager, pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, world.TimeKeeper, seed, pWorldData.WorldData.GameData.StoryTiming.AuroraCountdownTime, pWorldData.WorldData.GameData.StoryTiming.AuroraWarningTime, pWorldData.WorldData.GameData.StoryTiming.AuroraRealExplosionTime);
+#elif BELOWZERO
+            world.StoryManager = new(world.PlayerManager, pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, world.TimeKeeper, seed);
+#endif
+
             world.ScheduleKeeper = new ScheduleKeeper(pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, world.TimeKeeper, world.PlayerManager);
 
             world.BatchEntitySpawner = new BatchEntitySpawner(
                 NitroxServiceLocator.LocateService<EntitySpawnPointFactory>(),
-                NitroxServiceLocator.LocateService<UweWorldEntityFactory>(),
-                NitroxServiceLocator.LocateService<UwePrefabFactory>(),
+                NitroxServiceLocator.LocateService<IUweWorldEntityFactory>(),
+                NitroxServiceLocator.LocateService<IUwePrefabFactory>(),
                 pWorldData.WorldData.ParsedBatchCells,
                 protoBufSerializer,
-                NitroxServiceLocator.LocateService<Dictionary<NitroxTechType, IEntityBootstrapper>>(),
+                NitroxServiceLocator.LocateService<IEntityBootstrapperManager>(),
                 NitroxServiceLocator.LocateService<Dictionary<string, PrefabPlaceholdersGroupAsset>>(),
+                pWorldData.WorldData.GameData.PDAState,
                 world.Seed
             );
 
             world.WorldEntityManager = new WorldEntityManager(world.EntityRegistry, world.BatchEntitySpawner);
 
-            HashSet<NitroxTechType> serverSpawnedSimulationWhiteList = NitroxServiceLocator.LocateService<HashSet<NitroxTechType>>();
-            world.EntitySimulation = new EntitySimulation(world.EntityRegistry, world.WorldEntityManager, world.SimulationOwnershipData, world.PlayerManager, serverSpawnedSimulationWhiteList);
+            world.BuildingManager = new(world.EntityRegistry, world.WorldEntityManager, config);
+
+            ISimulationWhitelist simulationWhitelist = NitroxServiceLocator.LocateService<ISimulationWhitelist>();
+            world.EntitySimulation = new EntitySimulation(world.EntityRegistry, world.WorldEntityManager, world.SimulationOwnershipData, world.PlayerManager, simulationWhitelist);
 
             return world;
         }

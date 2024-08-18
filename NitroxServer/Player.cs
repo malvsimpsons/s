@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.GameLogic.Entities;
+using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.MultiplayerSession;
 using NitroxModel.Packets;
 using NitroxModel.Packets.Processors.Abstract;
+using NitroxModel.Server;
 using NitroxServer.Communication;
 
 namespace NitroxServer
@@ -18,9 +19,9 @@ namespace NitroxServer
         private readonly ThreadSafeSet<AbsoluteEntityCell> visibleCells;
 
         public ThreadSafeList<NitroxTechType> UsedItems { get; }
-        public NitroxId[] QuickSlotsBindingIds { get; set; }
+        public Optional<NitroxId>[] QuickSlotsBindingIds { get; set; }
 
-        public NitroxConnection Connection { get; set; }
+        public INitroxConnection Connection { get; set; }
         public PlayerSettings PlayerSettings => PlayerContext.PlayerSettings;
         public PlayerContext PlayerContext { get; set; }
         public ushort Id { get; }
@@ -32,15 +33,18 @@ namespace NitroxServer
         public Optional<NitroxId> SubRootId { get; set; }
         public Perms Permissions { get; set; }
         public PlayerStatsData Stats { get; set; }
+        public NitroxGameMode GameMode { get; set; }
         public NitroxVector3? LastStoredPosition { get; set; }
         public Optional<NitroxId> LastStoredSubRootID { get; set; }
         public ThreadSafeDictionary<string, float> PersonalCompletedGoalsWithTimestamp { get; }
         public ThreadSafeDictionary<string, PingInstancePreference> PingInstancePreferences { get; set; }
         public ThreadSafeList<int> PinnedRecipePreferences { get; set; }
 
-        public Player(ushort id, string name, bool isPermaDeath, PlayerContext playerContext, NitroxConnection connection,
-                      NitroxVector3 position, NitroxQuaternion rotation, NitroxId playerId, Optional<NitroxId> subRootId, Perms perms, PlayerStatsData stats,
-                      IEnumerable<NitroxTechType> usedItems, NitroxId[] quickSlotsBindingIds,
+        public PlayerWorldEntity Entity { get; set; }
+
+        public Player(ushort id, string name, bool isPermaDeath, PlayerContext playerContext, INitroxConnection connection,
+                      NitroxVector3 position, NitroxQuaternion rotation, NitroxId playerId, Optional<NitroxId> subRootId, Perms perms, PlayerStatsData stats, NitroxGameMode gameMode,
+                      IEnumerable<NitroxTechType> usedItems, Optional<NitroxId>[] quickSlotsBindingIds,
                       IEnumerable<EquippedItemData> equippedItems, IEnumerable<EquippedItemData> modules, IDictionary<string, float> personalCompletedGoalsWithTimestamp, IDictionary<string, PingInstancePreference> pingInstancePreferences, IList<int> pinnedRecipePreferences)
         {
             Id = id;
@@ -54,6 +58,7 @@ namespace NitroxServer
             GameObjectId = playerId;
             Permissions = perms;
             Stats = stats;
+            GameMode = gameMode;
             LastStoredPosition = null;
             LastStoredSubRootID = Optional.Empty;
             UsedItems = new ThreadSafeList<NitroxTechType>(usedItems);
@@ -158,10 +163,9 @@ namespace NitroxServer
         {
             if (entity is WorldEntity worldEntity)
             {
-                return worldEntity.ExistsInGlobalRoot || HasCellLoaded(worldEntity.AbsoluteEntityCell);
+                return worldEntity is GlobalRootEntity || HasCellLoaded(worldEntity.AbsoluteEntityCell);
             }
 
-            // Assume all other entity types are in global root
             return true;
         }
 

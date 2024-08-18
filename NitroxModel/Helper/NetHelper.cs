@@ -37,8 +37,8 @@ namespace NitroxModel.Helper
         public static IEnumerable<NetworkInterface> GetInternetInterfaces()
         {
             return NetworkInterface.GetAllNetworkInterfaces()
-                                   .Where(n => n.Name is "Ethernet" or "Wi-Fi" && n.OperationalStatus is OperationalStatus.Up && n.NetworkInterfaceType is NetworkInterfaceType.Wireless80211 or NetworkInterfaceType.Ethernet)
-                                   .OrderBy(n => n.Name == "Ethernet" ? 1 : 0)
+                                   .Where(n => n.Name.Contains("Ethernet") || n.Name.Contains("Wi-Fi") && n.OperationalStatus is OperationalStatus.Up && n.NetworkInterfaceType is NetworkInterfaceType.Wireless80211 or NetworkInterfaceType.Ethernet)
+                                   .OrderBy(n => n.Name.Contains("Ethernet") ? 1 : 0)
                                    .ThenBy(n => n.Name);
         }
 
@@ -157,6 +157,32 @@ namespace NitroxModel.Helper
                 if (IsInRange(address, privateSubnet))
                 {
                     return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        ///     Returns true if the IP address points to the executing machine.
+        /// </summary>
+        public static bool IsLocalhost(this IPAddress address)
+        {
+            if (address == null)
+            {
+                return false;
+            }
+            if (IPAddress.IsLoopback(address))
+            {
+                return true;
+            }
+            foreach (NetworkInterface ni in GetInternetInterfaces())
+            {
+                foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                {
+                    if (address.Equals(ip.Address))
+                    {
+                        return true;
+                    }
                 }
             }
             return false;
