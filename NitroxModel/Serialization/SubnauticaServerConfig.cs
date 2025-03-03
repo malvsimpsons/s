@@ -99,7 +99,7 @@ namespace NitroxModel.Serialization
         public ServerSerializerMode SerializerMode { get; set; } = ServerSerializerMode.JSON;
 
         [PropertyDescription("Possible values:", typeof(Perms))]
-        public Perms DefaultPlayerPerm { get; set; } = Perms.PLAYER;
+        public Perms DefaultPlayerPerm { get; set; } = Perms.DEFAULT;
 
         [PropertyDescription("\nDefault player stats below here")]
         public float DefaultOxygenValue { get; set; } = 45;

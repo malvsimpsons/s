@@ -104,7 +104,7 @@ public class ExosuitMovementReplicator : VehicleMovementReplicator
 
     private void SetupSound()
     {
-        this.Resolve<FMODWhitelist>().TryGetSoundData(exosuit.loopingJetSound.asset.path, out SoundData jetSoundData);
+        this.Resolve<FmodWhitelist>().TryGetSoundData(exosuit.loopingJetSound.asset.path, out SoundData jetSoundData);
         jetLoopingSoundDistance = jetSoundData.Radius;
         
         if (FMODUWE.IsInvalidParameterId(exosuit.fmodIndexSpeed))

@@ -121,7 +121,7 @@ public partial class ManageServerViewModel : RoutableViewModelBase
     private bool serverIsOnline;
 
     private string SaveFolderDirectory => Path.Combine(SavesFolderDir, Server.Name);
-    private string SavesFolderDir => keyValueStore.GetSavesFolderDir();
+    private string SavesFolderDir => keyValueStore.GetServerSavesPath();
 
     public ManageServerViewModel()
     {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using NitroxModel.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
@@ -31,13 +32,13 @@ public class WorldEntityManager
     /// </summary>
     private readonly Dictionary<NitroxId, GlobalRootEntity> globalRootEntitiesById;
 
-    private readonly BatchEntitySpawner batchEntitySpawner;
+    // private readonly BatchEntitySpawner batchEntitySpawner;
     private readonly PlayerManager playerManager;
 
-    private readonly object worldEntitiesLock;
-    private readonly object globalRootEntitiesLock;
+    private readonly Lock worldEntitiesLock;
+    private readonly Lock globalRootEntitiesLock;
 
-    public WorldEntityManager(EntityRegistry entityRegistry, BatchEntitySpawner batchEntitySpawner, PlayerManager playerManager)
+    public WorldEntityManager(EntityRegistry entityRegistry, PlayerManager playerManager)
     {
         List<WorldEntity> worldEntities = entityRegistry.GetEntities<WorldEntity>();
 
@@ -47,7 +48,6 @@ public class WorldEntityManager
                                                .GroupBy(entity => entity.AbsoluteEntityCell)
                                                .ToDictionary(group => group.Key, group => group.ToDictionary(entity => entity.Id, entity => entity));
         this.entityRegistry = entityRegistry;
-        this.batchEntitySpawner = batchEntitySpawner;
         this.playerManager = playerManager;
 
         worldEntitiesLock = new();
@@ -213,19 +213,17 @@ public class WorldEntityManager
         }
     }
 
-    public void LoadAllUnspawnedEntities(System.Threading.CancellationToken token)
-    {            
-        IMap map = NitroxServiceLocator.LocateService<IMap>();
-
-        int totalBatches = map.DimensionsInBatches.X * map.DimensionsInBatches.Y * map.DimensionsInBatches.Z;
+    public void LoadAllUnspawnedEntities(CancellationToken token)
+    {
+        int totalBatches = SubnauticaMap.DimensionsInBatches.X * SubnauticaMap.DimensionsInBatches.Y * SubnauticaMap.DimensionsInBatches.Z;
         int batchesLoaded = 0;
 
-        for (int x = 0; x < map.DimensionsInBatches.X; x++)
+        for (int x = 0; x < SubnauticaMap.DimensionsInBatches.X; x++)
         {
             token.ThrowIfCancellationRequested();
-            for (int y = 0; y < map.DimensionsInBatches.Y; y++)
+            for (int y = 0; y < SubnauticaMap.DimensionsInBatches.Y; y++)
             {
-                for (int z = 0; z < map.DimensionsInBatches.Z; z++)
+                for (int z = 0; z < SubnauticaMap.DimensionsInBatches.Z; z++)
                 {
                     int spawned = LoadUnspawnedEntities(new(x, y, z), true);
 
@@ -244,7 +242,8 @@ public class WorldEntityManager
 
     public int LoadUnspawnedEntities(NitroxInt3 batchId, bool suppressLogs)
     {
-        List<Entity> spawnedEntities = batchEntitySpawner.LoadUnspawnedEntities(batchId, suppressLogs);
+        // TODO: REMOVE
+        List<Entity> spawnedEntities = []; // batchEntitySpawner.LoadUnspawnedEntities(batchId, suppressLogs)
 
         List<WorldEntity> entitiesInCells = spawnedEntities.Where(entity => typeof(WorldEntity).IsAssignableFrom(entity.GetType()) &&
                                                                                 entity.GetType() != typeof(CellRootEntity) &&

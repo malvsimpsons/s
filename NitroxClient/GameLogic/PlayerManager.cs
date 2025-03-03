@@ -16,13 +16,13 @@ public class PlayerManager
 {
     private readonly PlayerModelManager playerModelManager;
     private readonly PlayerVitalsManager playerVitalsManager;
-    private readonly FMODWhitelist fmodWhitelist;
+    private readonly FmodWhitelist fmodWhitelist;
     private readonly Dictionary<ushort, RemotePlayer> playersById = new();
 
     public OnCreateDelegate OnCreate;
     public OnRemoveDelegate OnRemove;
 
-    public PlayerManager(PlayerModelManager playerModelManager, PlayerVitalsManager playerVitalsManager, FMODWhitelist fmodWhitelist)
+    public PlayerManager(PlayerModelManager playerModelManager, PlayerVitalsManager playerVitalsManager, FmodWhitelist fmodWhitelist)
     {
         this.playerModelManager = playerModelManager;
         this.playerVitalsManager = playerVitalsManager;

@@ -8,9 +8,9 @@ namespace NitroxClient.Communication.Packets.Processors;
 
 public class FMODAssetProcessor : ClientPacketProcessor<FMODAssetPacket>
 {
-    private readonly FMODWhitelist fmodWhitelist;
+    private readonly FmodWhitelist fmodWhitelist;
 
-    public FMODAssetProcessor(FMODWhitelist fmodWhitelist)
+    public FMODAssetProcessor(FmodWhitelist fmodWhitelist)
     {
         this.fmodWhitelist = fmodWhitelist;
     }

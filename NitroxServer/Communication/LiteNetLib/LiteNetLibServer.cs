@@ -4,10 +4,8 @@ using System.Threading.Tasks;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Mono.Nat;
-using NitroxModel.Helper;
 using NitroxModel.Packets;
 using NitroxModel.Serialization;
-using NitroxServer.Communication.Packets;
 using NitroxServer.GameLogic;
 using NitroxServer.GameLogic.Entities;
 
@@ -18,7 +16,7 @@ public class LiteNetLibServer : NitroxServer
     private readonly EventBasedNetListener listener;
     private readonly NetManager server;
 
-    public LiteNetLibServer(PacketHandler packetHandler, PlayerManager playerManager, EntitySimulation entitySimulation, SubnauticaServerConfig serverConfig) : base(packetHandler, playerManager, entitySimulation, serverConfig)
+    public LiteNetLibServer(PlayerManager playerManager, EntitySimulation entitySimulation, SubnauticaServerConfig serverConfig) : base(playerManager, entitySimulation, serverConfig)
     {
         listener = new EventBasedNetListener();
         server = new NetManager(listener);

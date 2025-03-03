@@ -8,6 +8,7 @@ using NitroxModel.Packets;
 
 namespace NitroxServer.GameLogic.Entities;
 
+[Obsolete("Use new EntitySimulation")]
 public class EntitySimulation
 {
     private const SimulationLockType DEFAULT_ENTITY_SIMULATION_LOCKTYPE = SimulationLockType.TRANSIENT;

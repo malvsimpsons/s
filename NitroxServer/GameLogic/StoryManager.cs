@@ -3,8 +3,6 @@ using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Packets;
 using NitroxServer.Helper;
 using NitroxServer.GameLogic.Unlockables;
-using NitroxModel.Helper;
-using NitroxModel;
 
 namespace NitroxServer.GameLogic;
 
@@ -32,7 +30,7 @@ public class StoryManager : IDisposable
     public double AuroraWarningTimeMs;
 
     /// <summary>
-    /// In seconds
+    /// In seconds.
     /// </summary>
     public double AuroraRealExplosionTime;
 

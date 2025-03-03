@@ -15,7 +15,7 @@ public sealed partial class FMOD_CustomEmitter_OnStop_Patch : NitroxPatch, IDyna
 
     public static void Postfix(FMOD_CustomEmitter __instance)
     {
-        if (!Resolve<FMODWhitelist>().IsWhitelisted(__instance.asset.path))
+        if (!Resolve<FmodWhitelist>().IsWhitelisted(__instance.asset.path))
         {
             return;
         }

@@ -35,5 +35,3 @@ namespace NitroxClient.Communication.Packets.Processors
         }
     }
 }
-
-

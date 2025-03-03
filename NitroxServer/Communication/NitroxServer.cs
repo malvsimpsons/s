@@ -4,7 +4,6 @@ using System.Threading;
 using NitroxModel.DataStructures;
 using NitroxModel.Packets;
 using NitroxModel.Serialization;
-using NitroxServer.Communication.Packets;
 using NitroxServer.GameLogic;
 using NitroxServer.GameLogic.Entities;
 
@@ -22,14 +21,14 @@ namespace NitroxServer.Communication
         protected readonly bool useUpnpPortForwarding;
         protected readonly bool useLANBroadcast;
 
-        protected readonly PacketHandler packetHandler;
+        // protected readonly PacketHandler packetHandler;
         protected readonly EntitySimulation entitySimulation;
         protected readonly Dictionary<int, INitroxConnection> connectionsByRemoteIdentifier = new();
         protected readonly PlayerManager playerManager;
 
-        public NitroxServer(PacketHandler packetHandler, PlayerManager playerManager, EntitySimulation entitySimulation, SubnauticaServerConfig serverConfig)
+        public NitroxServer(PlayerManager playerManager, EntitySimulation entitySimulation, SubnauticaServerConfig serverConfig)
         {
-            this.packetHandler = packetHandler;
+            // this.packetHandler = packetHandler;
             this.playerManager = playerManager;
             this.entitySimulation = entitySimulation;
 
@@ -49,7 +48,7 @@ namespace NitroxServer.Communication
 
             if (player != null)
             {
-                playerManager.PlayerDisconnected(connection);
+                playerManager.Disconnect(connection);
 
                 Disconnect disconnect = new(player.Id);
                 playerManager.SendPacketToAllPlayers(disconnect);
@@ -72,7 +71,8 @@ namespace NitroxServer.Communication
         {
             try
             {
-                packetHandler.Process(packet, connection);
+                // TODO: FIX for new server
+                // packetHandler.Process(packet, connection);
             }
             catch (Exception ex)
             {

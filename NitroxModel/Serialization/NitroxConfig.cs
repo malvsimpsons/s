@@ -9,6 +9,42 @@ using System.Text;
 
 namespace NitroxModel.Serialization;
 
+public static class NitroxConfig
+{
+    public static IDictionary<string, string> Parse(Stream stream)
+    {
+        using StreamReader reader = new(stream, leaveOpen: true, encoding: Encoding.UTF8, detectEncodingFromByteOrderMarks: false, bufferSize: 4096);
+        return Parse(reader);
+    }
+
+    public static IDictionary<string, string> Parse(StreamReader stream)
+    {
+        Dictionary<string, string> result = [];
+        char[] keyValueSeparator = ['='];
+        int lineNum = 0;
+
+        while (stream.ReadLine() is { } readLine)
+        {
+            lineNum++;
+            if (readLine.Length < 1 || readLine[0] == '#')
+            {
+                continue;
+            }
+
+            if (readLine.Contains('='))
+            {
+                string[] keyValuePair = readLine.Split(keyValueSeparator, 2);
+                result.Add(keyValuePair[0], keyValuePair[1]);
+            }
+            else
+            {
+                throw new Exception($"Incorrect format detected on line {lineNum}:{Environment.NewLine}{readLine}");
+            }
+        }
+        return result;
+    }
+}
+
 public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
 {
     private static readonly Dictionary<string, object> unserializedMembersWarnOnceCache = [];
@@ -38,46 +74,27 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
             Type type = GetType();
             Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary();
             using StreamReader reader = new(new FileStream(Path.Combine(saveDir, FileName), FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
-
             HashSet<MemberInfo> unserializedMembers = new(typeCachedDict.Values);
-            char[] lineSeparator = { '=' };
-            int lineNum = 0;
-            string readLine;
 
-            while ((readLine = reader.ReadLine()) != null)
+            foreach (KeyValuePair<string, string> pair in NitroxConfig.Parse(reader))
             {
-                lineNum++;
-                if (readLine.Length < 1 || readLine[0] == '#')
+                // Ignore case for property names in file.
+                if (!typeCachedDict.TryGetValue(pair.Key.ToLowerInvariant(), out MemberInfo member))
                 {
+                    Log.Warn($"Property or field {pair.Key} does not exist on type {type.FullName}!");
                     continue;
                 }
+                unserializedMembers.Remove(member); // This member was serialized in the file
 
-                if (readLine.Contains('='))
+                if (!SetMemberValue(this, member, pair.Value))
                 {
-                    string[] keyValuePair = readLine.Split(lineSeparator, 2);
-                    // Ignore case for property names in file.
-                    if (!typeCachedDict.TryGetValue(keyValuePair[0].ToLowerInvariant(), out MemberInfo member))
+                    (Type type, object value) logData = member switch
                     {
-                        Log.Warn($"Property or field {keyValuePair[0]} does not exist on type {type.FullName}!");
-                        continue;
-                    }
-
-                    unserializedMembers.Remove(member); // This member was serialized in the file
-
-                    if (!NitroxConfig<T>.SetMemberValue(this, member, keyValuePair[1]))
-                    {
-                        (Type type, object value) logData = member switch
-                        {
-                            FieldInfo field => (field.FieldType, field.GetValue(this)),
-                            PropertyInfo prop => (prop.PropertyType, prop.GetValue(this)),
-                            _ => (typeof(string), "")
-                        };
-                        Log.Warn($@"Property ""({logData.type.Name}) {member.Name}"" has an invalid value {NitroxConfig<T>.StringifyValue(keyValuePair[1])} on line {lineNum}. Using default value: {NitroxConfig<T>.StringifyValue(logData.value)}");
-                    }
-                }
-                else
-                {
-                    Log.Error($"Incorrect format detected on line {lineNum} in {Path.GetFullPath(Path.Combine(saveDir, FileName))}:{Environment.NewLine}{readLine}");
+                        FieldInfo field => (field.FieldType, field.GetValue(this)),
+                        PropertyInfo prop => (prop.PropertyType, prop.GetValue(this)),
+                        _ => (typeof(string), "")
+                    };
+                    Log.Warn($@"Property ""({logData.type.Name}) {member.Name}"" has an invalid value {StringifyValue(pair.Value)}. Using default value: {StringifyValue(logData.value)}");
                 }
             }
 
@@ -136,14 +153,14 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
                     if (field != null)
                     {
                         WritePropertyDescription(member, stream);
-                        NitroxConfig<T>.WriteProperty(field, field.GetValue(this), stream);
+                        WriteProperty(field, field.GetValue(this), stream);
                     }
 
                     PropertyInfo property = member as PropertyInfo;
                     if (property != null)
                     {
                         WritePropertyDescription(member, stream);
-                        NitroxConfig<T>.WriteProperty(property, property.GetValue(this), stream);
+                        WriteProperty(property, property.GetValue(this), stream);
                     }
                 }
             }

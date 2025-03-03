@@ -9,9 +9,9 @@ namespace NitroxClient.Communication.Packets.Processors;
 
 public class ToggleLightsProcessor : ClientPacketProcessor<NitroxModel.Packets.ToggleLights>
 {
-    private readonly FMODWhitelist fmodWhitelist;
+    private readonly FmodWhitelist fmodWhitelist;
 
-    public ToggleLightsProcessor(FMODWhitelist fmodWhitelist)
+    public ToggleLightsProcessor(FmodWhitelist fmodWhitelist)
     {
         this.fmodWhitelist = fmodWhitelist;
     }

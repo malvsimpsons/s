@@ -19,7 +19,7 @@ public class FootstepPacketProcessor : ClientPacketProcessor<FootstepPacket>
     private readonly float footstepAudioRadius; // To modify this value, modify the last value in the SoundWhitelist_Subnautica.csv file
     private const float FOOTSTEP_AUDIO_MAX_VOLUME = 0.5f;
 
-    public FootstepPacketProcessor(PlayerManager remotePlayerManager, FMODWhitelist whitelist)
+    public FootstepPacketProcessor(PlayerManager remotePlayerManager, FmodWhitelist whitelist)
     {
         this.remotePlayerManager = remotePlayerManager;
         whitelist.TryGetSoundData("event:/player/footstep_precursor_base", out SoundData soundData);

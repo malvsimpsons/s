@@ -22,6 +22,13 @@ namespace NitroxServer
         public INitroxConnection Connection { get; set; }
         public PlayerSettings PlayerSettings => PlayerContext.PlayerSettings;
         public PlayerContext PlayerContext { get; set; }
+
+        /// <summary>
+        ///     Gets the connected player index of the player.
+        /// </summary>
+        /// <remarks>
+        ///     This ID is not unique and should not be persisted.
+        /// </remarks>
         public ushort Id { get; }
         public string Name { get; }
         public bool IsPermaDeath { get; set; }
@@ -105,7 +112,7 @@ namespace NitroxServer
         /// <summary>
         /// Returns a <b>new</b> list from the original set. To use the original set, use <see cref="AddCells"/>, <see cref="RemoveCells"/> and <see cref="HasCellLoaded"/>.
         /// </summary>
-        internal List<AbsoluteEntityCell> GetVisibleCells()
+        public List<AbsoluteEntityCell> GetVisibleCells()
         {
             return [.. visibleCells];
         }

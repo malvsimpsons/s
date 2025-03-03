@@ -29,7 +29,7 @@ public class RemotePlayer : INitroxPlayer
 
     private readonly PlayerModelManager playerModelManager;
     private readonly PlayerVitalsManager playerVitalsManager;
-    private readonly FMODWhitelist fmodWhitelist;
+    private readonly FmodWhitelist fmodWhitelist;
 
     public PlayerContext PlayerContext { get; }
     public GameObject Body { get; private set; }
@@ -59,7 +59,7 @@ public class RemotePlayer : INitroxPlayer
 
     public CyclopsPawn Pawn { get; set; }
 
-    public RemotePlayer(PlayerContext playerContext, PlayerModelManager playerModelManager, PlayerVitalsManager playerVitalsManager, FMODWhitelist fmodWhitelist)
+    public RemotePlayer(PlayerContext playerContext, PlayerModelManager playerModelManager, PlayerVitalsManager playerVitalsManager, FmodWhitelist fmodWhitelist)
     {
         PlayerContext = playerContext;
         this.playerModelManager = playerModelManager;

@@ -17,7 +17,7 @@ public sealed partial class Utils_PlayFMODAsset_Patch : NitroxPatch, IDynamicPat
 
     public static void Postfix(FMODAsset asset)
     {
-        if (Resolve<FMODWhitelist>().IsWhitelisted(asset.path))
+        if (Resolve<FmodWhitelist>().IsWhitelisted(asset.path))
         {
             Resolve<FMODSystem>().SendAssetPlay(asset.path, Player.main.transform.position.ToDto(), 1f);
         }

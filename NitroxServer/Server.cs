@@ -17,7 +17,7 @@ using Timer = System.Timers.Timer;
 
 namespace NitroxServer;
 
-public class Server
+internal class Server
 {
     private readonly Communication.NitroxServer server;
     private readonly WorldPersistence worldPersistence;
@@ -72,62 +72,20 @@ public class Server
         StringBuilder builder = new("\n");
         if (viewerPerms is Perms.CONSOLE)
         {
-            builder.AppendLine($" - Save location: {Path.Combine(KeyValueStore.Instance.GetSavesFolderDir(), Name)}");
+            builder.AppendLine($" - Save location: {Path.Combine(KeyValueStore.Instance.GetServerSavesPath(), Name)}");
         }
-        builder.AppendLine($"""
-         - Aurora's state: {world.StoryManager.GetAuroraStateSummary()}
-         - Current time: day {world.TimeKeeper.Day} ({Math.Floor(world.TimeKeeper.ElapsedSeconds)}s)
-         - Scheduled goals stored: {world.GameData.StoryGoals.ScheduledGoals.Count}
-         - Story goals completed: {world.GameData.StoryGoals.CompletedGoals.Count}
-         - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}
-         - World gamemode: {serverConfig.GameMode}
-         - Encyclopedia entries: {world.GameData.PDAState.EncyclopediaEntries.Count}
-         - Known tech: {world.GameData.PDAState.KnownTechTypes.Count}
-        """);
+//         builder.AppendLine($"""
+//          - Aurora's state: {world.StoryManager.GetAuroraStateSummary()}
+//          - Current time: day {world.TimeKeeper.Day} ({Math.Floor(world.TimeKeeper.ElapsedSeconds)}s)
+//          - Scheduled goals stored: {world.GameData.StoryGoals.ScheduledGoals.Count}
+//          - Story goals completed: {world.GameData.StoryGoals.CompletedGoals.Count}
+//          - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}
+//          - World gamemode: {serverConfig.GameMode}
+//          - Encyclopedia entries: {world.GameData.PDAState.EncyclopediaEntries.Count}
+//          - Known tech: {world.GameData.PDAState.KnownTechTypes.Count}
+//         """);
 
         return builder.ToString();
-    }
-
-    // TODO : Remove this method once server hosting/loading happens as a service (see '.NET Generic Host' on msdn)
-    public static SubnauticaServerConfig CreateOrLoadConfig()
-    {
-        string saveDir = null;
-        if (GetSaveName(Environment.GetCommandLineArgs()) is { } saveName)
-        {
-            saveDir = Path.Combine(KeyValueStore.Instance.GetSavesFolderDir(), saveName);
-        }
-        if (Directory.Exists(saveDir))
-        {
-            return SubnauticaServerConfig.Load(saveDir);
-        }
-
-        // Check if there are any save files
-        List<ServerListing> saves = GetSaves();
-        if (saves.Any())
-        {
-            // Get last save file used
-            string lastSaveAccessed = saves[0].SaveDir;
-            if (saves.Count > 1)
-            {
-                for (int i = 1; i < saves.Count; i++)
-                {
-                    if (File.GetLastWriteTime(Path.Combine(saves[i].SaveDir, "WorldData.json")) > File.GetLastWriteTime(lastSaveAccessed))
-                    {
-                        lastSaveAccessed = saves[i].SaveDir;
-                    }
-                }
-            }
-            saveDir = lastSaveAccessed;
-        }
-        else
-        {
-            // Create new save file
-            Log.Debug("No save file was found, creating a new one...");
-            saveDir = Path.Combine(KeyValueStore.Instance.GetSavesFolderDir(), "My World");
-            Directory.CreateDirectory(saveDir);
-        }
-
-        return SubnauticaServerConfig.Load(saveDir);
     }
 
     public void Save()
@@ -139,7 +97,7 @@ public class Server
 
         IsSaving = true;
 
-        bool savedSuccessfully = worldPersistence.Save(world, Path.Combine(KeyValueStore.Instance.GetSavesFolderDir(), Name));
+        bool savedSuccessfully = worldPersistence.Save(world, Path.Combine(KeyValueStore.Instance.GetServerSavesPath(), Name));
         if (savedSuccessfully && !string.IsNullOrWhiteSpace(serverConfig.PostSaveCommandPath))
         {
             try
@@ -182,7 +140,7 @@ public class Server
 
         if (!serverConfig.DisableAutoBackup)
         {
-            worldPersistence.BackUp(Path.Combine(KeyValueStore.Instance.GetSavesFolderDir(), saveName));
+            worldPersistence.BackUp(Path.Combine(KeyValueStore.Instance.GetServerSavesPath(), saveName));
         }
 
         try
@@ -260,7 +218,7 @@ public class Server
 
         Save();
 
-        worldPersistence.BackUp(Path.Combine(KeyValueStore.Instance.GetSavesFolderDir(), Name));
+        worldPersistence.BackUp(Path.Combine(KeyValueStore.Instance.GetServerSavesPath(), Name));
     }
 
     private async Task LogHowToConnectAsync()
@@ -325,10 +283,10 @@ public class Server
     {
         try
         {
-            Directory.CreateDirectory(KeyValueStore.Instance.GetSavesFolderDir());
+            Directory.CreateDirectory(KeyValueStore.Instance.GetServerSavesPath());
 
             List<ServerListing> saves = [];
-            foreach (string saveDir in Directory.EnumerateDirectories(KeyValueStore.Instance.GetSavesFolderDir()))
+            foreach (string saveDir in Directory.EnumerateDirectories(KeyValueStore.Instance.GetServerSavesPath()))
             {
                 try
                 {
@@ -351,16 +309,6 @@ public class Server
             Log.Error(ex, "Error while getting saves");
         }
         return [];
-    }
-
-    /// <summary>
-    ///     Parses the save name from the given command line arguments or defaults to the standard save name.
-    /// </summary>
-    // TODO : Remove this method once server hosting/loading happens as a service (see '.NET Generic Host' on msdn)
-    public static string GetSaveName(string[] args, string defaultValue = null)
-    {
-        string result = args.GetCommandArgs("--save").FirstOrDefault() ?? args.GetCommandArgs("--name").FirstOrDefault();
-        return IsValidSaveName(result) ? result : defaultValue;
     }
 
     private static bool IsValidSaveName(string name)

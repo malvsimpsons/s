@@ -88,10 +88,6 @@ namespace NitroxClient
                             .As<ILocalNitroxPlayer>()
                             .InstancePerLifetimeScope();
 
-            containerBuilder.RegisterType<SubnauticaMap>()
-                            .As<IMap>()
-                            .InstancePerLifetimeScope();
-
             containerBuilder.RegisterType<PlayerManager>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<PlayerModelManager>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<PlayerVitalsManager>().InstancePerLifetimeScope();
@@ -115,7 +111,7 @@ namespace NitroxClient
             containerBuilder.RegisterType<ExosuitModuleEvent>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<SeamothModulesEvent>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<Fires>().InstancePerLifetimeScope();
-            containerBuilder.Register(_ => FMODWhitelist.Load(GameInfo.Subnautica)).InstancePerLifetimeScope();
+            containerBuilder.Register(_ => FmodWhitelist.Load(GameInfo.Subnautica)).InstancePerLifetimeScope();
             containerBuilder.RegisterType<FMODSystem>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<NitroxSettingsManager>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<ThrottledPacketSender>().InstancePerLifetimeScope();

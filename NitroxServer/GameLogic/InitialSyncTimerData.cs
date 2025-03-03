@@ -9,7 +9,7 @@ namespace NitroxServer.GameLogic
     /// 
     /// For use with <see cref="System.Threading.Timer"/>
     /// </summary>
-    internal class InitialSyncTimerData
+    public class InitialSyncTimerData
     {
         public readonly INitroxConnection Connection;
         public readonly AuthenticationContext Context;

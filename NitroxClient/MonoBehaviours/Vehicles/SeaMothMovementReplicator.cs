@@ -74,9 +74,9 @@ public class SeamothMovementReplicator : VehicleMovementReplicator
         rpmSound.followParent = true;
         revSound.followParent = true;
 
-        this.Resolve<FMODWhitelist>().IsWhitelisted(rpmSound.asset.path, out radiusRpmSound);
-        this.Resolve<FMODWhitelist>().IsWhitelisted(revSound.asset.path, out radiusRevSound);
-        this.Resolve<FMODWhitelist>().IsWhitelisted(seaMoth.enterSeamoth.asset.path, out radiusEnterSound);
+        this.Resolve<FmodWhitelist>().IsWhitelisted(rpmSound.asset.path, out radiusRpmSound);
+        this.Resolve<FmodWhitelist>().IsWhitelisted(revSound.asset.path, out radiusRevSound);
+        this.Resolve<FmodWhitelist>().IsWhitelisted(seaMoth.enterSeamoth.asset.path, out radiusEnterSound);
 
         rpmSound.GetEventInstance().setProperty(EVENT_PROPERTY.MINIMUM_DISTANCE, 1f);
         revSound.GetEventInstance().setProperty(EVENT_PROPERTY.MINIMUM_DISTANCE, 1f);

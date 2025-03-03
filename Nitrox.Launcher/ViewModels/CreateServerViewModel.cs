@@ -27,7 +27,7 @@ public partial class CreateServerViewModel : ModalViewModelBase
     [ObservableProperty]
     private NitroxGameMode selectedGameMode = NitroxGameMode.SURVIVAL;
 
-    private string SavesFolderDir => keyValueStore.GetSavesFolderDir();
+    private string SavesFolderDir => keyValueStore.GetServerSavesPath();
 
     public CreateServerViewModel()
     {

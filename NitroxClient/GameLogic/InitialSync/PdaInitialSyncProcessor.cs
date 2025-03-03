@@ -42,7 +42,7 @@ public sealed class PdaInitialSyncProcessor : InitialSyncProcessor
 
     private static IEnumerator RestorePDALog(InitialPlayerSync packet)
     {
-        List<PDALogEntry> logEntries = packet.PDAData.PDALogEntries;
+        List<PdaLogEntry> logEntries = packet.PDAData.PDALogEntries;
         Log.Info($"Received initial sync packet with {logEntries.Count} pda log entries");
 
         using (PacketSuppressor<PDALogEntryAdd>.Suppress())

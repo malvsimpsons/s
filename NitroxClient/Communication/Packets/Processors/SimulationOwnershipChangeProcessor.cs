@@ -22,4 +22,3 @@ public class SimulationOwnershipChangeProcessor : ClientPacketProcessor<Simulati
         }
     }
 }
-

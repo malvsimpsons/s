@@ -7,17 +7,17 @@ namespace NitroxModel.Packets;
 [Serializable]
 public sealed class PlaceBase : Packet
 {
-    public NitroxId FormerGhostId { get; }
-    public BuildEntity BuildEntity { get; set; }
-
     public PlaceBase(NitroxId formerGhostId, BuildEntity buildEntity)
     {
         FormerGhostId = formerGhostId;
         BuildEntity = buildEntity;
     }
 
-    public void Deflate()
-    {
-        BuildEntity = null;
-    }
+    public NitroxId FormerGhostId { get; }
+    public BuildEntity BuildEntity { get; set; }
+
+    /// <summary>
+    ///     End-players can process elementary operations without this data (packet would be heavier for no reason).
+    /// </summary>
+    public void Deflate() => BuildEntity = null;
 }

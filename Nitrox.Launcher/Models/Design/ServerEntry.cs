@@ -216,7 +216,7 @@ public partial class ServerEntry : ObservableObject
     {
         System.Diagnostics.Process.Start(new ProcessStartInfo
         {
-            FileName = Path.Combine(KeyValueStore.Instance.GetSavesFolderDir(), Name),
+            FileName = Path.Combine(KeyValueStore.Instance.GetServerSavesPath(), Name),
             Verb = "open",
             UseShellExecute = true
         })?.Dispose();
@@ -236,10 +236,10 @@ public partial class ServerEntry : ObservableObject
 
         private ServerProcess(string saveDir, Action onExited, bool isEmbeddedMode = false)
         {
-            string serverExeName = "NitroxServer-Subnautica.exe";
+            string serverExeName = "Nitrox.Server.Subnautica.exe";
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                serverExeName = "NitroxServer-Subnautica";
+                serverExeName = "Nitrox.Server.Subnautica";
             }
             string serverFile = Path.Combine(NitroxUser.ExecutableRootPath, serverExeName);
             ProcessStartInfo startInfo = new(serverFile)
@@ -284,9 +284,9 @@ public partial class ServerEntry : ObservableObject
                                 LogText = match.Groups["logText"].ValueSpan.Trim().ToString(),
                                 Type = match.Groups["level"].ValueSpan switch
                                 {
-                                    "DBG" => OutputLineType.DEBUG_LOG,
-                                    "WRN" => OutputLineType.WARNING_LOG,
-                                    "ERR" => OutputLineType.ERROR_LOG,
+                                    "dbug" => OutputLineType.DEBUG_LOG,
+                                    "warn" => OutputLineType.WARNING_LOG,
+                                    "erro" => OutputLineType.ERROR_LOG,
                                     _ => OutputLineType.INFO_LOG
                                 }
                             };

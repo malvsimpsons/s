@@ -14,7 +14,7 @@ public sealed partial class FMOD_CustomEmitter_Start_Patch : NitroxPatch, IDynam
 
     public static void Prefix(FMOD_CustomEmitter __instance)
     {
-        if (!Resolve<FMODWhitelist>().IsWhitelisted(__instance.asset.path, out float radius))
+        if (!Resolve<FmodWhitelist>().IsWhitelisted(__instance.asset.path, out float radius))
         {
             return;
         }

@@ -76,7 +76,7 @@ public sealed partial class FootstepSounds_OnStep_Patch : NitroxPatch, IDynamicP
 
     private static readonly Lazy<float> stepSoundRadius = new(() =>
     {
-        Resolve<FMODWhitelist>().TryGetSoundData(LAND_STEP_SOUND_PATH, out SoundData soundData);
+        Resolve<FmodWhitelist>().TryGetSoundData(LAND_STEP_SOUND_PATH, out SoundData soundData);
         return soundData.Radius;
     });
 

@@ -30,17 +30,19 @@ namespace NitroxServer.GameLogic.Entities
 
             foreach (Entity entity in Entities)
             {
-                if (entity.ParentId != null)
+                if (entity.ParentId == null)
                 {
-                    if (entitiesById.TryGetValue(entity.ParentId, out Entity parent))
-                    {
-                        parent.ChildEntities.Add(entity);
+                    continue;
+                }
+                if (!entitiesById.TryGetValue(entity.ParentId, out Entity parent))
+                {
+                    continue;
+                }
 
-                        if (entity is WorldEntity we && parent is WorldEntity weParent)
-                        {
-                            we.Transform.SetParent(weParent.Transform, false);
-                        }
-                    }
+                parent.ChildEntities.Add(entity);
+                if (entity is WorldEntity we && parent is WorldEntity weParent)
+                {
+                    we.Transform.SetParent(weParent.Transform, false);
                 }
             }
         }

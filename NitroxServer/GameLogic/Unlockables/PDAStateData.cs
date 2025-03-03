@@ -14,22 +14,22 @@ namespace NitroxServer.GameLogic.Unlockables
         /// The KnownTech construct uses both <see cref='NitroxModel.Packets.KnownTechEntryAdd.EntryCategory.KNOWN'>KnownTech.knownTech</see> and <see cref='NitroxModel.Packets.KnownTechEntryAdd.EntryCategory.ANALYZED'>KnownTech.analyzedTech</see>
         /// </summary>
         [DataMember(Order = 1)]
-        public ThreadSafeList<NitroxTechType> KnownTechTypes { get; } = new ThreadSafeList<NitroxTechType>();
+        public ThreadSafeList<NitroxTechType> KnownTechTypes { get; } = [];
         
         [DataMember(Order = 2)]
-        public ThreadSafeList<NitroxTechType> AnalyzedTechTypes { get; } = new ThreadSafeList<NitroxTechType>();
+        public ThreadSafeList<NitroxTechType> AnalyzedTechTypes { get; } = [];
         
         /// <summary>
         /// Gets or sets the log of story events present in the PDA
         /// </summary>
         [DataMember(Order = 3)]
-        public ThreadSafeList<PDALogEntry> PdaLog { get; } = new ThreadSafeList<PDALogEntry>();
+        public ThreadSafeList<PdaLogEntry> PdaLog { get; } = [];
         
         /// <summary>
         /// Gets or sets the entries that show up the the PDA's Encyclopedia
         /// </summary>
         [DataMember(Order = 4)]
-        public ThreadSafeList<string> EncyclopediaEntries { get; } = new ThreadSafeList<string>();
+        public ThreadSafeList<string> EncyclopediaEntries { get; } = [];
         
         /// <summary>
         /// The ids of the already scanned entities.
@@ -39,19 +39,19 @@ namespace NitroxServer.GameLogic.Unlockables
         /// We can therefore use it as a list.
         /// </remarks>
         [DataMember(Order = 5)]
-        public ThreadSafeSet<NitroxId> ScannerFragments { get; } = new();
+        public ThreadSafeSet<NitroxId> ScannerFragments { get; } = [];
         
         /// <summary>
         /// Partially unlocked PDA entries (e.g. fragments)
         /// </summary>
         [DataMember(Order = 6)]
-        public ThreadSafeList<PDAEntry> ScannerPartial { get; } = new();
+        public ThreadSafeList<PDAEntry> ScannerPartial { get; } = [];
 
         /// <summary>
         /// Fully unlocked PDA entries
         /// </summary>
         [DataMember(Order = 7)]
-        public ThreadSafeList<NitroxTechType> ScannerComplete { get; } = new();
+        public ThreadSafeList<NitroxTechType> ScannerComplete { get; } = [];
 
         public void AddKnownTechType(NitroxTechType techType, List<NitroxTechType> partialTechTypesToRemove)
         {
@@ -90,9 +90,9 @@ namespace NitroxServer.GameLogic.Unlockables
             }
         }
 
-        public void AddPDALogEntry(PDALogEntry entry)
+        public void AddPdaLogEntry(PdaLogEntry entry)
         {
-            if (!PdaLog.Any(logEntry => logEntry.Key == entry.Key))
+            if (PdaLog.All(logEntry => logEntry.Key != entry.Key))
             {
                 PdaLog.Add(entry);
             }
