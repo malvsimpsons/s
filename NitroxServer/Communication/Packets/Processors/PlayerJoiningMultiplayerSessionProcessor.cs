@@ -92,7 +92,8 @@ namespace NitroxServer.Communication.Packets.Processors
                 storyManager.GetTimeData(),
                 isFirstPlayer,
                 BuildingManager.GetEntitiesOperations(globalRootEntities),
-                serverConfig.KeepInventoryOnDeath
+                serverConfig.KeepInventoryOnDeath,
+                serverConfig.MarkDeathPointsWithBeacon
             );
 
             player.SendPacket(initialPlayerSync);
