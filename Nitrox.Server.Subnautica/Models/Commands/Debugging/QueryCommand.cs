@@ -9,7 +9,7 @@ using NitroxModel.DataStructures.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Debugging;
 
-[RequiresPermission(Perms.CONSOLE)]
+[RequiresPermission(Perms.SUPERADMIN)]
 internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipData simulationOwnershipData, ILogger<QueryCommand> logger) : ICommandHandler<NitroxId>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;

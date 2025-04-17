@@ -67,12 +67,12 @@ internal class Server
         };
     }
 
-    public string GetSaveSummary(Perms viewerPerms = Perms.CONSOLE)
+    public string GetSaveSummary(Perms viewerPerms = Perms.SUPERADMIN)
     {
         // TODO: Extend summary with more useful save file data
         // Note for later additions: order these lines by their length
         StringBuilder builder = new("\n");
-        if (viewerPerms is Perms.CONSOLE)
+        if (viewerPerms is Perms.SUPERADMIN)
         {
             builder.AppendLine($" - Save location: {Path.Combine(KeyValueStore.Instance.GetServerSavesPath(), Name)}");
         }

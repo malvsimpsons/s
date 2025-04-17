@@ -13,7 +13,7 @@ internal sealed record HostToServerCommandContext : ICommandContext
     public CommandOrigin Origin { get; init; } = CommandOrigin.SERVER;
     public string OriginName => "SERVER";
     public ushort OriginId { get; init; } = ChatMessage.SERVER_ID;
-    public Perms Permissions { get; init; } = Perms.CONSOLE;
+    public Perms Permissions { get; init; } = Perms.SUPERADMIN;
 
     public HostToServerCommandContext(PlayerService playerService)
     {

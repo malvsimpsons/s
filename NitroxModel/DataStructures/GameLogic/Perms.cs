@@ -6,6 +6,9 @@ public enum Perms : byte
     PLAYER,
     MODERATOR,
     ADMIN,
-    CONSOLE,
+    /// <summary>
+    ///     Owner of the server. This is the permission used when using the server console.
+    /// </summary>
+    SUPERADMIN,
     DEFAULT = PLAYER
 }
