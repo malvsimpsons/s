@@ -152,7 +152,7 @@ public class Program
         builder.Services
                .AddSubnauticaEntityManagement()
                .AddSubnauticaResources()
-               .AddPersistence()
+               .AddPersistence() // TODO: Use SQLite instead.
                .AddHibernation()
                .AddHostedSingletonService<SubnauticaServerService>()
                .AddHostedSingletonService<TimeService>()

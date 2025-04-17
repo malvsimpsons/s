@@ -1,3 +1,4 @@
+using System;
 using Autofac;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
@@ -9,6 +10,8 @@ using NitroxServer.Serialization;
 
 namespace Nitrox.Server.Subnautica;
 
+// TODO: REMOVE THIS
+[Obsolete("Use .NET Generic Host in Nitrox.Server.Subnautica")]
 public class SubnauticaServerAutoFacRegistrar : ServerAutoFacRegistrar
 {
     public override void RegisterDependencies(ContainerBuilder containerBuilder)

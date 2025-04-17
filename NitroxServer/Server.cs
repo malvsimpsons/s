@@ -17,6 +17,8 @@ using Timer = System.Timers.Timer;
 
 namespace NitroxServer;
 
+// TODO: Remove this class
+[Obsolete("Use .NET Generic Host in Nitrox.Server.Subnautica")]
 internal class Server
 {
     private readonly Communication.NitroxServer server;
