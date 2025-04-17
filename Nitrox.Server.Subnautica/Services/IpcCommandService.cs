@@ -14,11 +14,11 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Opens an interprocess channel so other processes on the machine can send server commands.
 /// </summary>
-internal sealed class IpcCommandService(CommandService commandService, Func<HostToServerCommandContext> commandContextProvider, ILogger<IpcCommandService> logger) : BackgroundService
+internal sealed class IpcCommandService(CommandService commandService, PlayerService playerService, ILogger<IpcCommandService> logger) : BackgroundService
 {
     private readonly CommandService commandService = commandService;
-    private readonly Func<HostToServerCommandContext> commandContextProvider = commandContextProvider;
     private readonly NamedPipeServerStream server = new($"Nitrox Server {NitroxEnvironment.CurrentProcessId}", PipeDirection.In, 1);
+    private readonly PlayerService playerService = playerService;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -29,7 +29,7 @@ internal sealed class IpcCommandService(CommandService commandService, Func<Host
             try
             {
                 string command = await ReadStringAsync(stoppingToken);
-                commandService.ExecuteCommand(command, commandContextProvider());
+                commandService.ExecuteCommand(command, new HostToServerCommandContext(playerService));
             }
             catch (OperationCanceledException)
             {
