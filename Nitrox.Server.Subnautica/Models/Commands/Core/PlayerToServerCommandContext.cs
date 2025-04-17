@@ -20,20 +20,10 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
     /// </summary>
     public NitroxServer.Player Player { get; init; }
 
-    public PlayerToServerCommandContext(PlayerService playerService, ushort playerId)
-    {
-        this.playerService = playerService;
-        if (!playerService.TryGetPlayerById(playerId, out NitroxServer.Player player))
-        {
-            throw new ArgumentException($"Player with id {playerId} was not found");
-        }
-        Player = player;
-        OriginId = player.Id;
-        Permissions = player.Permissions;
-    }
-
     public PlayerToServerCommandContext(PlayerService playerService, NitroxServer.Player player)
     {
+        ArgumentNullException.ThrowIfNull(playerService);
+        ArgumentNullException.ThrowIfNull(player);
         this.playerService = playerService;
         Player = player;
         OriginId = player.Id;
@@ -65,12 +55,7 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
         {
             return;
         }
-        if (Player is not { } player)
-        {
-            Logger.LogWarning("No player found with id {PlayerId}", OriginId);
-            return;
-        }
-        player.SendPacket(new ChatMessage(OriginId, message));
+        Player.SendPacket(new ChatMessage(ChatMessage.SERVER_ID, message));
     }
 
     public void MessageAll(string message)
@@ -79,12 +64,7 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
         {
             return;
         }
-        if (!playerService.TryGetPlayerById(OriginId, out NitroxServer.Player player))
-        {
-            Logger.LogError("No player found with id {PlayerId}", OriginId);
-            return;
-        }
-        playerService.SendPacketToOtherPlayers(new ChatMessage(OriginId, message), player);
-        Logger.LogInformation("Player {PlayerName} #{PlayerId} sent a message to everyone:{Message}", player.Name, OriginId, message);
+        playerService.SendPacketToOtherPlayers(new ChatMessage(ChatMessage.SERVER_ID, message), Player);
+        Logger.LogInformation("Player {PlayerName} #{PlayerId} sent a message to everyone:{Message}", Player.Name, Player.Id, message);
     }
 }
