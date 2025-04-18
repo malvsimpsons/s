@@ -8,6 +8,7 @@ using AssetsTools.NET.Extra;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Resources.Helper;
+using NitroxModel.Helper;
 using LootDictionary = System.Collections.Generic.Dictionary<string, LootDistributionData.SrcData>;
 
 namespace Nitrox.Server.Subnautica.Models.Resources.Parsers;
@@ -42,6 +43,8 @@ internal class EntityDistributionsResource(SubnauticaAssetsManager assetsManager
                                                                            });
         LootDistributionData data = new();
         data.Initialize(result);
+        Validate.IsTrue(data.dstDistribution.Count > 0);
+        Validate.IsTrue(data.srcDistribution.Count > 0);
         return data;
     }
 

@@ -29,6 +29,7 @@ internal sealed class RandomStartResource(SubnauticaAssetsManager assetsManager,
 
     private async Task<RandomStartGenerator> GetRandomStartGeneratorAsync(CancellationToken cancellationToken = default)
     {
+        // TODO: Fix multiple callers reloading this resource...
         if (randomStartGenerator is { IsCompletedSuccessfully : true, Result: not null })
         {
             return await randomStartGenerator;

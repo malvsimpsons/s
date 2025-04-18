@@ -92,14 +92,6 @@ public class Program
         //     LANBroadcastServer.Start(ct);
         // }
 
-        // TODO: Validate game resources after they're loaded
-        // Validate.NotNull(resourceAssets);
-        // Validate.IsTrue(resourceAssets.WorldEntitiesByClassId.Count > 0);
-        // Validate.IsTrue(resourceAssets.LootDistributionsJson != "");
-        // Validate.IsTrue(resourceAssets.PrefabPlaceholdersGroupsByGroupClassId.Count > 0);
-        // Validate.IsTrue(resourceAssets.RandomPossibilitiesByClassId.Count > 0);
-        // Validate.NotNull(resourceAssets.NitroxRandom);
-
         HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
         builder.Configuration.Sources.Clear();
         builder.Configuration

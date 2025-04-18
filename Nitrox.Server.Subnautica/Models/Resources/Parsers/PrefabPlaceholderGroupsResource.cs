@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Nitrox.Server.Subnautica.Models.Resources.Catalog;
 using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using NitroxModel.DataStructures.Unity;
+using NitroxModel.Helper;
 using NitroxServer.GameLogic.Entities;
 using NitroxServer.Resources;
 
@@ -101,6 +102,7 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
         placeholdersByClassId.Clear();
 
         // Get all needed data for the filtered PrefabPlaceholdersGroups to construct PrefabPlaceholdersGroupAssets and add them to the dictionary by classId
+        Validate.IsFalse(RandomPossibilitiesByClassId.IsEmpty);
         return result;
     }
 
@@ -127,6 +129,8 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
             logger.LogDebug("Successfully built cache with {PrefabPlaceholdersCount} prefab placeholder groups and {RandomPossibilitiesCount} random spawn behaviours. Future server starts will take less time.", prefabPlaceholdersGroupPaths.Count,
                             RandomPossibilitiesByClassId.Count);
         }
+        Validate.IsTrue(prefabPlaceholdersGroupPaths.Count > 0);
+        Validate.IsTrue(RandomPossibilitiesByClassId.Count > 0);
         return prefabPlaceholdersGroupPaths;
     }
 
