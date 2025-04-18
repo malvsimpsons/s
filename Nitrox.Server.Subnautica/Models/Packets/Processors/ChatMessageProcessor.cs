@@ -1,12 +1,13 @@
 ﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Packets;
 using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class ChatMessageProcessor(PlayerManager playerManager) : AuthenticatedPacketProcessor<ChatMessage>
+internal class ChatMessageProcessor(PlayerService playerService) : AuthenticatedPacketProcessor<ChatMessage>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerManager = playerService;
 
     public override void Process(ChatMessage packet, NitroxServer.Player player)
     {

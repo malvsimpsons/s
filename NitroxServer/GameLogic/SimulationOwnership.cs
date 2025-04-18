@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using NitroxModel.DataStructures;
 
 namespace NitroxServer.GameLogic
 {
+    // TODO: REMOVE
+    [Obsolete("Use Nitrox.Server.Subnautica SimulationOwnershipData ")]
     public class SimulationOwnershipData
     {
         public struct PlayerLock

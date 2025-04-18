@@ -6,7 +6,7 @@ using NitroxServer.GameLogic.Bases;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class UpdateBaseProcessor(BuildingManager buildingManager, PlayerService playerService, GameLogic.EntitySimulation entitySimulation) : AuthenticatedPacketProcessor<UpdateBase>
+internal sealed class UpdateBaseProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService, GameLogic.EntitySimulation entitySimulation) : AuthenticatedPacketProcessor<UpdateBase>
 {
     public override void Process(UpdateBase packet, NitroxServer.Player player)
     {

@@ -48,8 +48,10 @@ public sealed partial class SubnauticaServerOptions
     [RegularExpression(@"\w+")]
     public string Seed { get; set; }
 
-    public string AdminPassword { get; }
+    public bool DisableConsole { get; set; }
+    public string AdminPassword { get; set; }
     public bool KeepInventoryOnDeath { get; set; }
+    public bool PvpEnabled { get; set; } = true;
 
     [OptionsValidator]
     internal partial class Validator : IValidateOptions<SubnauticaServerOptions>;

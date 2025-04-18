@@ -16,6 +16,7 @@ using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using Nitrox.Server.Subnautica.Models.Serialization.Json;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
+using NitroxModel.Packets.Processors.Abstract;
 using NitroxServer.GameLogic.Entities;
 using NitroxServer.GameLogic.Entities.Spawning;
 using ServiceScan.SourceGenerator;
@@ -28,6 +29,13 @@ public static partial class ServiceCollectionExtensions
 
     public static IServiceCollection AddHostedSingletonService<T>(this IServiceCollection services, Func<ServiceProvider, T> factory) where T : class, IHostedService =>
         services.AddSingleton(factory).AddHostedService(provider => provider.GetRequiredService<T>());
+
+    public static IServiceCollection AddPackets(this IServiceCollection services) =>
+        services
+            .AddHostedSingletonService<LiteNetLibService>()
+            .AddHostedSingletonService<PacketService>()
+            .AddSingleton<DefaultPacketProcessor>()
+            .AddPacketProcessors();
 
     /// <summary>
     ///     Registers command handlers which will process incoming text-based commands via console or IPC.
@@ -48,13 +56,6 @@ public static partial class ServiceCollectionExtensions
                .AddSingleton<Func<CommandRegistry>>(provider => provider.GetRequiredService<CommandRegistry>)
                .AddCommandHandlers()
                .AddCommandArgConverters();
-    }
-
-    public static IServiceCollection AddPackets(this IServiceCollection services)
-    {
-        return services
-               .AddHostedSingletonService<PacketService>()
-               .AddSingleton<DefaultPacketProcessor>();
     }
 
     public static IServiceCollection AddSubnauticaEntityManagement(this IServiceCollection services) =>
@@ -115,6 +116,9 @@ public static partial class ServiceCollectionExtensions
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IArgConverter), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
     private static partial IServiceCollection AddCommandArgConverters(this IServiceCollection services);
+
+    [GenerateServiceRegistrations(AssignableTo = typeof(PacketProcessor), Lifetime = ServiceLifetime.Singleton)]
+    private static partial IServiceCollection AddPacketProcessors(this IServiceCollection services);
 
     /// <summary>
     ///     Registers a single command and all of its handlers as can be known by the implemented interfaces.

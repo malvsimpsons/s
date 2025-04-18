@@ -1,11 +1,11 @@
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-class SubRootChangedPacketProcessor(PlayerService playerService, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<SubRootChanged>
+internal class SubRootChangedPacketProcessor(PlayerService playerService, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<SubRootChanged>
 {
     private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;

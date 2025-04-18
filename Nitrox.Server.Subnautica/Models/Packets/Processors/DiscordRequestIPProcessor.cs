@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
 using NitroxModel.Helper;
 using NitroxModel.Packets;
@@ -7,9 +9,9 @@ using NitroxModel.Serialization;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class DiscordRequestIPProcessor(SubnauticaServerConfig serverConfig) : AuthenticatedPacketProcessor<DiscordRequestIP>
+public class DiscordRequestIPProcessor(IOptions<SubnauticaServerOptions> optionsProvider) : AuthenticatedPacketProcessor<DiscordRequestIP>
 {
-    private readonly SubnauticaServerConfig serverConfig = serverConfig;
+    private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
 
     private string ipPort;
 
@@ -34,7 +36,7 @@ public class DiscordRequestIPProcessor(SubnauticaServerConfig serverConfig) : Au
             return;
         }
 
-        packet.IpPort = ipPort = $"{result}:{serverConfig.ServerPort}";
+        packet.IpPort = ipPort = $"{result}:{optionsProvider.Value.Port}";
         player.SendPacket(packet);
     }
 

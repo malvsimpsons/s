@@ -19,7 +19,7 @@ internal sealed class HibernationService(IEnumerable<IHibernate> hibernators, IL
     {
         foreach (IHibernate hibernator in hibernators)
         {
-            logger.LogDebug("Added hibernator {TypeName}", hibernator.GetType().Name);
+            logger.LogTrace("Added hibernator {TypeName}", hibernator.GetType().Name);
         }
         logger.LogDebug("{HibernateCount} hibernators found and registered", hibernators.Length);
         return Task.CompletedTask;

@@ -12,7 +12,7 @@ namespace NitroxServer.GameLogic;
 public class StoryManager : IDisposable
 {
     private readonly PlayerManager playerManager;
-    private readonly PDAStateData pdaStateData;
+    private readonly PdaStateData pdaStateData;
     private readonly StoryGoalData storyGoalData;
     private readonly TimeKeeper timeKeeper;
     private readonly string seed;
@@ -37,7 +37,7 @@ public class StoryManager : IDisposable
     private double ElapsedMilliseconds => timeKeeper.ElapsedMilliseconds;
     private double ElapsedSeconds => timeKeeper.ElapsedSeconds;
 
-    public StoryManager(PlayerManager playerManager, PDAStateData pdaStateData, StoryGoalData storyGoalData, TimeKeeper timeKeeper, string seed, double? auroraExplosionTime, double? auroraWarningTime, double? auroraRealExplosionTime)
+    public StoryManager(PlayerManager playerManager, PdaStateData pdaStateData, StoryGoalData storyGoalData, TimeKeeper timeKeeper, string seed, double? auroraExplosionTime, double? auroraWarningTime, double? auroraRealExplosionTime)
     {
         this.playerManager = playerManager;
         this.pdaStateData = pdaStateData;

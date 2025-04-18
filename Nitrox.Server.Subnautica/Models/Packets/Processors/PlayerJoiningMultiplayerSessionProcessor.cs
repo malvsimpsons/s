@@ -1,5 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.GameLogic;
+using Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
@@ -11,30 +15,34 @@ using NitroxModel.Helper;
 using NitroxModel.MultiplayerSession;
 using NitroxModel.Networking;
 using NitroxModel.Packets;
-using NitroxModel.Serialization;
 using NitroxServer.Communication;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Bases;
-using NitroxServer.GameLogic.Entities;
-using NitroxServer.Serialization.World;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class PlayerJoiningMultiplayerSessionProcessor(ScheduleKeeper scheduleKeeper, StoryManager storyManager, PlayerService playerService, World world, EntityRegistry entityRegistry, SubnauticaServerConfig serverConfig, NtpSyncer ntpSyncer)
+internal class PlayerJoiningMultiplayerSessionProcessor(
+    StoryTimingService storyTimingService,
+    PlayerService playerService,
+    EntitySimulation entitySimulation,
+    WorldEntityManager worldEntityManager,
+    EscapePodService escapePodService,
+    EntityRegistry entityRegistry,
+    IOptions<SubnauticaServerOptions> optionsProvider,
+    NtpSyncer ntpSyncer)
     : UnauthenticatedPacketProcessor<PlayerJoiningMultiplayerSession>
 {
-    private readonly PlayerService playerService = playerService;
-    private readonly ScheduleKeeper scheduleKeeper = scheduleKeeper;
-    private readonly StoryManager storyManager = storyManager;
-    private readonly World world = world;
     private readonly EntityRegistry entityRegistry = entityRegistry;
-    private readonly SubnauticaServerConfig serverConfig = serverConfig;
+    private readonly EntitySimulation entitySimulation = entitySimulation;
+    private readonly EscapePodService escapePodService = escapePodService;
     private readonly NtpSyncer ntpSyncer = ntpSyncer;
+    private readonly PlayerService playerService = playerService;
+    private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
+    private readonly StoryTimingService storyTimingService = storyTimingService;
+    private readonly WorldEntityManager worldEntityManager = worldEntityManager;
 
     public override void Process(PlayerJoiningMultiplayerSession packet, INitroxConnection connection)
     {
-        NitroxServer.Player player = playerService.PlayerConnected(connection, packet.ReservationKey, out bool wasBrandNewPlayer);
-        NitroxId assignedEscapePodId = world.EscapePodManager.AssignPlayerToEscapePod(player.Id, out Optional<EscapePodWorldEntity> newlyCreatedEscapePod);
+        NitroxServer.Player player = playerService.AddConnectedPlayer(connection, packet.ReservationKey, out bool wasBrandNewPlayer);
+        NitroxId assignedEscapePodId = escapePodService.AssignPlayerToEscapePod(player.Id, out Optional<EscapePodWorldEntity> newlyCreatedEscapePod);
 
         if (wasBrandNewPlayer)
         {
@@ -54,11 +62,11 @@ internal class PlayerJoiningMultiplayerSessionProcessor(ScheduleKeeper scheduleK
             player.Permissions = Perms.ADMIN;
         }
 
-        List<SimulatedEntity> simulations = world.EntitySimulation.AssignGlobalRootEntitiesAndGetData(player);
+        List<SimulatedEntity> simulations = entitySimulation.AssignGlobalRootEntitiesAndGetData(player);
 
         player.Entity = wasBrandNewPlayer ? SetupPlayerEntity(player) : RespawnExistingEntity(player);
 
-        List<GlobalRootEntity> globalRootEntities = world.WorldEntityManager.GetGlobalRootEntities(true);
+        List<GlobalRootEntity> globalRootEntities = worldEntityManager.GetGlobalRootEntities(true);
         bool isFirstPlayer = playerService.GetConnectedPlayers().Count == 1;
 
         InitialPlayerSync initialPlayerSync = new(player.GameObjectId,
@@ -82,11 +90,11 @@ internal class PlayerJoiningMultiplayerSessionProcessor(ScheduleKeeper scheduleK
                                                   player.GameMode,
                                                   player.Permissions,
                                                   wasBrandNewPlayer ? IntroCinematicMode.LOADING : IntroCinematicMode.COMPLETED,
-                                                  new(new(player.PingInstancePreferences), player.PinnedRecipePreferences.ToList()),
-                                                  storyManager.GetTimeData(),
+                                                  new SubnauticaPlayerPreferences(new Dictionary<string, PingInstancePreference>(player.PingInstancePreferences), player.PinnedRecipePreferences.ToList()),
+                                                  storyTimingService.GetTimeData(),
                                                   isFirstPlayer,
                                                   BuildingManager.GetEntitiesOperations(globalRootEntities),
-                                                  serverConfig.KeepInventoryOnDeath
+                                                  optionsProvider.Value.KeepInventoryOnDeath
         );
 
         player.SendPacket(initialPlayerSync);
@@ -102,9 +110,9 @@ internal class PlayerJoiningMultiplayerSessionProcessor(ScheduleKeeper scheduleK
     {
         NitroxTransform transform = new(player.Position, player.Rotation, NitroxVector3.One);
 
-        PlayerWorldEntity playerEntity = new PlayerWorldEntity(transform, 0, null, false, player.GameObjectId, NitroxTechType.None, null, null, new List<Entity>());
+        PlayerWorldEntity playerEntity = new(transform, 0, null, false, player.GameObjectId, NitroxTechType.None, null, null, new List<Entity>());
         entityRegistry.AddOrUpdate(playerEntity);
-        world.WorldEntityManager.TrackEntityInTheWorld(playerEntity);
+        worldEntityManager.TrackEntityInTheWorld(playerEntity);
         return playerEntity;
     }
 

@@ -1,14 +1,15 @@
+using Microsoft.Extensions.Logging;
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class PlayerInCyclopsMovementProcessor(PlayerManager playerManager, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<PlayerInCyclopsMovement>
+internal class PlayerInCyclopsMovementProcessor(PlayerService playerService, EntityRegistry entityRegistry, ILogger<PlayerInCyclopsMovementProcessor> logger) : AuthenticatedPacketProcessor<PlayerInCyclopsMovement>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
     public override void Process(PlayerInCyclopsMovement packet, NitroxServer.Player player)
@@ -20,11 +21,11 @@ public class PlayerInCyclopsMovementProcessor(PlayerManager playerManager, Entit
 
             player.Position = playerWorldEntity.Transform.Position;
             player.Rotation = playerWorldEntity.Transform.Rotation;
-            playerManager.SendPacketToOtherPlayers(packet, player);
+            playerService.SendPacketToOtherPlayers(packet, player);
         }
         else
         {
-            Log.ErrorOnce($"{nameof(PlayerWorldEntity)} couldn't be found for player {player.Name}. It is adviced the player reconnects before losing too much progression.");
+            logger.LogErrorOnce("{TypeName} couldn't be found for player {PlayerName}. It is advised the player reconnects before losing too much progression.", nameof(PlayerWorldEntity), player.Name);
         }
     }
 }

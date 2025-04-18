@@ -21,7 +21,7 @@ namespace NitroxServer;
 [Obsolete("Use .NET Generic Host in Nitrox.Server.Subnautica")]
 internal class Server
 {
-    private readonly Communication.NitroxServer server;
+    // private readonly Communication.NitroxServer server;
     private readonly WorldPersistence worldPersistence;
     private readonly SubnauticaServerConfig serverConfig;
     private readonly Timer saveTimer;
@@ -40,11 +40,11 @@ internal class Server
     public string Name { get; private set; } = "My World";
     public int Port => serverConfig?.ServerPort ?? -1;
 
-    public Server(WorldPersistence worldPersistence, World world, SubnauticaServerConfig serverConfig, Communication.NitroxServer server, WorldEntityManager worldEntityManager, EntityRegistry entityRegistry)
+    public Server(WorldPersistence worldPersistence, World world, SubnauticaServerConfig serverConfig, WorldEntityManager worldEntityManager, EntityRegistry entityRegistry) // Communication.NitroxServer server
     {
         this.worldPersistence = worldPersistence;
         this.serverConfig = serverConfig;
-        this.server = server;
+        // this.server = server;
         this.world = world;
         this.worldEntityManager = worldEntityManager;
         this.entityRegistry = entityRegistry;
@@ -132,10 +132,10 @@ internal class Server
         {
             return false;
         }
-        if (!server.Start(ct.Token))
-        {
-            return false;
-        }
+        // if (!server.Start(ct.Token))
+        // {
+        //     return false;
+        // }
         Name = saveName;
         serverCancelSource = ct;
         IsRunning = true;
@@ -207,7 +207,7 @@ internal class Server
             Save();
         }
 
-        server.Stop();
+        // server.Stop();
         Log.Info("Nitrox Server Stopped");
     }
 

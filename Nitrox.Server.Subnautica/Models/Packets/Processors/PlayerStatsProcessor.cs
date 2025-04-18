@@ -1,13 +1,14 @@
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Packets;
 using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class PlayerStatsProcessor(PlayerManager playerManager) : AuthenticatedPacketProcessor<PlayerStats>
+internal class PlayerStatsProcessor(PlayerService playerService) : AuthenticatedPacketProcessor<PlayerStats>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerService = playerService;
 
     public override void Process(PlayerStats packet, NitroxServer.Player player)
     {
@@ -17,6 +18,6 @@ public class PlayerStatsProcessor(PlayerManager playerManager) : AuthenticatedPa
             packet.PlayerId = player.Id;
         }
         player.Stats = new PlayerStatsData(packet.Oxygen, packet.MaxOxygen, packet.Health, packet.Food, packet.Water, packet.InfectionAmount);
-        playerManager.SendPacketToOtherPlayers(packet, player);
+        playerService.SendPacketToOtherPlayers(packet, player);
     }
 }

@@ -18,6 +18,8 @@ using NitroxServer.GameLogic.Unlockables;
 
 namespace NitroxServer.Serialization.World;
 
+// TODO: REMOVE
+[Obsolete("use SQLite")]
 public class WorldPersistence
 {
     public const string BACKUP_DATE_TIME_FORMAT = "yyyy-MM-dd HH.mm.ss";
@@ -132,7 +134,7 @@ public class WorldPersistence
             SimulationOwnershipData = new SimulationOwnershipData(),
             PlayerManager = new PlayerManager(pWorldData.PlayerData.GetPlayers(), config),
             EscapePodManager = new EscapePodManager(entityRegistry, randomStart, seed),
-            EntityRegistry = entityRegistry,
+            // EntityRegistry = entityRegistry,
             // GameData = pWorldData.WorldData.GameData,
             GameMode = gameMode,
             Seed = seed
@@ -156,12 +158,12 @@ public class WorldPersistence
         //     world.Seed
         // );
 
-        world.WorldEntityManager = new WorldEntityManager(world.EntityRegistry, /*world.BatchEntitySpawner,*/ world.PlayerManager);
-
-        world.BuildingManager = new BuildingManager(world.EntityRegistry, world.WorldEntityManager, config);
-
-        ISimulationWhitelist simulationWhitelist = NitroxServiceLocator.LocateService<ISimulationWhitelist>();
-        world.EntitySimulation = new EntitySimulation(world.EntityRegistry, world.WorldEntityManager, world.SimulationOwnershipData, world.PlayerManager, simulationWhitelist);
+        // world.WorldEntityManager = new WorldEntityManager(world.EntityRegistry, /*world.BatchEntitySpawner,*/ world.PlayerManager);
+        //
+        // world.BuildingManager = new BuildingManager(world.EntityRegistry, world.WorldEntityManager, config);
+        //
+        // ISimulationWhitelist simulationWhitelist = NitroxServiceLocator.LocateService<ISimulationWhitelist>();
+        // world.EntitySimulation = new EntitySimulation(world.EntityRegistry, world.WorldEntityManager, world.SimulationOwnershipData, world.PlayerManager, simulationWhitelist);
 
         return world;
     }

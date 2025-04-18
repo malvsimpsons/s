@@ -1,3 +1,4 @@
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
@@ -5,8 +6,6 @@ using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
@@ -39,7 +38,7 @@ internal sealed class PickupItemPacketProcessor(EntityRegistry entityRegistry, W
     {
         Optional<Entity> entity = entityRegistry.GetEntityById(id);
 
-        if (entity.HasValue && entity.Value is WorldEntity worldEntity)
+        if (entity is { HasValue: true, Value: WorldEntity worldEntity })
         {
             // Do not track this entity in the open world anymore.
             worldEntityManager.StopTrackingEntity(worldEntity);

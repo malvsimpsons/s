@@ -1,18 +1,18 @@
 using System.Collections.Generic;
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class PlayerUnseeOutOfCellEntityProcessor(SimulationOwnershipData simulationOwnershipData, PlayerManager playerManager, EntitySimulation entitySimulation, EntityRegistry entityRegistry)
+internal class PlayerUnseeOutOfCellEntityProcessor(SimulationOwnershipData simulationOwnershipData, PlayerService playerService, EntitySimulation entitySimulation, EntityRegistry entityRegistry)
     : AuthenticatedPacketProcessor<PlayerUnseeOutOfCellEntity>
 {
     private readonly SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerManager = playerService;
     private readonly EntitySimulation entitySimulation = entitySimulation;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 

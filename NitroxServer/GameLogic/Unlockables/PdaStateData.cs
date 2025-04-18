@@ -7,7 +7,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxServer.GameLogic.Unlockables
 {
     [DataContract]
-    public class PDAStateData
+    public class PdaStateData
     {
         /// <summary>
         /// Gets or sets the KnownTech construct which powers the popup shown to the user when a new TechType is discovered ("New Creature Discovered!")

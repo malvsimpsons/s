@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using NitroxModel.Helper;
 
-namespace Nitrox.Server.Subnautica.Models.Resources.Helper;
+namespace Nitrox.Server.Subnautica.Extensions;
 
 public static class ServerStartOptionsExtensions
 {

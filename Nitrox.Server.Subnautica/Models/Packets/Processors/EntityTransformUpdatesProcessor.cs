@@ -1,17 +1,17 @@
 using System.Collections.Generic;
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Entities;
 using static NitroxModel.Packets.EntityTransformUpdates;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-class EntityTransformUpdatesProcessor(PlayerManager playerManager, WorldEntityManager worldEntityManager, SimulationOwnershipData simulationOwnershipData) : AuthenticatedPacketProcessor<EntityTransformUpdates>
+internal class EntityTransformUpdatesProcessor(PlayerService playerService, WorldEntityManager worldEntityManager, SimulationOwnershipData simulationOwnershipData) : AuthenticatedPacketProcessor<EntityTransformUpdates>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerManager = playerService;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
     private readonly SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
 

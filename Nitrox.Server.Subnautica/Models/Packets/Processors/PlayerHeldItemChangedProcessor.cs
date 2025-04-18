@@ -1,12 +1,13 @@
 ﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Packets;
 using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class PlayerHeldItemChangedProcessor(PlayerManager playerManager) : AuthenticatedPacketProcessor<PlayerHeldItemChanged>
+internal class PlayerHeldItemChangedProcessor(PlayerService playerService) : AuthenticatedPacketProcessor<PlayerHeldItemChanged>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerService = playerService;
 
     public override void Process(PlayerHeldItemChanged packet, NitroxServer.Player player)
     {
@@ -15,6 +16,6 @@ public class PlayerHeldItemChangedProcessor(PlayerManager playerManager) : Authe
             player.UsedItems.Add(packet.IsFirstTime);
         }
 
-        playerManager.SendPacketToOtherPlayers(packet, player);
+        playerService.SendPacketToOtherPlayers(packet, player);
     }
 }

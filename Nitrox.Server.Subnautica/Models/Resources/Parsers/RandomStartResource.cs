@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using AssetsTools.NET;
@@ -13,18 +14,12 @@ using SixLabors.ImageSharp.Processing;
 
 namespace Nitrox.Server.Subnautica.Models.Resources.Parsers;
 
-internal sealed class RandomStartResource : IGameResource
+internal sealed class RandomStartResource(SubnauticaAssetsManager assetsManager, IOptions<Configuration.ServerStartOptions> optionsProvider) : IGameResource
 {
-    private readonly SubnauticaAssetsManager assetsManager;
-    private readonly IOptions<Configuration.ServerStartOptions> optionsProvider;
+    private readonly SubnauticaAssetsManager assetsManager = assetsManager;
+    private readonly IOptions<Configuration.ServerStartOptions> optionsProvider = optionsProvider;
     private Task<RandomStartGenerator> randomStartGenerator;
     public RandomStartGenerator RandomStartGenerator => GetRandomStartGeneratorAsync().GetAwaiter().GetResult();
-
-    public RandomStartResource(SubnauticaAssetsManager assetsManager, IOptions<Configuration.ServerStartOptions> optionsProvider)
-    {
-        this.assetsManager = assetsManager;
-        this.optionsProvider = optionsProvider;
-    }
 
     public Task LoadAsync(CancellationToken cancellationToken)
     {
@@ -34,9 +29,9 @@ internal sealed class RandomStartResource : IGameResource
 
     private async Task<RandomStartGenerator> GetRandomStartGeneratorAsync(CancellationToken cancellationToken = default)
     {
-        if (randomStartGenerator != null)
+        if (randomStartGenerator is { IsCompletedSuccessfully : true, Result: not null })
         {
-            await randomStartGenerator;
+            return await randomStartGenerator;
         }
 
         string bundlePath = Path.Combine(optionsProvider.Value.GetSubnauticaStandaloneResourcePath(), "essentials.unity_0ee8dd89ed55f05bc38a09cc77137d4e.bundle");
@@ -61,7 +56,7 @@ internal sealed class RandomStartResource : IGameResource
         return new RandomStartGenerator(new PixelProvider(texture));
     }
 
-    internal class PixelProvider : RandomStartGenerator.IPixelProvider
+    private class PixelProvider : RandomStartGenerator.IPixelProvider
     {
         private readonly Image<Bgra32> texture;
 

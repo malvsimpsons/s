@@ -5,10 +5,10 @@ using NitroxModel.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class SimulationOwnershipRequestProcessor(PlayerService playerService, NitroxServer.GameLogic.SimulationOwnershipData simulationOwnershipData, EntitySimulation entitySimulation) : AuthenticatedPacketProcessor<SimulationOwnershipRequest>
+internal sealed class SimulationOwnershipRequestProcessor(PlayerService playerService, SimulationOwnershipData simulationOwnershipData, EntitySimulation entitySimulation) : AuthenticatedPacketProcessor<SimulationOwnershipRequest>
 {
     private readonly PlayerService playerService = playerService;
-    private readonly NitroxServer.GameLogic.SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
+    private readonly SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
     private readonly EntitySimulation entitySimulation = entitySimulation;
 
     public override void Process(SimulationOwnershipRequest ownershipRequest, NitroxServer.Player player)

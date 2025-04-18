@@ -1,15 +1,15 @@
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-class PlayerMovementProcessor(PlayerManager playerManager, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<PlayerMovement>
+internal class PlayerMovementProcessor(PlayerService playerService, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<PlayerMovement>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
     public override void Process(PlayerMovement packet, NitroxServer.Player player)
@@ -24,6 +24,6 @@ class PlayerMovementProcessor(PlayerManager playerManager, EntityRegistry entity
 
         player.Position = packet.Position;
         player.Rotation = packet.BodyRotation;
-        playerManager.SendPacketToOtherPlayers(packet, player);
+        playerService.SendPacketToOtherPlayers(packet, player);
     }
 }

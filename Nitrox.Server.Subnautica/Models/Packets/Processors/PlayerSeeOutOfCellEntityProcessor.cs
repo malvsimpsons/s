@@ -1,10 +1,10 @@
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class PlayerSeeOutOfCellEntityProcessor(EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<PlayerSeeOutOfCellEntity>
+internal class PlayerSeeOutOfCellEntityProcessor(EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<PlayerSeeOutOfCellEntity>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
 

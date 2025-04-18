@@ -5,7 +5,7 @@ using NitroxServer.GameLogic.Bases;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class PlaceGhostProcessor(BuildingManager buildingManager, PlayerService playerService) : AuthenticatedPacketProcessor<PlaceGhost>
+internal sealed class PlaceGhostProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService) : AuthenticatedPacketProcessor<PlaceGhost>
 {
     public override void Process(PlaceGhost packet, NitroxServer.Player player)
     {

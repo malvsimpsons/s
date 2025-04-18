@@ -1,16 +1,16 @@
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-class ModuleRemovedProcessor(PlayerManager playerManager, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<ModuleRemoved>
+internal class ModuleRemovedProcessor(PlayerService playerService, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<ModuleRemoved>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
     public override void Process(ModuleRemoved packet, NitroxServer.Player player)
@@ -31,7 +31,7 @@ class ModuleRemovedProcessor(PlayerManager playerManager, EntityRegistry entityR
             entityRegistry.AddOrUpdate(inventoryEntity);
 
             // Have other players respawn the item inside the inventory.
-            playerManager.SendPacketToOtherPlayers(new SpawnEntities(inventoryEntity, forceRespawn: true), player);
+            playerService.SendPacketToOtherPlayers(new SpawnEntities(inventoryEntity, forceRespawn: true), player);
         }
     }
 }

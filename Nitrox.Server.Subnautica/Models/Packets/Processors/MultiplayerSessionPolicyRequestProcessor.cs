@@ -1,18 +1,22 @@
-﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
 using NitroxModel.Packets;
-using NitroxModel.Serialization;
 using NitroxServer.Communication;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class MultiplayerSessionPolicyRequestProcessor(SubnauticaServerConfig config) : UnauthenticatedPacketProcessor<MultiplayerSessionPolicyRequest>
+internal class MultiplayerSessionPolicyRequestProcessor(IOptions<SubnauticaServerOptions> optionsProvider, ILogger<MultiplayerSessionPolicyRequestProcessor> logger) : UnauthenticatedPacketProcessor<MultiplayerSessionPolicyRequest>
 {
-    private readonly SubnauticaServerConfig config = config;
+    private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
+    private readonly ILogger<MultiplayerSessionPolicyRequestProcessor> logger = logger;
 
     // This will extend in the future when we look into different options for auth
     public override void Process(MultiplayerSessionPolicyRequest packet, INitroxConnection connection)
     {
-        Log.Info("Providing session policies...");
-        connection.SendPacket(new MultiplayerSessionPolicy(packet.CorrelationId, config.DisableConsole, config.MaxConnections, config.IsPasswordRequired()));
+        logger.LogInformation("Providing session policies...");
+        SubnauticaServerOptions options = optionsProvider.Value;
+        connection.SendPacket(new MultiplayerSessionPolicy(packet.CorrelationId, options.DisableConsole, options.MaxConnections, options.IsPasswordRequired()));
     }
 }

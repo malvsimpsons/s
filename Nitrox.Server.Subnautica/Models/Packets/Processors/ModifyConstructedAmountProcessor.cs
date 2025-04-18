@@ -5,10 +5,10 @@ using NitroxServer.GameLogic.Bases;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class ModifyConstructedAmountProcessor(BuildingManager buildingManager, PlayerService playerService) : AuthenticatedPacketProcessor<ModifyConstructedAmount>
+internal sealed class ModifyConstructedAmountProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService) : AuthenticatedPacketProcessor<ModifyConstructedAmount>
 {
     private readonly PlayerService playerService = playerService;
-    private readonly BuildingManager buildingManager = buildingManager;
+    private readonly GameLogic.Bases.BuildingManager buildingManager = buildingManager;
 
     public override void Process(ModifyConstructedAmount packet, NitroxServer.Player player)
     {

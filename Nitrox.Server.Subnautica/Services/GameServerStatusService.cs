@@ -10,35 +10,21 @@ using NitroxModel.Packets;
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
-///     Service which starts listening on the game server port. Passing incoming data to the packet handler.
+///     Service which prints out information at appropriate time in the app life cycle.
 /// </summary>
-internal sealed class SubnauticaServerService(IOptions<ServerStartOptions> startOptions, PlayerService playerService, ILogger<SubnauticaServerService> logger) : IHostedLifecycleService
+internal sealed class GameServerStatusService(IOptions<ServerStartOptions> startOptions, PlayerService playerService, ILogger<GameServerStatusService> logger) : IHostedLifecycleService
 {
-    private readonly ILogger<SubnauticaServerService> logger = logger;
+    private readonly ILogger<GameServerStatusService> logger = logger;
     private readonly IOptions<ServerStartOptions> startOptions = startOptions;
     private readonly PlayerService playerService = playerService;
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        // TODO: Persist options
-
-        // if (!stoppingToken.IsCancellationRequested)
-        // {
-        //     if (!server.Start(serverStartConfig.SaveName, CancellationTokenSource.CreateLinkedTokenSource(stoppingToken)))
-        //     {
-        //         throw new Exception("Unable to start server.");
-        //     }
-        //     else
-        //     {
-        //         // Log.Info($"Server started ({Math.Round(watch.Elapsed.TotalSeconds, 1)}s)");
-        //
-        //     }
-        // }
+        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        // TODO: Save & backup
         return Task.CompletedTask;
     }
 

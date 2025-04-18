@@ -10,7 +10,7 @@ using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic;
 
-internal class EntitySimulation
+internal sealed class EntitySimulation
 {
     private const SimulationLockType DEFAULT_ENTITY_SIMULATION_LOCKTYPE = SimulationLockType.TRANSIENT;
 

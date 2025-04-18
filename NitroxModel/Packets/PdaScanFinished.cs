@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Packets;
 
 [Serializable]
-public class PDAScanFinished : Packet
+public class PdaScanFinished : Packet
 {
     public NitroxId Id { get; }
     public NitroxTechType TechType { get; }
@@ -14,7 +14,7 @@ public class PDAScanFinished : Packet
     public bool Destroy { get; }
     public bool WasAlreadyResearched { get; }
 
-    public PDAScanFinished(NitroxId id, NitroxTechType techType,  int unlockedAmount, bool fullyResearched, bool destroy, bool wasAlreadyResearched = false)
+    public PdaScanFinished(NitroxId id, NitroxTechType techType,  int unlockedAmount, bool fullyResearched, bool destroy, bool wasAlreadyResearched = false)
     {
         Id = id;
         TechType = techType;

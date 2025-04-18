@@ -1,19 +1,20 @@
-﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+﻿using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Packets;
-using NitroxModel.Serialization;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-class PlayerDeathEventProcessor(PlayerService playerService, SubnauticaServerConfig config) : AuthenticatedPacketProcessor<PlayerDeathEvent>
+class PlayerDeathEventProcessor(PlayerService playerService, IOptions<SubnauticaServerOptions> optionsProvider) : AuthenticatedPacketProcessor<PlayerDeathEvent>
 {
     private readonly PlayerService playerService = playerService;
-    private readonly SubnauticaServerConfig serverConfig = config;
+    private readonly IOptions<SubnauticaServerOptions> serverOptionsProvider = optionsProvider;
 
     public override void Process(PlayerDeathEvent packet, NitroxServer.Player player)
     {
-        if (serverConfig.IsHardcore())
+        if (serverOptionsProvider.Value.IsHardcore())
         {
             player.IsPermaDeath = true;
             PlayerKicked playerKicked = new("Permanent death from hardcore mode");

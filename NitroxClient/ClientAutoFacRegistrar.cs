@@ -1,6 +1,7 @@
 global using NitroxClient.Helpers;
 global using NitroxModel.Logger;
 global using static NitroxModel.Extensions;
+using System.IO;
 using System.Reflection;
 using Autofac;
 using Autofac.Core;
@@ -111,7 +112,7 @@ namespace NitroxClient
             containerBuilder.RegisterType<ExosuitModuleEvent>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<SeamothModulesEvent>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<Fires>().InstancePerLifetimeScope();
-            containerBuilder.Register(_ => FmodWhitelist.Load(GameInfo.Subnautica)).InstancePerLifetimeScope();
+            containerBuilder.Register(_ => FmodWhitelist.FromCsv(File.ReadAllText(Path.Combine(NitroxUser.AssetsPath, "Resources", $"SoundWhitelist_{GameInfo.Subnautica.Name}.csv")))).InstancePerLifetimeScope();
             containerBuilder.RegisterType<FMODSystem>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<NitroxSettingsManager>().InstancePerLifetimeScope();
             containerBuilder.RegisterType<ThrottledPacketSender>().InstancePerLifetimeScope();

@@ -1,16 +1,14 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using NitroxModel.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
-using NitroxModel.Helper;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic.Entities.Spawning;
 
 namespace NitroxServer.GameLogic.Entities;
 
@@ -18,6 +16,7 @@ namespace NitroxServer.GameLogic.Entities;
 /// Regular <see cref="WorldEntity"/> are held in cells and should be registered in <see cref="worldEntitiesByBatchId"/> and <see cref="worldEntitiesByCell"/>.
 /// But <see cref="GlobalRootEntity"/> are held in their own root object (GlobalRoot) so they should never be registered in cells (they're seeable at all times).
 /// </remarks>
+[Obsolete("Use Nitrox.Server.Subnautica WorldEntityMangager")]
 public class WorldEntityManager
 {
     private readonly EntityRegistry entityRegistry;

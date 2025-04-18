@@ -180,7 +180,7 @@ internal sealed class PlayerService(IOptions<Models.Configuration.SubnauticaServ
         JoinQueue = new(JoinQueue.Where(pair => !Equals(pair.Key, connection)));
     }
 
-    public NitroxServer.Player PlayerConnected(INitroxConnection connection, string reservationKey, out bool wasBrandNewPlayer)
+    public NitroxServer.Player AddConnectedPlayer(INitroxConnection connection, string reservationKey, out bool wasBrandNewPlayer)
     {
         PlayerContext playerContext = reservations[reservationKey];
         Validate.NotNull(playerContext);

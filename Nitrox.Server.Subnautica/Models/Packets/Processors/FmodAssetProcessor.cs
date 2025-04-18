@@ -1,25 +1,25 @@
 ﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.GameLogic.FMOD;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class FMODAssetProcessor(PlayerManager playerManager, FmodWhitelist fmodWhitelist) : AuthenticatedPacketProcessor<FMODAssetPacket>
+internal class FmodAssetProcessor(PlayerService playerService, FmodService fmodService) : AuthenticatedPacketProcessor<FMODAssetPacket>
 {
-    private readonly PlayerManager playerManager = playerManager;
-    private readonly FmodWhitelist fmodWhitelist = fmodWhitelist;
+    private readonly PlayerService playerService = playerService;
+    private readonly FmodService fmodService = fmodService;
 
     public override void Process(FMODAssetPacket packet, NitroxServer.Player sendingPlayer)
     {
-        if (!fmodWhitelist.TryGetSoundData(packet.AssetPath, out SoundData soundData))
+        if (!fmodService.TryGetSoundData(packet.AssetPath, out SoundData soundData))
         {
-            Log.Error($"[{nameof(FMODAssetProcessor)}] Whitelist has no item for {packet.AssetPath}.");
+            Log.Error($"[{nameof(FmodAssetProcessor)}] Whitelist has no item for {packet.AssetPath}.");
             return;
         }
 
-        foreach (NitroxServer.Player player in playerManager.GetConnectedPlayers())
+        foreach (NitroxServer.Player player in playerService.GetConnectedPlayers())
         {
             float distance = NitroxVector3.Distance(player.Position, packet.Position);
             if (player != sendingPlayer && (soundData.IsGlobal || player.SubRootId.Equals(sendingPlayer.SubRootId)) && distance <= soundData.Radius)

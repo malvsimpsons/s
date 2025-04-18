@@ -4,14 +4,13 @@ using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
 
-internal abstract class TransmitIfCanSeePacketProcessor<T>(PlayerService playerService, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<T>
+internal abstract class TransmitIfCanSeePacketProcessor<T>(PlayerService playerService, GameLogic.EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<T>
     where T : Packet
 {
-    private readonly EntityRegistry entityRegistry = entityRegistry;
+    private readonly GameLogic.EntityRegistry entityRegistry = entityRegistry;
     private readonly PlayerService playerService = playerService;
 
     /// <summary>

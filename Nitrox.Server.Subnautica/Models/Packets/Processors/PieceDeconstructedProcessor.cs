@@ -5,9 +5,9 @@ using NitroxServer.GameLogic.Bases;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class PieceDeconstructedProcessor(BuildingManager buildingManager, PlayerService playerService) : AuthenticatedPacketProcessor<PieceDeconstructed>
+internal sealed class PieceDeconstructedProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService) : AuthenticatedPacketProcessor<PieceDeconstructed>
 {
-    private readonly BuildingManager buildingManager = buildingManager;
+    private readonly GameLogic.Bases.BuildingManager buildingManager = buildingManager;
 
     public override void Process(PieceDeconstructed packet, NitroxServer.Player player)
     {

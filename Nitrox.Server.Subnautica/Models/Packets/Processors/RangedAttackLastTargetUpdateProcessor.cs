@@ -7,7 +7,7 @@ namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
 internal sealed class RangedAttackLastTargetUpdateProcessor(
     PlayerService playerService,
-    EntityRegistry entityRegistry
+    GameLogic.EntityRegistry entityRegistry
 ) : TransmitIfCanSeePacketProcessor<RangedAttackLastTargetUpdate>(playerService, entityRegistry)
 {
     public override void Process(RangedAttackLastTargetUpdate packet, NitroxServer.Player sender) => TransmitIfCanSeeEntities(packet, sender, packet.CreatureId, packet.TargetId);

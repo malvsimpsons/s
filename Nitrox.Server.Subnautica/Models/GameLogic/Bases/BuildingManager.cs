@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Options;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Bases;
@@ -8,25 +9,14 @@ using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 using NitroxModel.Packets;
 using NitroxModel.Serialization;
-using NitroxServer.GameLogic.Entities;
-using NitroxServer.Serialization;
 
-namespace NitroxServer.GameLogic.Bases;
+namespace Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 
-// TODO: REMOVE
-[Obsolete("use Nitrox.Server.Subnautica BuildingManager")]
-public class BuildingManager
+internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, IOptions<SubnauticaServerConfig> configProvider)
 {
-    private readonly EntityRegistry entityRegistry;
-    private readonly WorldEntityManager worldEntityManager;
-    private readonly SubnauticaServerConfig config;
-
-    public BuildingManager(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, SubnauticaServerConfig config)
-    {
-        this.entityRegistry = entityRegistry;
-        this.worldEntityManager = worldEntityManager;
-        this.config = config;
-    }
+    private readonly EntityRegistry entityRegistry = entityRegistry;
+    private readonly WorldEntityManager worldEntityManager = worldEntityManager;
+    private readonly IOptions<SubnauticaServerConfig> configProvider = configProvider;
 
     public bool AddGhost(PlaceGhost placeGhost)
     {
@@ -162,7 +152,7 @@ public class BuildingManager
         return true;
     }
 
-    public bool UpdateBase(Player player, UpdateBase updateBase, out int operationId)
+    public bool UpdateBase(NitroxServer.Player player, UpdateBase updateBase, out int operationId)
     {
         if (!entityRegistry.TryGetEntityById<GhostEntity>(updateBase.FormerGhostId, out _))
         {
@@ -177,7 +167,7 @@ public class BuildingManager
             return false;
         }
         int deltaOperations = buildEntity.OperationId + 1 - updateBase.OperationId;
-        if (deltaOperations != 0 && config.SafeBuilding)
+        if (deltaOperations != 0 && configProvider.Value.SafeBuilding)
         {
             Log.Warn($"Ignoring an {nameof(UpdateBase)} packet from [{player.Name}] which is {Math.Abs(deltaOperations) + (deltaOperations > 0 ? " operations ahead" : " operations late")}");
             NotifyPlayerDesync(player);
@@ -251,7 +241,7 @@ public class BuildingManager
         return true;
     }
 
-    public bool ReplacePieceByGhost(Player player, PieceDeconstructed pieceDeconstructed, out Entity removedEntity, out int operationId)
+    public bool ReplacePieceByGhost(NitroxServer.Player player, PieceDeconstructed pieceDeconstructed, out Entity removedEntity, out int operationId)
     {
         if (!entityRegistry.TryGetEntityById(pieceDeconstructed.BaseId, out BuildEntity buildEntity))
         {
@@ -269,7 +259,7 @@ public class BuildingManager
         }
 
         int deltaOperations = buildEntity.OperationId + 1 - pieceDeconstructed.OperationId;
-        if (deltaOperations != 0 && config.SafeBuilding)
+        if (deltaOperations != 0 && configProvider.Value.SafeBuilding)
         {
             Log.Warn($"Ignoring a {nameof(PieceDeconstructed)} packet from [{player.Name}] which is {Math.Abs(deltaOperations) + (deltaOperations > 0 ? " operations ahead" : " operations late")}");
             NotifyPlayerDesync(player);
@@ -315,7 +305,7 @@ public class BuildingManager
         return true;
     }
 
-    private void NotifyPlayerDesync(Player player)
+    private void NotifyPlayerDesync(NitroxServer.Player player)
     {
         Dictionary<NitroxId, int> operations = GetEntitiesOperations(worldEntityManager.GetGlobalRootEntities(true));
         player.SendPacket(new BuildingDesyncWarning(operations));

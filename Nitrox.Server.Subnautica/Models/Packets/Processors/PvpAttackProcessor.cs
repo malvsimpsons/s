@@ -1,15 +1,16 @@
 using System.Collections.Generic;
+using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Packets;
-using NitroxModel.Serialization;
-using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class PvPAttackProcessor(SubnauticaServerConfig serverConfig, PlayerManager playerManager) : AuthenticatedPacketProcessor<PvPAttack>
+internal class PvpAttackProcessor(PlayerService playerService, IOptions<SubnauticaServerOptions> configProvider) : AuthenticatedPacketProcessor<PvPAttack>
 {
-    private readonly SubnauticaServerConfig serverConfig = serverConfig;
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerService = playerService;
+    private readonly IOptions<SubnauticaServerOptions> configProvider = configProvider;
 
     // TODO: In the future, do a whole config for damage sources
     private static readonly Dictionary<PvPAttack.AttackType, float> damageMultiplierByType = new()
@@ -20,11 +21,11 @@ public class PvPAttackProcessor(SubnauticaServerConfig serverConfig, PlayerManag
 
     public override void Process(PvPAttack packet, NitroxServer.Player player)
     {
-        if (!serverConfig.PvPEnabled)
+        if (!configProvider.Value.PvpEnabled)
         {
             return;
         }
-        if (!playerManager.TryGetPlayerById(packet.TargetPlayerId, out NitroxServer.Player targetPlayer))
+        if (!playerService.TryGetPlayerById(packet.TargetPlayerId, out NitroxServer.Player targetPlayer))
         {
             return;
         }

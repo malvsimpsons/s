@@ -2,40 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
-using NitroxModel.Helper;
 
 namespace NitroxModel.GameLogic.FMOD;
 
 public class FmodWhitelist
 {
-    private readonly HashSet<string> whitelistedPaths = new();
-    private readonly Dictionary<string, SoundData> soundsWhitelist = new();
+    private readonly Dictionary<string, SoundData> soundsWhitelist = [];
+    private readonly HashSet<string> whitelistedPaths = [];
 
-    public static FmodWhitelist Load(GameInfo game)
+    public static FmodWhitelist FromCsv(string fileData)
     {
-        return new FmodWhitelist(game);
-    }
-
-    private FmodWhitelist(GameInfo game)
-    {
-        string filePath = Path.Combine(NitroxUser.AssetsPath, "Resources", $"SoundWhitelist_{game.Name}.csv");
-        string fileData = "";
-        try
-        {
-            fileData = File.ReadAllText(filePath);
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
         if (string.IsNullOrWhiteSpace(fileData))
         {
-            Log.Error($"[{nameof(FmodWhitelist)}]: Provided sound whitelist at '{filePath}' is null or whitespace");
-            return;
+            throw new ArgumentNullException(nameof(fileData));
         }
 
+        FmodWhitelist whitelist = new();
         foreach (string entry in fileData.Split('\n'))
         {
             if (string.IsNullOrWhiteSpace(entry) || entry.StartsWith("#") || entry.StartsWith(";"))
@@ -48,24 +30,22 @@ public class FmodWhitelist
                 bool.TryParse(keyValuePair[2], out bool isGlobal) &&
                 float.TryParse(keyValuePair[3], NumberStyles.Any, CultureInfo.InvariantCulture, out float soundRadius))
             {
-                soundsWhitelist.Add(keyValuePair[0], new SoundData(isWhitelisted, isGlobal, soundRadius));
+                whitelist.soundsWhitelist.Add(keyValuePair[0], new SoundData(isWhitelisted, isGlobal, soundRadius));
 
                 if (isWhitelisted)
                 {
-                    whitelistedPaths.Add(keyValuePair[0]);
+                    whitelist.whitelistedPaths.Add(keyValuePair[0]);
                 }
             }
             else
             {
-                Log.Error($"[{nameof(FmodWhitelist)}]: Error while parsing {filePath} at line {entry}");
+                throw new Exception($"Error while parsing whitelist at line {entry}");
             }
         }
+        return whitelist;
     }
 
-    public bool IsWhitelisted(string path)
-    {
-        return whitelistedPaths.Contains(path);
-    }
+    public bool IsWhitelisted(string path) => whitelistedPaths.Contains(path);
 
     public bool IsWhitelisted(string path, out float radius)
     {
@@ -79,24 +59,7 @@ public class FmodWhitelist
         return false;
     }
 
-    public bool TryGetSoundData(string path, out SoundData soundData)
-    {
-        return soundsWhitelist.TryGetValue(path, out soundData);
-    }
+    public bool TryGetSoundData(string path, out SoundData soundData) => soundsWhitelist.TryGetValue(path, out soundData);
 
     public ReadOnlyDictionary<string, SoundData> GetWhitelist() => new(soundsWhitelist);
-}
-
-public readonly struct SoundData
-{
-    public bool IsWhitelisted { get; }
-    public bool IsGlobal { get; }
-    public float Radius { get; }
-
-    public SoundData(bool isWhitelisted, bool isGlobal, float radius)
-    {
-        IsWhitelisted = isWhitelisted;
-        IsGlobal = isGlobal;
-        Radius = radius;
-    }
 }

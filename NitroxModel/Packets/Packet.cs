@@ -126,7 +126,7 @@ public abstract class Packet
     ///     Wrapper which is used to serialize packets in BinaryPack.
     ///     We cannot serialize Packets directly because
     ///     <p>
-    ///     1) We will not know what type to deserialize to and
+    ///     1) We will not know what type to deserialize to<br/>
     ///     2) The root object must have a callable constructor so it can't be abstract
     ///     </p>
     ///     This type solves both problems and only adds a single byte to the data.

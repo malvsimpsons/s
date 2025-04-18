@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Console;
 using Nitrox.Server.Subnautica.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.GameLogic;
+using Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Resources;
@@ -77,7 +78,19 @@ public class Program
 
     private static async Task StartServerAsync(string[] args)
     {
+        // TODO: Don't use NitroxModel.Log in this project.
+
         // TODO: pass logs to serilog with rolling log files strategy.
+
+        // TODO: Move to separate services
+        // if (optionsProvider.ValueuseUpnpPortForwarding)
+        // {
+        //     _ = PortForwardAsync((ushort)portNumber, ct);
+        // }
+        // if (useLANBroadcast)
+        // {
+        //     LANBroadcastServer.Start(ct);
+        // }
 
         // TODO: Validate game resources after they're loaded
         // Validate.NotNull(resourceAssets);
@@ -154,14 +167,17 @@ public class Program
                .AddSubnauticaResources()
                .AddPersistence() // TODO: Use SQLite instead.
                .AddHibernation()
-               .AddHostedSingletonService<SubnauticaServerService>()
+               .AddHostedSingletonService<GameServerStatusService>()
                .AddHostedSingletonService<TimeService>()
                .AddHostedSingletonService<PlayerService>()
                .AddHostedSingletonService<StoryTimingService>() // TODO: Merge story services together?
                .AddHostedSingletonService<StoryScheduleService>()
                .AddHostedSingletonService<BatchEntitySpawnerService>()
                .AddHostedSingletonService<FmodService>()
+               .AddHostedSingletonService<EscapePodService>()
                .AddSingleton(_ => GameInfo.Subnautica)
+               .AddSingleton<BuildingManager>()
+               .AddSingleton<WorldEntityManager>()
                .AddSingleton<BatchCellsParser>()
                .AddSingleton<SubnauticaServerProtoBufSerializer>()
                .AddSingleton<NtpSyncer>()

@@ -1,15 +1,15 @@
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Packets;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class EntityReparentedProcessor(EntityRegistry entityRegistry, PlayerManager playerManager) : AuthenticatedPacketProcessor<EntityReparented>
+internal class EntityReparentedProcessor(EntityRegistry entityRegistry, PlayerService playerService) : AuthenticatedPacketProcessor<EntityReparented>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerManager = playerService;
 
     public override void Process(EntityReparented packet, NitroxServer.Player player)
     {

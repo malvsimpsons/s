@@ -6,6 +6,7 @@ using NitroxServer.GameLogic.Entities.Spawning;
 
 namespace NitroxServer.Serialization.World
 {
+    // TODO: Remove in favor of SQLite tables
     public class World
     {
         public PlayerManager PlayerManager { get; set; }
@@ -14,8 +15,8 @@ namespace NitroxServer.Serialization.World
         public SimulationOwnershipData SimulationOwnershipData { get; set; }
         public EscapePodManager EscapePodManager { get; set; }
         // public BatchEntitySpawner BatchEntitySpawner { get; set; }
-        public EntitySimulation EntitySimulation { get; set; }
-        public EntityRegistry EntityRegistry { get; set; }
+        // public EntitySimulation EntitySimulation { get; set; }
+        // public EntityRegistry EntityRegistry { get; set; }
         public WorldEntityManager WorldEntityManager { get; set; }
         public BuildingManager BuildingManager { get; set; }
         public StoryManager StoryManager { get; set; }

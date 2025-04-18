@@ -204,6 +204,22 @@ public static class Extensions
         return buffer;
     }
 
+    public static bool IsAssignableToGenericType(this Type givenType, Type genericType)
+    {
+        if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType)
+        {
+            return true;
+        }
+
+        Type givenBaseType = givenType.BaseType;
+        if (givenBaseType == null)
+        {
+            return false;
+        }
+
+        return IsAssignableToGenericType(givenBaseType, genericType);
+    }
+
     public static bool IsHardcore(this SubnauticaServerConfig config) => config.GameMode == NitroxGameMode.HARDCORE;
     public static bool IsPasswordRequired(this SubnauticaServerConfig config) => config.ServerPassword != "";
 

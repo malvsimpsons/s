@@ -1,15 +1,16 @@
+using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 using NitroxModel.Packets;
 using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class EntityMetadataUpdateProcessor(PlayerManager playerManager, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<EntityMetadataUpdate>
+internal class EntityMetadataUpdateProcessor(PlayerService playerService, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<EntityMetadataUpdate>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
     public override void Process(EntityMetadataUpdate packet, NitroxServer.Player sendingPlayer)
@@ -29,7 +30,7 @@ public class EntityMetadataUpdateProcessor(PlayerManager playerManager, EntityRe
 
     private void SendUpdateToVisiblePlayers(EntityMetadataUpdate packet, NitroxServer.Player sendingPlayer, Entity entity)
     {
-        foreach (NitroxServer.Player player in playerManager.GetConnectedPlayers())
+        foreach (NitroxServer.Player player in playerService.GetConnectedPlayers())
         {
             bool updateVisibleToPlayer = player.CanSee(entity);
 

@@ -57,7 +57,7 @@ public class WorldPersistenceTest
         // StoryTimingTest(worldData.WorldData.GameData.StoryTiming, worldDataAfter.WorldData.GameData.StoryTiming);
     }
 
-    private static void PDAStateTest(PDAStateData pdaState, PDAStateData pdaStateAfter)
+    private static void PDAStateTest(PdaStateData pdaState, PdaStateData pdaStateAfter)
     {
         Assert.IsTrue(pdaState.KnownTechTypes.SequenceEqual(pdaStateAfter.KnownTechTypes));
         Assert.IsTrue(pdaState.AnalyzedTechTypes.SequenceEqual(pdaStateAfter.AnalyzedTechTypes));

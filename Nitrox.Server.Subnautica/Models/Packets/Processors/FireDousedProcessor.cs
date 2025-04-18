@@ -1,15 +1,16 @@
 ﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Packets;
 using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-class FireDousedProcessor(PlayerManager playerManager) : AuthenticatedPacketProcessor<FireDoused>
+internal class FireDousedProcessor(PlayerService playerService) : AuthenticatedPacketProcessor<FireDoused>
 {
-    private readonly PlayerManager playerManager = playerManager;
+    private readonly PlayerService playerService = playerService;
 
     public override void Process(FireDoused packet, NitroxServer.Player simulatingPlayer)
     {
-        playerManager.SendPacketToOtherPlayers(packet, simulatingPlayer);
+        playerService.SendPacketToOtherPlayers(packet, simulatingPlayer);
     }
 }

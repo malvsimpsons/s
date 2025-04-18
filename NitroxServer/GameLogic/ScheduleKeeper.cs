@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NitroxModel.DataStructures;
@@ -7,17 +8,19 @@ using NitroxServer.GameLogic.Unlockables;
 
 namespace NitroxServer.GameLogic;
 
+// TODO: REMOVE THIS CLASS
+[Obsolete("Use StoryScheduleService instead")]
 public class ScheduleKeeper
 {
     private readonly ThreadSafeDictionary<string, NitroxScheduledGoal> scheduledGoals = new();
-    private readonly PDAStateData pdaStateData;
+    private readonly PdaStateData pdaStateData;
     private readonly StoryGoalData storyGoalData;
     private readonly TimeKeeper timeKeeper;
     private readonly PlayerManager playerManager;
 
     private float ElapsedSecondsFloat => (float)timeKeeper.ElapsedSeconds;
 
-    public ScheduleKeeper(PDAStateData pdaStateData, StoryGoalData storyGoalData, TimeKeeper timeKeeper, PlayerManager playerManager)
+    public ScheduleKeeper(PdaStateData pdaStateData, StoryGoalData storyGoalData, TimeKeeper timeKeeper, PlayerManager playerManager)
     {
         this.pdaStateData = pdaStateData;
         this.storyGoalData = storyGoalData;

@@ -1,39 +1,29 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.GameLogic;
+using Nitrox.Server.Subnautica.Models.Resources.Parsers;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
-using NitroxServer.GameLogic.Entities;
 
-namespace NitroxServer.GameLogic;
+namespace Nitrox.Server.Subnautica.Services;
 
-// TODO: REMOVE CLASS
-[Obsolete("Use EscapePodService instead")]
-public class EscapePodManager
+internal sealed class EscapePodService(EntityRegistry entityRegistry, RandomStartResource randomStart, IOptions<SubnauticaServerOptions> optionsProvider) : IHostedService
 {
     private const int PLAYERS_PER_ESCAPEPOD = 50;
 
-    private readonly EntityRegistry entityRegistry;
+    private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly ThreadSafeDictionary<ushort, EscapePodWorldEntity> escapePodsByPlayerId = new();
+    private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
     private EscapePodWorldEntity podForNextPlayer;
-    private readonly string seed;
-
-    private readonly RandomStartGenerator randomStart;
-
-    public EscapePodManager(EntityRegistry entityRegistry, RandomStartGenerator randomStart, string seed)
-    {
-        this.seed = seed;
-        this.randomStart = randomStart;
-        this.entityRegistry = entityRegistry;
-
-        List<EscapePodWorldEntity> escapePods = entityRegistry.GetEntities<EscapePodWorldEntity>();
-
-        InitializePodForNextPlayer(escapePods);
-        InitializeEscapePodsByPlayerId(escapePods);
-    }
 
     public NitroxId AssignPlayerToEscapePod(ushort playerId, out Optional<EscapePodWorldEntity> newlyCreatedPod)
     {
@@ -56,6 +46,19 @@ public class EscapePodManager
         return podForNextPlayer.Id;
     }
 
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        List<EscapePodWorldEntity> escapePods = entityRegistry.GetEntities<EscapePodWorldEntity>();
+
+        InitializePodForNextPlayer(escapePods);
+        InitializeEscapePodsByPlayerId(escapePods);
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private static bool IsPodFull(EscapePodWorldEntity pod) => pod.Players.Count >= PLAYERS_PER_ESCAPEPOD;
+
     private EscapePodWorldEntity CreateNewEscapePod()
     {
         EscapePodWorldEntity escapePod = new(GetStartPosition(), new NitroxId(), new EscapePodMetadata(false, false));
@@ -74,8 +77,8 @@ public class EscapePodManager
     {
         List<EscapePodWorldEntity> escapePods = entityRegistry.GetEntities<EscapePodWorldEntity>();
 
-        Random rnd = new(seed.GetHashCode());
-        NitroxVector3 position = randomStart.GenerateRandomStartPosition(rnd);
+        Random rnd = new(optionsProvider.Value.Seed.GetHashCode());
+        NitroxVector3 position = randomStart.RandomStartGenerator.GenerateRandomStartPosition(rnd);
 
         if (escapePods.Count == 0)
         {
@@ -148,10 +151,5 @@ public class EscapePodManager
                 escapePodsByPlayerId[playerId] = pod;
             }
         }
-    }
-
-    private static bool IsPodFull(EscapePodWorldEntity pod)
-    {
-        return pod.Players.Count >= PLAYERS_PER_ESCAPEPOD;
     }
 }

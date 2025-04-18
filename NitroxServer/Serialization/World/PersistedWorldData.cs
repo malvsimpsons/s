@@ -21,19 +21,20 @@ public class PersistedWorldData
 
     public static PersistedWorldData From(World world)
     {
-        return new PersistedWorldData
-        {
-            WorldData =
-            {
-                // TODO: Use service for saving instead of this...
-                // ParsedBatchCells = world.BatchEntitySpawner.SerializableParsedBatches,
-                // GameData = GameData.From(world.GameData.PDAState, world.GameData.StoryGoals, world.ScheduleKeeper, world.StoryManager, world.TimeKeeper),
-                Seed = world.Seed
-            },
-            PlayerData = PlayerData.From(world.PlayerManager.GetAllPlayers()),
-            GlobalRootData = GlobalRootData.From(world.WorldEntityManager.GetPersistentGlobalRootEntities()),
-            EntityData = EntityData.From(world.EntityRegistry.GetAllEntities(true))
-        };
+        return new PersistedWorldData();
+        // TODO: Use SQLite for saving instead of this...
+        // return new PersistedWorldData
+        // {
+        //     WorldData =
+        //     {
+        // ParsedBatchCells = world.BatchEntitySpawner.SerializableParsedBatches,
+        // GameData = GameData.From(world.GameData.PDAState, world.GameData.StoryGoals, world.ScheduleKeeper, world.StoryManager, world.TimeKeeper),
+        //         Seed = world.Seed
+        //     },
+        //     PlayerData = PlayerData.From(world.PlayerManager.GetAllPlayers()),
+        //     GlobalRootData = GlobalRootData.From(world.WorldEntityManager.GetPersistentGlobalRootEntities()),
+        //     EntityData = EntityData.From(world.EntityRegistry.GetAllEntities(true))
+        // };
     }
 
     public bool IsValid()

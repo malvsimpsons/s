@@ -6,9 +6,9 @@ using NitroxModel_Subnautica.DataStructures;
 
 namespace NitroxClient.Communication.Packets.Processors;
 
-public class PDAScanFinishedProcessor : ClientPacketProcessor<PDAScanFinished>
+public class PDAScanFinishedProcessor : ClientPacketProcessor<PdaScanFinished>
 {
-    public override void Process(PDAScanFinished packet)
+    public override void Process(PdaScanFinished packet)
     {
         if (packet.Id != null)
         {
