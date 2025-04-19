@@ -17,7 +17,7 @@ public sealed partial class SubnauticaServerOptions
     public byte MaxConnections { get; set; } = 100;
 
     [Range(1, ushort.MaxValue)]
-    public short Port { get; set; } = 11000;
+    public ushort Port { get; set; } = 11000;
 
     [RegularExpression(@"\w+")]
     public string ServerPassword { get; set; } = "";
@@ -41,6 +41,12 @@ public sealed partial class SubnauticaServerOptions
 
     [PropertyDescription("Recommended to keep at 0.1f which is the default starting value. If set to 0 then new players are cured by default.")]
     public float DefaultInfectionValue { get; set; } = 0.1f;
+
+    [PropertyDescription("If set to true, the server will try to open port on your router via UPnP")]
+    public bool AutoPortForward { get; set; } = true;
+
+    [PropertyDescription("Determines whether the server will listen for and reply to LAN discovery requests.")]
+    public bool LANDiscoveryEnabled { get; set; } = true;
 
     public PlayerStatsData DefaultPlayerStats => new(DefaultOxygenValue, DefaultMaxOxygenValue, DefaultHealthValue, DefaultHungerValue, DefaultThirstValue, DefaultInfectionValue);
 

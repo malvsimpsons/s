@@ -83,10 +83,6 @@ public class Program
         // TODO: pass logs to serilog with rolling log files strategy.
 
         // TODO: Move to separate services
-        // if (optionsProvider.ValueuseUpnpPortForwarding)
-        // {
-        //     _ = PortForwardAsync((ushort)portNumber, ct);
-        // }
         // if (useLANBroadcast)
         // {
         //     LANBroadcastServer.Start(ct);
@@ -160,6 +156,7 @@ public class Program
                .AddPersistence() // TODO: Use SQLite instead.
                .AddHibernation()
                .AddHostedSingletonService<GameServerStatusService>()
+               .AddHostedSingletonService<PortForwardService>()
                .AddHostedSingletonService<TimeService>()
                .AddHostedSingletonService<PlayerService>()
                .AddHostedSingletonService<StoryTimingService>() // TODO: Merge story services together?

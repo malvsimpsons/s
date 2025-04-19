@@ -74,37 +74,14 @@ internal class LiteNetLibService : IHostedService
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         playerService.SendPacketToAllPlayers(new ServerStopped());
-        await Task.Delay(500, cancellationToken); // We want every player to receive "ServerStopped" packet
+        while (server.PoolCount > 0)
+        {
+            await Task.Delay(25, cancellationToken);
+        }
         server.Stop();
         logger.LogDebug("stopped");
     }
 
-    //
-    //     private async Task PortForwardAsync(ushort port, CancellationToken ct = default)
-    //     {
-    //         if (await NatHelper.GetPortMappingAsync(port, Protocol.Udp, ct) != null)
-    //         {
-    //             Log.Info($"Port {port} UDP is already port forwarded");
-    //             return;
-    //         }
-    //
-    //         NatHelper.ResultCodes mappingResult = await NatHelper.AddPortMappingAsync(port, Protocol.Udp, ct);
-    //         if (!ct.IsCancellationRequested)
-    //         {
-    //             switch (mappingResult)
-    //             {
-    //                 case NatHelper.ResultCodes.SUCCESS:
-    //                     Log.Info($"Server port {port} UDP has been automatically opened on your router (port is closed when server closes)");
-    //                     break;
-    //                 case NatHelper.ResultCodes.CONFLICT_IN_MAPPING_ENTRY:
-    //                     Log.Warn($"Port forward for {port} UDP failed. It appears to already be port forwarded or it conflicts with another port forward rule.");
-    //                     break;
-    //                 case NatHelper.ResultCodes.UNKNOWN_ERROR:
-    //                     Log.Warn($"Failed to port forward {port} UDP through UPnP. If using Hamachi or you've manually port-forwarded, please disregard this warning. To disable this feature you can go into the server settings.");
-    //                     break;
-    //             }
-    //         }
-    //     }
     //
     //     public override void Stop()
     //     {
