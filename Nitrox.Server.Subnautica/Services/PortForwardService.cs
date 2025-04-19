@@ -14,11 +14,10 @@ using NitroxModel.Helper;
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
-///     Opens ports on network attached routers via UPnP.
+///     Opens ports on network attached routers via <a href="https://en.wikipedia.org/wiki/Universal_Plug_and_Play">UPnP</a>.
 /// </summary>
 /// <remarks>
-///     By port forwarding, incoming connections will be forwarded to the host machine running the game server.<br/><br/>
-///
+///     By port forwarding, incoming connections will be forwarded to the host machine running the game server.<br /><br />
 ///     <b>Trivia</b>: Routers are by default configured to block incoming connections coming from WAN, for security.
 /// </remarks>
 internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optionsProvider, ILogger<PortForwardService> logger) : BackgroundService
@@ -37,8 +36,7 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        IDisposable optionsMonitorDisposable = optionsProvider.OnChange(OptionsChanged);
-        stoppingToken.Register(() => optionsMonitorDisposable?.Dispose());
+        ListenForOptionsChange();
         await QueueInitialPortOpenAsync();
 
         try
@@ -68,6 +66,37 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
             throw;
         }
 
+        void ListenForOptionsChange()
+        {
+            IDisposable optionsMonitorDisposable = optionsProvider.OnChange(options =>
+            {
+                logger.LogTrace("Adjusting for options change...");
+                if (options.AutoPortForward)
+                {
+                    // Remove ports opened prior. TODO: Delay closing port if player connections are still active?
+                    foreach (KeyValuePair<ushort, bool> pair in openedPorts)
+                    {
+                        if (pair.Key == options.Port)
+                        {
+                            continue;
+                        }
+                        portForwardChannel.Writer.TryWrite(new PortForwardAction(pair.Key, false));
+                    }
+                    // Open the new port.
+                    portForwardChannel.Writer.TryWrite(new PortForwardAction(options.Port, true));
+                }
+                else
+                {
+                    // Close all ports as port forwarding option is disabled.
+                    foreach (KeyValuePair<ushort, bool> pair in openedPorts)
+                    {
+                        portForwardChannel.Writer.TryWrite(new PortForwardAction(pair.Key, false));
+                    }
+                }
+            });
+            stoppingToken.Register(() => optionsMonitorDisposable?.Dispose());
+        }
+
         async Task QueueInitialPortOpenAsync()
         {
             if (optionsProvider.CurrentValue is { AutoPortForward: true, Port: var port })
@@ -75,12 +104,6 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
                 await portForwardChannel.Writer.WriteAsync(new PortForwardAction(port, true), stoppingToken);
             }
         }
-    }
-
-    private void OptionsChanged(SubnauticaServerOptions options, string arg2)
-    {
-        ushort port = options.Port;
-        portForwardChannel.Writer.TryWrite(new PortForwardAction(port, options.AutoPortForward));
     }
 
     private async Task OpenPortAsync(ushort port, CancellationToken cancellationToken = default)

@@ -16,6 +16,7 @@ internal sealed class NitroxConfigurationSource : FileConfigurationSource
         Optional = optional;
         FileProvider = fileProvider;
         Section = configSection;
+        ReloadOnChange = true;
     }
 
     /// <summary>

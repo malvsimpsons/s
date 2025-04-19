@@ -17,7 +17,7 @@
         <PackageReference Include="SixLabors.ImageSharp" />
         <PackageReference Include="Microsoft.Extensions.Hosting" />
         <PackageReference Include="ServiceScan.SourceGenerator" />
-        <PackageReference Include="stbychkov.AutoLoggerMessage" /> <!-- TODO: BUG here https://github.com/stbychkov/AutoLoggerMessage/issues/19 -->
+        <PackageReference Include="stbychkov.AutoLoggerMessage" />
     </ItemGroup>
 
     <ItemGroup>

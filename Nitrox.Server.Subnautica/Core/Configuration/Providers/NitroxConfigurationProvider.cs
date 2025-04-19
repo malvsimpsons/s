@@ -15,7 +15,7 @@ internal sealed class NitroxConfigurationProvider(NitroxConfigurationSource sour
         {
             foreach (KeyValuePair<string, string> pair in NitroxConfig.Parse(stream))
             {
-                Data.Add($"{source.Section}:{pair.Key}", pair.Value);
+                Data[$"{source.Section}:{pair.Key}"] = pair.Value;
             }
         }
         else

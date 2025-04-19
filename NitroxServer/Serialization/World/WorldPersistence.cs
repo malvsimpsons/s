@@ -188,10 +188,10 @@ public class WorldPersistence
             Serializer.Serialize(Path.Combine(saveDir, $"GlobalRootData{FileEnding}"), persistedData.GlobalRootData);
             Serializer.Serialize(Path.Combine(saveDir, $"EntityData{FileEnding}"), persistedData.EntityData);
 
-            using (config.Update(saveDir))
-            {
-                config.Seed = persistedData.WorldData.Seed;
-            }
+            // using (config.Update(saveDir))
+            // {
+            //     config.Seed = persistedData.WorldData.Seed;
+            // }
 
             Log.Info("World state saved");
             return true;

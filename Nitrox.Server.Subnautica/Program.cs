@@ -14,7 +14,6 @@ using Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Resources;
-using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Helper;
@@ -92,7 +91,7 @@ public class Program
         builder.Configuration.Sources.Clear();
         builder.Configuration
                .AddCommandLine(args)
-               .AddNitroxConfigFile(startOptions.GetServerConfigFilePath(), SubnauticaServerOptions.CONFIG_SECTION_PATH);
+               .AddNitroxConfigFile<SubnauticaServerOptions>(startOptions.GetServerConfigFilePath(), SubnauticaServerOptions.CONFIG_SECTION_PATH);
         builder.Logging.ClearProviders(); // Important for logging performance.
         builder.Logging
                .SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information)

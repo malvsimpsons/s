@@ -11,6 +11,12 @@ namespace NitroxModel.Serialization;
 
 public static class NitroxConfig
 {
+    private static readonly Dictionary<string, MemberInfo> typeCache = [];
+    private static readonly Dictionary<string, object> unserializedMembersWarnOnceCache = [];
+
+    private static readonly char[] newlineChars = Environment.NewLine.ToCharArray();
+    private static readonly object locker = new();
+
     public static IDictionary<string, string> Parse(Stream stream)
     {
         using StreamReader reader = new(stream, leaveOpen: true, encoding: Encoding.UTF8, detectEncodingFromByteOrderMarks: false, bufferSize: 4096);
@@ -43,37 +49,14 @@ public static class NitroxConfig
         }
         return result;
     }
-}
 
-public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
-{
-    private static readonly Dictionary<string, object> unserializedMembersWarnOnceCache = [];
-    private static readonly Dictionary<string, MemberInfo> typeCache = [];
-
-    private readonly char[] newlineChars = Environment.NewLine.ToCharArray();
-    private readonly object locker = new();
-
-    public abstract string FileName { get; }
-
-    public static T Load(string saveDir)
+    public static void LoadIntoObject<TConfig>(string filePath, TConfig config) where TConfig : class
     {
-        T config = new();
-        config.Deserialize(saveDir);
-        return config;
-    }
-
-    public void Deserialize(string saveDir)
-    {
-        if (!File.Exists(Path.Combine(saveDir, FileName)))
-        {
-            return;
-        }
-
         lock (locker)
         {
-            Type type = GetType();
-            Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary();
-            using StreamReader reader = new(new FileStream(Path.Combine(saveDir, FileName), FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
+            Type type = typeof(TConfig);
+            Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary<TConfig>();
+            using StreamReader reader = new(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
             HashSet<MemberInfo> unserializedMembers = new(typeCachedDict.Values);
 
             foreach (KeyValuePair<string, string> pair in NitroxConfig.Parse(reader))
@@ -86,12 +69,12 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
                 }
                 unserializedMembers.Remove(member); // This member was serialized in the file
 
-                if (!SetMemberValue(this, member, pair.Value))
+                if (!SetMemberValue(config, member, pair.Value))
                 {
                     (Type type, object value) logData = member switch
                     {
-                        FieldInfo field => (field.FieldType, field.GetValue(this)),
-                        PropertyInfo prop => (prop.PropertyType, prop.GetValue(this)),
+                        FieldInfo field => (field.FieldType, field.GetValue(config)),
+                        PropertyInfo prop => (prop.PropertyType, prop.GetValue(config)),
                         _ => (typeof(string), "")
                     };
                     Log.Warn($@"Property ""({logData.type.Name}) {member.Name}"" has an invalid value {StringifyValue(pair.Value)}. Using default value: {StringifyValue(logData.value)}");
@@ -106,11 +89,11 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
                                                  object value = null;
                                                  if (m is FieldInfo field)
                                                  {
-                                                     value = field.GetValue(this);
+                                                     value = field.GetValue(config);
                                                  }
                                                  else if (m is PropertyInfo prop)
                                                  {
-                                                     value = prop.GetValue(this);
+                                                     value = prop.GetValue(config);
                                                  }
 
                                                  if (unserializedMembersWarnOnceCache.TryGetValue(m.Name, out object cachedValue))
@@ -127,22 +110,23 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
                                              .ToArray();
                 if (unserializedProps.Length > 0)
                 {
-                    Log.Warn($"{FileName} is using default values for the missing properties:{Environment.NewLine}{string.Join(Environment.NewLine, unserializedProps)}");
+                    Log.Warn($"{Path.GetFileName(filePath)} is using default values for the missing properties:{Environment.NewLine}{string.Join(Environment.NewLine, unserializedProps)}");
                 }
             }
         }
     }
 
-    public void Serialize(string saveDir)
+    public static void CreateFile<TConfig>(string filePath) where TConfig : class, new()
     {
         lock (locker)
         {
-            Type type = GetType();
-            Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary();
+            Type type = typeof(TConfig);
+            TConfig config = new();
+            Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary<TConfig>();
             try
             {
-                Directory.CreateDirectory(saveDir);
-                using StreamWriter stream = new(new FileStream(Path.Combine(saveDir, FileName), FileMode.Create, FileAccess.Write), Encoding.UTF8);
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? throw new ArgumentException(nameof(filePath)));
+                using StreamWriter stream = new(new FileStream(filePath, FileMode.Create, FileAccess.Write), Encoding.UTF8);
                 WritePropertyDescription(type, stream);
 
                 foreach (string name in typeCachedDict.Keys)
@@ -153,39 +137,31 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
                     if (field != null)
                     {
                         WritePropertyDescription(member, stream);
-                        WriteProperty(field, field.GetValue(this), stream);
+                        WriteProperty(field, field.GetValue(config), stream);
                     }
 
                     PropertyInfo property = member as PropertyInfo;
                     if (property != null)
                     {
                         WritePropertyDescription(member, stream);
-                        WriteProperty(property, property.GetValue(this), stream);
+                        WriteProperty(property, property.GetValue(config), stream);
                     }
                 }
             }
             catch (UnauthorizedAccessException)
             {
-                Log.Error($"Config file {FileName} exists but is a hidden file and cannot be modified, config file will not be updated. Please make file accessible");
+                Log.Error($"Config file {Path.GetFileName(filePath)} exists but is a hidden file and cannot be modified, config file will not be updated. Please make file accessible");
             }
         }
     }
 
-    /// <summary>
-    ///     Ensures updates are properly persisted to the backing config file without overwriting user edits.
-    /// </summary>
-    public UpdateDiposable Update(string saveDir)
-    {
-        return new UpdateDiposable(this, saveDir);
-    }
-
-    private static Dictionary<string, MemberInfo> GetTypeCacheDictionary()
+    private static Dictionary<string, MemberInfo> GetTypeCacheDictionary<T>() where T : class
     {
         Type type = typeof(T);
         if (typeCache.Count == 0)
         {
             IEnumerable<MemberInfo> members = type.GetFields()
-                                                  .Where(f => f.Attributes != FieldAttributes.NotSerialized)
+                                                  .Where(f => f.Attributes != FieldAttributes.NotSerialized && !f.IsLiteral)
                                                   .Concat(type.GetProperties()
                                                               .Where(p => p.CanWrite)
                                                               .Cast<MemberInfo>());
@@ -214,9 +190,9 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
         _ => value.ToString()
     };
 
-    private static bool SetMemberValue(NitroxConfig<T> instance, MemberInfo member, string valueFromFile)
+    private static bool SetMemberValue(object instance, MemberInfo member, string valueFromFile)
     {
-        object ConvertFromStringOrDefault(Type typeOfValue, out bool isDefault, object defaultValue = default)
+        object ConvertFromStringOrDefault(Type typeOfValue, out bool isDefault, object defaultValue = null)
         {
             try
             {
@@ -252,7 +228,7 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
         stream.WriteLine(Convert.ToString(value, CultureInfo.InvariantCulture));
     }
 
-    private void WritePropertyDescription(MemberInfo member, StreamWriter stream)
+    private static void WritePropertyDescription(MemberInfo member, StreamWriter stream)
     {
         PropertyDescriptionAttribute attribute = member.GetCustomAttribute<PropertyDescriptionAttribute>();
         if (attribute != null)
@@ -264,13 +240,43 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
             }
         }
     }
+}
 
-    public readonly struct UpdateDiposable : IDisposable
+public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
+{
+    public abstract string FileName { get; }
+
+    public static T Load(string saveDir)
+    {
+        T config = new();
+        config.Deserialize(saveDir);
+        return config;
+    }
+
+    public void Deserialize(string saveDir)
+    {
+        NitroxConfig.LoadIntoObject(Path.Combine(saveDir, FileName), this);
+    }
+
+    public void Serialize(string saveDir)
+    {
+        NitroxConfig.CreateFile<T>(Path.Combine(saveDir, FileName));
+    }
+
+    /// <summary>
+    ///     Ensures updates are properly persisted to the backing config file without overwriting user edits.
+    /// </summary>
+    public UpdateDisposable Update(string saveDir)
+    {
+        return new UpdateDisposable(this, saveDir);
+    }
+
+    public readonly struct UpdateDisposable : IDisposable
     {
         private string SaveDir { get; }
         private NitroxConfig<T> Config { get; }
 
-        public UpdateDiposable(NitroxConfig<T> config, string saveDir)
+        public UpdateDisposable(NitroxConfig<T> config, string saveDir)
         {
             config.Deserialize(saveDir);
             SaveDir = saveDir;

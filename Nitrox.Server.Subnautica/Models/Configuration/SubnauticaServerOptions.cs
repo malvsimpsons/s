@@ -39,7 +39,7 @@ public sealed partial class SubnauticaServerOptions
     public float DefaultHungerValue { get; set; } = 50.5f;
     public float DefaultThirstValue { get; set; } = 90.5f;
 
-    [PropertyDescription("Recommended to keep at 0.1f which is the default starting value. If set to 0 then new players are cured by default.")]
+    [PropertyDescription("Recommended to keep at 0.1 which is the default starting value. If set to 0, new players are cured by default.")]
     public float DefaultInfectionValue { get; set; } = 0.1f;
 
     [PropertyDescription("If set to true, the server will try to open port on your router via UPnP")]
