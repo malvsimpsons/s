@@ -193,18 +193,11 @@ public class Program
                .AddHostedSingletonService<PlayerService>()
                .AddHostedSingletonService<StoryTimingService>() // TODO: Merge story services together?
                .AddHostedSingletonService<StoryScheduleService>()
-               .AddHostedSingletonService<BatchEntitySpawnerService>()
                .AddHostedSingletonService<FmodService>()
-               .AddHostedSingletonService<EscapePodService>()
                .AddSingleton(_ => GameInfo.Subnautica)
-               .AddSingleton<BuildingManager>()
-               .AddSingleton<WorldEntityManager>()
-               .AddSingleton<BatchCellsParser>()
                .AddSingleton<SubnauticaServerProtoBufSerializer>()
                .AddSingleton<NtpSyncer>()
-               .AddTransient<SubnauticaServerRandom>()
-               .AddSingleton<IEntityBootstrapperManager, SubnauticaEntityBootstrapperManager>()
-               .AddSingleton<SimulationOwnershipData>();
+               .AddTransient<SubnauticaServerRandom>();
 
         await builder.Build().RunAsync();
     }

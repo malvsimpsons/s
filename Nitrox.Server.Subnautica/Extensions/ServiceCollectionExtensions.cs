@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
+using Nitrox.Server.Subnautica.Models.GameLogic;
+using Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 using Nitrox.Server.Subnautica.Models.Hibernation;
@@ -60,21 +62,27 @@ public static partial class ServiceCollectionExtensions
 
     public static IServiceCollection AddSubnauticaEntityManagement(this IServiceCollection services) =>
         services
-            .AddSingleton<Models.GameLogic.EntitySimulation>()
-            .AddSingleton<Models.GameLogic.EntityRegistry>()
+            .AddHostedSingletonService<BatchEntitySpawnerService>()
+            .AddHostedSingletonService<EscapePodService>()
+            .AddSingleton<BuildingManager>()
             .AddSingleton<Models.GameLogic.WorldEntityManager>()
+            .AddSingleton<IEntityBootstrapperManager, SubnauticaEntityBootstrapperManager>()
+            .AddSingleton<SimulationOwnershipData>()
+            .AddSingleton<EntitySimulation>()
+            .AddSingleton<Models.GameLogic.EntityRegistry>()
             .AddSingleton<BatchEntitySpawnerService>()
             .AddSingleton<EntitySpawnPointFactory, SubnauticaEntitySpawnPointFactory>()
+            .AddSingleton<IUweWorldEntityFactory, SubnauticaUweWorldEntityFactory>()
             .AddSingleton<ISimulationWhitelist, SimulationWhitelist>();
 
     public static IServiceCollection AddSubnauticaResources(this IServiceCollection services) =>
         services
             .AddHostedSingletonService<SubnauticaResourceLoaderService>()
             .AddGameResources()
-            .AddTransient<IMonoBehaviourTemplateGenerator, ThreadSafeMonoCecilTempGenerator>()
+            .AddSingleton<BatchCellsParser>()
             .AddSingleton<SubnauticaAssetsManager>()
-            .AddSingleton<IUweWorldEntityFactory, SubnauticaUweWorldEntityFactory>()
-            .AddSingleton<IUwePrefabFactory, SubnauticaUwePrefabFactory>();
+            .AddSingleton<IUwePrefabFactory, SubnauticaUwePrefabFactory>()
+            .AddTransient<IMonoBehaviourTemplateGenerator, ThreadSafeMonoCecilTempGenerator>();
 
     /// <summary>
     ///     Adds server persistence for all defined state known by the server.
