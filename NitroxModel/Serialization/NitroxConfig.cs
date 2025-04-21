@@ -56,10 +56,19 @@ public static class NitroxConfig
         {
             Type type = typeof(TConfig);
             Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary<TConfig>();
-            using StreamReader reader = new(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
             HashSet<MemberInfo> unserializedMembers = new(typeCachedDict.Values);
+            IDictionary<string, string> properties;
+            try
+            {
+                using StreamReader reader = new(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
+                properties = Parse(reader);
+            }
+            catch (FileNotFoundException)
+            {
+                properties = new Dictionary<string, string>();
+            }
 
-            foreach (KeyValuePair<string, string> pair in Parse(reader))
+            foreach (KeyValuePair<string, string> pair in properties)
             {
                 // Ignore case for property names in file.
                 if (!typeCachedDict.TryGetValue(pair.Key.ToLowerInvariant(), out MemberInfo member))

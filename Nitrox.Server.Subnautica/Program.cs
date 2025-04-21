@@ -76,12 +76,6 @@ public class Program
 
         // TODO: pass logs to serilog with rolling log files strategy.
 
-        // TODO: Move to separate services
-        // if (useLANBroadcast)
-        // {
-        //     LANBroadcastServer.Start(ct);
-        // }
-
         HostApplicationBuilder builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
         {
             DisableDefaults = true,
@@ -155,6 +149,7 @@ public class Program
                .AddKeyedSingleton<Stopwatch>(typeof(ServerStatusService), serverStartStopWatch)
                .AddHostedSingletonService<ServerStatusService>()
                .AddHostedSingletonService<PortForwardService>()
+               .AddHostedSingletonService<LanBroadcastService>()
                .AddHostedSingletonService<TimeService>()
                .AddHostedSingletonService<PlayerService>()
                .AddHostedSingletonService<StoryTimingService>() // TODO: Merge story services together?
