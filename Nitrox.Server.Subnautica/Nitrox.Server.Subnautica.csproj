@@ -32,7 +32,6 @@
         <Content Update="..\Nitrox.Assets.Subnautica\Resources\classdata.tpk">
             <Link>Resources\classdata.tpk</Link>
         </Content>
-
     </ItemGroup>
 
     <Import Project="..\Nitrox.Shared.targets" />

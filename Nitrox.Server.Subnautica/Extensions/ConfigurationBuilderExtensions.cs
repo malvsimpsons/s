@@ -22,16 +22,16 @@ internal static class ConfigurationBuilderExtensions
         // Link the config to a relative path within the working directory so that IOptionsMonitor<T> works. See https://github.com/dotnet/runtime/issues/114833
         try
         {
-            string targetConfigLink = Path.GetFileName(filePath);
-            FileInfo configFile = new(targetConfigLink);
+            string symbolicLinkPath = Path.GetFileName(filePath);
+            FileInfo configFile = new(symbolicLinkPath);
             if (configFile.Exists && configFile.LinkTarget != null)
             {
                 configFile.Delete();
             }
-            File.CreateSymbolicLink(targetConfigLink, filePath);
+            configFile.CreateAsSymbolicLink(filePath);
             // Fix targets to point to symbolic link instead.
             dirPath = AppContext.BaseDirectory;
-            filePath = targetConfigLink;
+            filePath = symbolicLinkPath;
         }
         catch (IOException)
         {
