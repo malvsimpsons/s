@@ -63,7 +63,7 @@ internal class LiteNetLibService : IHostedService
         {
             server.DisconnectTimeout = 300000; //Disables Timeout (for 5 min) for debug purpose (like if you jump though the server code)
         }
-        if (!server.Start(optionsProvider.Value.Port))
+        if (!server.Start(optionsProvider.Value.ServerPort))
         {
             throw new Exception("Failed to start LiteNetLib service");
         }

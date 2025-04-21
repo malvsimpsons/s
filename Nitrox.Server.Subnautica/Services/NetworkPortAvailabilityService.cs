@@ -20,7 +20,7 @@ internal sealed class NetworkPortAvailabilityService(IOptions<Models.Configurati
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await WaitForAvailablePortAsync(options.Port, ct: cancellationToken);
+        await WaitForAvailablePortAsync(options.ServerPort, ct: cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
@@ -57,7 +57,7 @@ internal sealed class NetworkPortAvailabilityService(IOptions<Models.Configurati
                 }
                 if (endPoint == null)
                 {
-                    logger.LogDebug("Port {Port} UDP is available", options.Port);
+                    logger.LogDebug("Port {Port} UDP is available", options.ServerPort);
                     break;
                 }
 

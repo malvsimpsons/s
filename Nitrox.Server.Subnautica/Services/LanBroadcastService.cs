@@ -77,7 +77,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
         {
             logger.LogDebug("Adjusting to option changes...");
         }
-        if (options.LANDiscoveryEnabled)
+        if (options.LanDiscoveryEnabled)
         {
             if (!StartListening())
             {
@@ -143,7 +143,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
             return;
         }
 
-        ushort port = optionsProvider.CurrentValue.Port;
+        ushort port = optionsProvider.CurrentValue.ServerPort;
         logger.LogDebug("Broadcasting server port {Port} over LAN...", port);
         NetDataWriter writer = new();
         writer.Put(LANDiscoveryConstants.BROADCAST_RESPONSE_STRING);

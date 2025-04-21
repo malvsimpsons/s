@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Serialization;
@@ -16,8 +17,9 @@ public sealed partial class SubnauticaServerOptions
     [Range(1, byte.MaxValue)]
     public byte MaxConnections { get; set; } = 100;
 
+    [ConfigurationKeyName("port")]
     [Range(1, ushort.MaxValue)]
-    public ushort Port { get; set; } = 11000;
+    public ushort ServerPort { get; set; } = 11000;
 
     [RegularExpression(@"\w+")]
     public string ServerPassword { get; set; } = "";
@@ -46,7 +48,7 @@ public sealed partial class SubnauticaServerOptions
     public bool AutoPortForward { get; set; } = true;
 
     [PropertyDescription("Determines whether the server will listen for and reply to LAN discovery requests.")]
-    public bool LANDiscoveryEnabled { get; set; } = true;
+    public bool LanDiscoveryEnabled { get; set; } = true;
 
     public PlayerStatsData DefaultPlayerStats => new(DefaultOxygenValue, DefaultMaxOxygenValue, DefaultHealthValue, DefaultHungerValue, DefaultThirstValue, DefaultInfectionValue);
 

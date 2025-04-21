@@ -36,7 +36,7 @@ public class DiscordRequestIPProcessor(IOptions<SubnauticaServerOptions> options
             return;
         }
 
-        packet.IpPort = ipPort = $"{result}:{optionsProvider.Value.Port}";
+        packet.IpPort = ipPort = $"{result}:{optionsProvider.Value.ServerPort}";
         player.SendPacket(packet);
     }
 

@@ -11,9 +11,6 @@ namespace NitroxModel.Serialization;
 
 public static class NitroxConfig
 {
-    private static readonly Dictionary<string, MemberInfo> typeCache = [];
-    private static readonly Dictionary<string, object> unserializedMembersWarnOnceCache = [];
-
     private static readonly char[] newlineChars = Environment.NewLine.ToCharArray();
     private static readonly object locker = new();
 
@@ -105,14 +102,14 @@ public static class NitroxConfig
                                                      value = prop.GetValue(config);
                                                  }
 
-                                                 if (unserializedMembersWarnOnceCache.TryGetValue(m.Name, out object cachedValue))
+                                                 if (NitroxConfig<TConfig>.UnserializedMembersWarnOnceCache.TryGetValue(m.Name, out object cachedValue))
                                                  {
                                                      if (Equals(value, cachedValue))
                                                      {
                                                          return null;
                                                      }
                                                  }
-                                                 unserializedMembersWarnOnceCache[m.Name] = value;
+                                                 NitroxConfig<TConfig>.UnserializedMembersWarnOnceCache[m.Name] = value;
                                                  return $" - {m.Name}: {value}";
                                              })
                                              .Where(i => i != null)
@@ -167,9 +164,14 @@ public static class NitroxConfig
 
     private static Dictionary<string, MemberInfo> GetTypeCacheDictionary<T>() where T : class
     {
-        Type type = typeof(T);
-        if (typeCache.Count == 0)
+        if (NitroxConfig<T>.TypeCache.Count == 0)
         {
+            Type type = typeof(T);
+            if (type.Name == "NitroxConfig`1")
+            {
+                type = type.GetGenericArguments().FirstOrDefault() ?? type;
+            }
+
             IEnumerable<MemberInfo> members = type.GetFields()
                                                   .Where(f => f.Attributes != FieldAttributes.NotSerialized && !f.IsLiteral)
                                                   .Concat(type.GetProperties()
@@ -180,7 +182,7 @@ public static class NitroxConfig
             {
                 foreach (MemberInfo member in members)
                 {
-                    typeCache.Add(member.Name.ToLowerInvariant(), member);
+                    NitroxConfig<T>.TypeCache.Add(member.Name.ToLowerInvariant(), member);
                 }
             }
             catch (ArgumentException e)
@@ -190,7 +192,7 @@ public static class NitroxConfig
             }
         }
 
-        return typeCache;
+        return NitroxConfig<T>.TypeCache;
     }
 
     private static string StringifyValue(object value) => value switch
@@ -252,14 +254,20 @@ public static class NitroxConfig
     }
 }
 
-public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
+public abstract class NitroxConfig<T> where T : class
 {
+    internal static readonly Dictionary<string, MemberInfo> TypeCache = [];
+    internal static readonly Dictionary<string, object> UnserializedMembersWarnOnceCache = [];
+
     public abstract string FileName { get; }
 
     public static T Load(string saveDir)
     {
-        T config = new();
-        config.Deserialize(saveDir);
+        T config = Activator.CreateInstance<T>();
+        if (config is NitroxConfig<T> deserializable)
+        {
+            deserializable.Deserialize(saveDir);
+        }
         return config;
     }
 

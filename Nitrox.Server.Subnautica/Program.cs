@@ -94,7 +94,6 @@ public class Program
                .AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information)
                .AddNitroxConsole(options =>
                {
-                   options.IsDevMode = builder.Environment.IsDevelopment();
                    options.ColorBehavior = startOptions.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled;
                });
         builder.Services.Configure<HostOptions>(options =>

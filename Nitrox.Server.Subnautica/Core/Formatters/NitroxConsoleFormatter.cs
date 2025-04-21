@@ -138,26 +138,10 @@ public class NitroxConsoleFormatter : ConsoleFormatter, IDisposable
             }
         }
 
-        // category and event id
-        if (FormatterOptions.IsDevMode)
-        {
-            textWriter.Write(' ');
-            textWriter.Write(category.AsSpan()[(category.LastIndexOf('.') + 1) ..]);
-            textWriter.Write(':');
-
-            // Event id
-            // textWriter.Write('[');
-            // Span<char> span = stackalloc char[10];
-            // if (eventId.TryFormat(span, out int charsWritten))
-            // {
-            //     textWriter.Write(span[..charsWritten]);
-            // }
-            // else
-            // {
-            //     textWriter.Write(eventId.ToString());
-            // }
-            // textWriter.Write(']');
-        }
+        // category
+        textWriter.Write(' ');
+        textWriter.Write(category.AsSpan()[(category.LastIndexOf('.') + 1) ..]);
+        textWriter.Write(':');
 
         // scope information
         WriteScopeInformation(textWriter, scopeProvider);

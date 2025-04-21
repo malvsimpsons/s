@@ -10,5 +10,4 @@ public class NitroxConsoleOptions : ConsoleFormatterOptions
     }
 
     public LoggerColorBehavior ColorBehavior { get; set; } = LoggerColorBehavior.Enabled;
-    public bool IsDevMode { get; set; }
 }
