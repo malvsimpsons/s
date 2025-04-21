@@ -1,5 +1,8 @@
+using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,9 +15,9 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Service which prints out information at appropriate time in the app life cycle.
 /// </summary>
-internal sealed class GameServerStatusService(IOptions<ServerStartOptions> startOptions, PlayerService playerService, ILogger<GameServerStatusService> logger) : IHostedLifecycleService
+internal sealed class ServerStatusService([FromKeyedServices(typeof(ServerStatusService))] Stopwatch appStartStopWatch, IOptions<ServerStartOptions> startOptions, PlayerService playerService, ILogger<ServerStatusService> logger) : IHostedLifecycleService
 {
-    private readonly ILogger<GameServerStatusService> logger = logger;
+    private readonly ILogger<ServerStatusService> logger = logger;
     private readonly IOptions<ServerStartOptions> startOptions = startOptions;
     private readonly PlayerService playerService = playerService;
 
@@ -38,6 +41,8 @@ internal sealed class GameServerStatusService(IOptions<ServerStartOptions> start
 
     public Task StartedAsync(CancellationToken cancellationToken)
     {
+        appStartStopWatch.Stop();
+        logger.LogInformation("Server started in {TimeSpan} seconds", Math.Round(appStartStopWatch.Elapsed.TotalSeconds, 3));
         return Task.CompletedTask;
     }
 

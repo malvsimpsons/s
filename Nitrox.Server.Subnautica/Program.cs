@@ -141,9 +141,7 @@ public class Program
         // Add initialization services - diagnoses the server environment on startup.
         builder.Services
                .AddHostedSingletonService<PreventMultiServerInitService>()
-               .AddHostedSingletonService<NetworkPortAvailabilityService>()
-               .AddHostedSingletonService<ServerPerformanceDiagnosticService>()
-               .AddKeyedSingleton<Stopwatch>(typeof(ServerPerformanceDiagnosticService), serverStartStopWatch);
+               .AddHostedSingletonService<NetworkPortAvailabilityService>();
         // Add communication services
         builder.Services
                .AddPackets()
@@ -154,7 +152,8 @@ public class Program
                .AddSubnauticaResources()
                .AddPersistence() // TODO: Use SQLite instead.
                .AddHibernation()
-               .AddHostedSingletonService<GameServerStatusService>()
+               .AddKeyedSingleton<Stopwatch>(typeof(ServerStatusService), serverStartStopWatch)
+               .AddHostedSingletonService<ServerStatusService>()
                .AddHostedSingletonService<PortForwardService>()
                .AddHostedSingletonService<TimeService>()
                .AddHostedSingletonService<PlayerService>()
