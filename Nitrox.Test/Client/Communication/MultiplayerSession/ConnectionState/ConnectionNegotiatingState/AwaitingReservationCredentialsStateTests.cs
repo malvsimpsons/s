@@ -3,7 +3,6 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nitrox.Test.Client.Communication.MultiplayerSession;
 using NitroxClient.Communication.Abstract;
-using NitroxModel.MultiplayerSession;
 using NitroxModel.Packets;
 using NSubstitute;
 

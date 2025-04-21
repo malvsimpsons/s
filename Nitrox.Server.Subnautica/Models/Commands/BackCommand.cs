@@ -1,12 +1,14 @@
 ﻿using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
+using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
 [RequiresPermission(Perms.MODERATOR)]
 [RequiresOrigin(CommandOrigin.PLAYER)]
-internal class BackCommand : ICommandHandler
+internal class BackCommand(PlayerService playerService) : ICommandHandler
 {
     [Description("Teleports you back on your last location")]
     public Task Execute(ICommandContext context)
@@ -14,15 +16,15 @@ internal class BackCommand : ICommandHandler
         switch (context)
         {
             case PlayerToServerCommandContext playerContext:
-                NitroxServer.Player player = playerContext.Player;
-                if (player.LastStoredPosition == null)
-                {
-                    context.Reply("No previous location...");
-                    return Task.CompletedTask;
-                }
-
-                player.Teleport(player.LastStoredPosition.Value, player.LastStoredSubRootID);
-                context.Reply($"Teleported back to {player.LastStoredPosition.Value}");
+                ConnectedPlayerDto player = playerContext.Player;
+                // TODO: USE DATABASE
+                // if (player.LastStoredPosition == null)
+                // {
+                //     context.Reply("No previous location...");
+                //     return Task.CompletedTask;
+                // }
+                // playerService.Teleport(player, player.LastStoredPosition.Value);
+                // context.Reply($"Teleported back to {player.LastStoredPosition.Value}");
                 break;
         }
         return Task.CompletedTask;

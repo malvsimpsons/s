@@ -1,20 +1,18 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class LeakRepairedProcessor(WorldEntityManager worldEntityManager, PlayerService playerService) : AuthenticatedPacketProcessor<LeakRepaired>
+internal class LeakRepairedProcessor(WorldEntityManager worldEntityManager) : IAuthPacketProcessor<LeakRepaired>
 {
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
-    private readonly PlayerService playerService = playerService;
 
-    public override void Process(LeakRepaired packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, LeakRepaired packet)
     {
         if (worldEntityManager.TryDestroyEntity(packet.LeakId, out _))
         {
-            playerService.SendPacketToOtherPlayers(packet, player);
+            context.ReplyToOthers(packet);
         }
     }
 }

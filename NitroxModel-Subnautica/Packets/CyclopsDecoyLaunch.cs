@@ -1,6 +1,6 @@
 ﻿using System;
 using NitroxModel.DataStructures;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace NitroxModel_Subnautica.Packets
 {

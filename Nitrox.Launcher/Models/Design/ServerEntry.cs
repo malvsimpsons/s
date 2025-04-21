@@ -15,6 +15,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Nitrox.Launcher.Models.Exceptions;
+using NitroxModel.Core;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Helper;
 using NitroxModel.Logger;
@@ -45,7 +46,7 @@ public partial class ServerEntry : ObservableObject
     private int autoSaveInterval = serverDefaults.SaveInterval / 1000;
 
     [ObservableProperty]
-    private NitroxGameMode gameMode = serverDefaults.GameMode;
+    private SubnauticaGameMode gameMode = serverDefaults.GameMode;
 
     [ObservableProperty]
     private bool isEmbedded;
@@ -105,7 +106,7 @@ public partial class ServerEntry : ObservableObject
         base.OnPropertyChanged(e);
     }
 
-    public static ServerEntry CreateNew(string saveDir, NitroxGameMode saveGameMode)
+    public static ServerEntry CreateNew(string saveDir, SubnauticaGameMode saveGameMode)
     {
         Directory.CreateDirectory(saveDir);
         SubnauticaServerConfig config = SubnauticaServerConfig.Load(saveDir);

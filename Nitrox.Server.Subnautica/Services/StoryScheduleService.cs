@@ -7,18 +7,16 @@ using Nitrox.Server.Subnautica.Models.Persistence;
 using Nitrox.Server.Subnautica.Models.Persistence.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
 ///     Keeps track of PDA story goals and scheduled story events.
 /// </summary>
-internal class StoryScheduleService(IStateManager<PdaData> pda, IStateManager<StoryGoalData> storyGoal, TimeService timeService, PlayerService playerService)
+internal class StoryScheduleService(TimeService timeService, PlayerService playerService)
     : IHostedService
 {
-    private readonly IStateManager<PdaData> pda = pda;
-    private readonly IStateManager<StoryGoalData> storyGoal = storyGoal;
     private readonly PlayerService playerService = playerService;
     private readonly ThreadSafeDictionary<string, NitroxScheduledGoal> scheduledGoals = new();
     private readonly TimeService timeService = timeService;
@@ -59,36 +57,42 @@ internal class StoryScheduleService(IStateManager<PdaData> pda, IStateManager<St
         if (becauseOfTime && !IsAlreadyRegistered(goalKey))
         {
             scheduledGoal.TimeExecute = (float)timeService.Elapsed.TotalSeconds + 15;
-            playerService.SendPacketToAllPlayers(new Schedule(scheduledGoal.TimeExecute, goalKey, scheduledGoal.GoalType));
+            playerService.SendPacketToAllPlayers(new Schedule(scheduledGoal.TimeExecute, goalKey, scheduledGoal.GoalCategory));
             return;
         }
         scheduledGoals.Remove(goalKey);
     }
 
-    public bool IsAlreadyRegistered(string goalKey) => pda.State.PdaLog.Any(entry => entry.Key == goalKey) || storyGoal.State.CompletedGoals.Contains(goalKey);
+    public bool IsAlreadyRegistered(string goalKey)
+    {
+        // TODO: USE DATBASE
+        // return pda.State.PdaLog.Any(entry => entry.Key == goalKey) || storyGoal.State.CompletedGoals.Contains(goalKey);
+        return false; // TODO REMOVE
+    }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        StoryGoalData story = await storyGoal.GetStateAsync(cancellationToken);
-        // We still want to get a "replicated" list in memory
-        for (int i = story.ScheduledGoals.Count - 1; i >= 0; i--)
-        {
-            NitroxScheduledGoal scheduledGoal = story.ScheduledGoals[i];
-            // In the unlikely case that there's a duplicated entry
-            if (scheduledGoals.TryGetValue(scheduledGoal.GoalKey, out NitroxScheduledGoal alreadyInGoal))
-            {
-                // We remove the goal that's already in if it's planned for later than the first one
-                if (scheduledGoal.TimeExecute <= alreadyInGoal.TimeExecute)
-                {
-                    UnScheduleGoal(alreadyInGoal.GoalKey);
-                }
-                continue;
-            }
-
-            scheduledGoals.Add(scheduledGoal.GoalKey, scheduledGoal);
-        }
-
-        await pda.GetStateAsync(cancellationToken);
+        // TODO: USE DATABASE
+        // StoryGoalData story = await storyGoal.GetStateAsync(cancellationToken);
+        // // We still want to get a "replicated" list in memory
+        // for (int i = story.ScheduledGoals.Count - 1; i >= 0; i--)
+        // {
+        //     NitroxScheduledGoal scheduledGoal = story.ScheduledGoals[i];
+        //     // In the unlikely case that there's a duplicated entry
+        //     if (scheduledGoals.TryGetValue(scheduledGoal.GoalKey, out NitroxScheduledGoal alreadyInGoal))
+        //     {
+        //         // We remove the goal that's already in if it's planned for later than the first one
+        //         if (scheduledGoal.TimeExecute <= alreadyInGoal.TimeExecute)
+        //         {
+        //             UnScheduleGoal(alreadyInGoal.GoalKey);
+        //         }
+        //         continue;
+        //     }
+        //
+        //     scheduledGoals.Add(scheduledGoal.GoalKey, scheduledGoal);
+        // }
+        //
+        // await pda.GetStateAsync(cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

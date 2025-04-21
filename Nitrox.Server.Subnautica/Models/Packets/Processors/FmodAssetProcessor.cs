@@ -1,32 +1,35 @@
-﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+﻿using Microsoft.Extensions.Logging;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.DataStructures.Unity;
+using NitroxModel.Dto;
 using NitroxModel.GameLogic.FMOD;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class FmodAssetProcessor(PlayerService playerService, FmodService fmodService) : AuthenticatedPacketProcessor<FMODAssetPacket>
+internal class FmodAssetProcessor(PlayerService playerService, FmodService fmodService, ILogger<FmodAssetProcessor> logger) : IAuthPacketProcessor<FMODAssetPacket>
 {
     private readonly PlayerService playerService = playerService;
     private readonly FmodService fmodService = fmodService;
+    private readonly ILogger<FmodAssetProcessor> logger = logger;
 
-    public override void Process(FMODAssetPacket packet, NitroxServer.Player sendingPlayer)
+    public async Task Process(AuthProcessorContext context, FMODAssetPacket packet)
     {
         if (!fmodService.TryGetSoundData(packet.AssetPath, out SoundData soundData))
         {
-            Log.Error($"[{nameof(FmodAssetProcessor)}] Whitelist has no item for {packet.AssetPath}.");
+            logger.LogError("whitelist has no item for {Path}", packet.AssetPath);
             return;
         }
 
-        foreach (NitroxServer.Player player in playerService.GetConnectedPlayers())
+        foreach (ConnectedPlayerDto player in await playerService.GetConnectedPlayersAsync())
         {
-            float distance = NitroxVector3.Distance(player.Position, packet.Position);
-            if (player != sendingPlayer && (soundData.IsGlobal || player.SubRootId.Equals(sendingPlayer.SubRootId)) && distance <= soundData.Radius)
-            {
-                packet.Volume = SoundHelper.CalculateVolume(distance, soundData.Radius, packet.Volume);
-                player.SendPacket(packet);
-            }
+            // TODO: USE DATABASE
+            // float distance = NitroxVector3.Distance(player.Position, packet.Position);
+            // if (player != sendingPlayer && (soundData.IsGlobal || player.SubRootId.Equals(sendingPlayer.SubRootId)) && distance <= soundData.Radius)
+            // {
+            //     packet.Volume = SoundHelper.CalculateVolume(distance, soundData.Radius, packet.Volume);
+            //     player.SendPacket(packet);
+            // }
         }
     }
 }

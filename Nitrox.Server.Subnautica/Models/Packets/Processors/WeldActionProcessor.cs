@@ -1,21 +1,22 @@
 ﻿using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using NitroxModel.Packets;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class WeldActionProcessor(SimulationOwnershipData simulationOwnershipData) : AuthenticatedPacketProcessor<WeldAction>
+internal sealed class WeldActionProcessor(SimulationOwnershipData simulationOwnershipData) : IAuthPacketProcessor<WeldAction>
 {
     private readonly SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
 
-    public override void Process(WeldAction packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, WeldAction packet)
     {
-        NitroxServer.Player simulatingPlayer = simulationOwnershipData.GetPlayerForLock(packet.Id);
+        // TODO: Fix getting player lock for entity ownership.
+        // NitroxServer.Player simulatingPlayer = simulationOwnershipData.GetPlayerForLock(packet.Id);
 
-        if (simulatingPlayer != null)
-        {
-            Log.Debug($"Send WeldAction to simulating player {simulatingPlayer.Name} for entity {packet.Id}");
-            simulatingPlayer.SendPacket(packet);
-        }
+        // if (simulatingPlayer != null)
+        // {
+        //     Log.Debug($"Send WeldAction to simulating player {simulatingPlayer.Name} for entity {packet.Id}");
+        //     simulatingPlayer.SendPacket(packet);
+        // }
     }
 }

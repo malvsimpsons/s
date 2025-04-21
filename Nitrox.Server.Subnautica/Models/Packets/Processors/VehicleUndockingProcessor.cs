@@ -1,17 +1,16 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class VehicleUndockingProcessor(PlayerService playerService, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<VehicleUndocking>
+internal sealed class VehicleUndockingProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<VehicleUndocking>
 {
-    private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
-    public override void Process(VehicleUndocking packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, VehicleUndocking packet)
     {
         if (packet.UndockingStart)
         {
@@ -30,6 +29,6 @@ internal sealed class VehicleUndockingProcessor(PlayerService playerService, Ent
             entityRegistry.RemoveFromParent(vehicleEntity);
         }
 
-        playerService.SendPacketToOtherPlayers(packet, player);
+        context.ReplyToOthers(packet);
     }
 }

@@ -10,7 +10,7 @@ using NitroxClient.MonoBehaviours.Gui.HUD;
 using NitroxClient.MonoBehaviours.Vehicles;
 using NitroxClient.Unity.Helper;
 using NitroxModel.GameLogic.FMOD;
-using NitroxModel.MultiplayerSession;
+using NitroxModel.Networking.Session;
 using NitroxModel.Server;
 using UnityEngine;
 using UWE;
@@ -541,7 +541,7 @@ public class RemotePlayer : INitroxPlayer
         }
     }
 
-    public void SetGameMode(NitroxGameMode gameMode)
+    public void SetGameMode(SubnauticaGameMode gameMode)
     {
         PlayerContext.GameMode = gameMode;
         RefreshVitalsVisibility();
@@ -551,7 +551,7 @@ public class RemotePlayer : INitroxPlayer
     {
         if (vitals)
         {
-            bool visible = PlayerContext.GameMode != NitroxGameMode.CREATIVE;
+            bool visible = PlayerContext.GameMode != SubnauticaGameMode.CREATIVE;
             vitals.SetStatsVisible(visible);
         }
     }
@@ -562,6 +562,6 @@ public class RemotePlayer : INitroxPlayer
     /// </summary>
     public bool CanBeAttacked()
     {
-        return !SubRoot && !EscapePod && PlayerContext.GameMode != NitroxGameMode.CREATIVE;
+        return !SubRoot && !EscapePod && PlayerContext.GameMode != SubnauticaGameMode.CREATIVE;
     }
 }

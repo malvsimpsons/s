@@ -7,7 +7,8 @@ using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.GameLogic.FMOD;
 using NitroxModel.Helper;
-using NitroxModel.MultiplayerSession;
+using NitroxModel.Networking;
+using NitroxModel.Networking.Session;
 using UnityEngine;
 
 namespace NitroxClient.GameLogic;
@@ -17,7 +18,7 @@ public class PlayerManager
     private readonly PlayerModelManager playerModelManager;
     private readonly PlayerVitalsManager playerVitalsManager;
     private readonly FmodWhitelist fmodWhitelist;
-    private readonly Dictionary<ushort, RemotePlayer> playersById = new();
+    private readonly Dictionary<PeerId, RemotePlayer> playersById = new();
 
     public OnCreateDelegate OnCreate;
     public OnRemoveDelegate OnRemove;
@@ -29,13 +30,13 @@ public class PlayerManager
         this.fmodWhitelist = fmodWhitelist;
     }
 
-    public Optional<RemotePlayer> Find(ushort playerId)
+    public Optional<RemotePlayer> Find(PeerId playerId)
     {
         playersById.TryGetValue(playerId, out RemotePlayer player);
         return Optional.OfNullable(player);
     }
 
-    public bool TryFind(ushort playerId, out RemotePlayer remotePlayer) => playersById.TryGetValue(playerId, out remotePlayer);
+    public bool TryFind(PeerId playerId, out RemotePlayer remotePlayer) => playersById.TryGetValue(playerId, out remotePlayer);
 
     public Optional<RemotePlayer> Find(NitroxId playerNitroxId)
     {
@@ -72,7 +73,7 @@ public class PlayerManager
         return remotePlayer;
     }
 
-    public void RemovePlayer(ushort playerId)
+    public void RemovePlayer(PeerId playerId)
     {
         if (playersById.TryGetValue(playerId, out RemotePlayer player))
         {
@@ -86,6 +87,6 @@ public class PlayerManager
     /// <returns>Remote players + You => X + 1</returns>
     public int GetTotalPlayerCount() => playersById.Count + 1;
 
-    public delegate void OnCreateDelegate(ushort playerId, RemotePlayer remotePlayer);
-    public delegate void OnRemoveDelegate(ushort playerId, RemotePlayer remotePlayer);
+    public delegate void OnCreateDelegate(PeerId playerId, RemotePlayer remotePlayer);
+    public delegate void OnRemoveDelegate(PeerId playerId, RemotePlayer remotePlayer);
 }

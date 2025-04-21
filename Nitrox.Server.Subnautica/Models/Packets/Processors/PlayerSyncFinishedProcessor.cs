@@ -1,22 +1,23 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class PlayerSyncFinishedProcessor(PlayerService playerManager, HibernationService hibernationService) : AuthenticatedPacketProcessor<PlayerSyncFinished>
+internal sealed class PlayerSyncFinishedProcessor(PlayerService playerManager, HibernationService hibernationService) : IAuthPacketProcessor<PlayerSyncFinished>
 {
     private readonly PlayerService playerManager = playerManager;
     private readonly HibernationService hibernationService = hibernationService;
 
-    public override void Process(PlayerSyncFinished packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, PlayerSyncFinished packet)
     {
-        // If this is the first player connecting we need to restart time at this exact moment
-        if (playerManager.GetConnectedPlayers().Count == 1)
-        {
-            hibernationService.Resume();
-        }
-
-        playerManager.FinishProcessingReservation(player);
+        // TODO: USE DATABASE
+        // // If this is the first player connecting we need to restart time at this exact moment
+        // if (playerManager.GetConnectedPlayersAsync().Count == 1)
+        // {
+        //     hibernationService.Resume();
+        // }
+        //
+        // playerManager.FinishProcessingReservation(player);
     }
 }

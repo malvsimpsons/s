@@ -6,7 +6,7 @@ using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Bases;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.GameLogic.Entities.Bases;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxModel.Serialization;
 using NitroxServer.GameLogic.Entities;
 using NitroxServer.Serialization;

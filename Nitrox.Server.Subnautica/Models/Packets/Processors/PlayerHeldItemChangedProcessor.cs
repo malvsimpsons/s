@@ -1,21 +1,22 @@
-﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class PlayerHeldItemChangedProcessor(PlayerService playerService) : AuthenticatedPacketProcessor<PlayerHeldItemChanged>
+internal class PlayerHeldItemChangedProcessor(PlayerService playerService) : IAuthPacketProcessor<PlayerHeldItemChanged>
 {
     private readonly PlayerService playerService = playerService;
 
-    public override void Process(PlayerHeldItemChanged packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, PlayerHeldItemChanged packet)
     {
-        if (packet.IsFirstTime != null && !player.UsedItems.Contains(packet.IsFirstTime))
-        {
-            player.UsedItems.Add(packet.IsFirstTime);
-        }
-
-        playerService.SendPacketToOtherPlayers(packet, player);
+        // TODO: USE DATABASE
+        // if (packet.IsFirstTime != null && !player.UsedItems.Contains(packet.IsFirstTime))
+        // {
+        //     player.UsedItems.Add(packet.IsFirstTime);
+        // }
+        //
+        // playerService.SendPacketToOtherPlayers(packet, player);
     }
 }

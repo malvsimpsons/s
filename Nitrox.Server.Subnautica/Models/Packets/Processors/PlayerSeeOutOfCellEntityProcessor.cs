@@ -1,18 +1,19 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using NitroxModel.Packets;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class PlayerSeeOutOfCellEntityProcessor(EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<PlayerSeeOutOfCellEntity>
+internal class PlayerSeeOutOfCellEntityProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<PlayerSeeOutOfCellEntity>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
-    public override void Process(PlayerSeeOutOfCellEntity packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, PlayerSeeOutOfCellEntity packet)
     {
-        if (entityRegistry.GetEntityById(packet.EntityId).HasValue)
-        {
-            player.OutOfCellVisibleEntities.Add(packet.EntityId);
-        }
+        // TODO: USE DATABASE
+        // if (entityRegistry.GetEntityById(packet.EntityId).HasValue)
+        // {
+        //     player.OutOfCellVisibleEntities.Add(packet.EntityId);
+        // }
     }
 }

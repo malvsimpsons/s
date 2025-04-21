@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Timers;
 using NitroxModel.Networking;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxServer.GameLogic.Bases;
 
 namespace NitroxServer.GameLogic;

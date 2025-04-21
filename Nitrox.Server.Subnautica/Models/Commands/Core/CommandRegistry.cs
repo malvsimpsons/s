@@ -133,7 +133,8 @@ internal sealed class CommandRegistry
             {
                 foreach (ArgConverterInfo converterInfo in list)
                 {
-                    ConvertResult result = converterInfo.Converter.Convert(TryParseToType(value, converterInfo.From));
+                    // TODO: VERIFY GETAWAITER() WORKS???!?!?!
+                    ConvertResult result = converterInfo.Converter.ConvertAsync(TryParseToType(value, converterInfo.From)).GetAwaiter().GetResult();
                     if (result.Success)
                     {
                         return result;

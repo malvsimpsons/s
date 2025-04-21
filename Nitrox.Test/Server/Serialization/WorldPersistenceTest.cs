@@ -85,7 +85,7 @@ public class WorldPersistenceTest
         {
             Assert.AreEqual(scheduledGoal.TimeExecute, scheduledGoalAfter.TimeExecute);
             Assert.AreEqual(scheduledGoal.GoalKey, scheduledGoalAfter.GoalKey);
-            Assert.AreEqual(scheduledGoal.GoalType, scheduledGoalAfter.GoalType);
+            Assert.AreEqual(scheduledGoal.GoalCategory, scheduledGoalAfter.GoalCategory);
         });
     }
 

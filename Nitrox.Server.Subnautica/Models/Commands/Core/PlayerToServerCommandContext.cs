@@ -1,8 +1,11 @@
 using System;
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Services;
+using NitroxModel.Core;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Dto;
+using NitroxModel.Networking;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Core;
 
@@ -12,15 +15,15 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
     public ILogger Logger { get; set; }
     public CommandOrigin Origin { get; init; } = CommandOrigin.PLAYER;
     public string OriginName => Player.Name;
-    public ushort OriginId { get; init; }
+    public PeerId OriginId { get; init; }
     public Perms Permissions { get; init; }
 
     /// <summary>
     ///     Gets the player which issued the command.
     /// </summary>
-    public NitroxServer.Player Player { get; init; }
+    public ConnectedPlayerDto Player { get; init; }
 
-    public PlayerToServerCommandContext(PlayerService playerService, NitroxServer.Player player)
+    public PlayerToServerCommandContext(PlayerService playerService, ConnectedPlayerDto player)
     {
         ArgumentNullException.ThrowIfNull(playerService);
         ArgumentNullException.ThrowIfNull(player);
@@ -30,7 +33,7 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
         Permissions = player.Permissions;
     }
 
-    public void Message(ushort id, string message)
+    public async Task MessageAsync(PeerId id, string message)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -41,12 +44,13 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
             Reply(message);
             return;
         }
-        if (!playerService.TryGetPlayerById(id, out NitroxServer.Player player))
+        ConnectedPlayerDto player = await playerService.GetConnectedPlayerByIdAsync(id);
+        if (player == null)
         {
             Logger.LogWarning("No player found with id {PlayerId}", id);
             return;
         }
-        player.SendPacket(new ChatMessage(OriginId, message));
+        playerService.SendPacket(new ChatMessage(OriginId, message), id);
     }
 
     public void Reply(string message)
@@ -55,16 +59,16 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
         {
             return;
         }
-        Player.SendPacket(new ChatMessage(ChatMessage.SERVER_ID, message));
+        playerService.SendPacket(new ChatMessage(PeerId.SERVER_ID, message), OriginId);
     }
 
-    public void MessageAll(string message)
+    public async Task MessageAllAsync(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
             return;
         }
-        playerService.SendPacketToOtherPlayers(new ChatMessage(ChatMessage.SERVER_ID, message), Player);
+        playerService.SendPacketToOtherPlayers(new ChatMessage(PeerId.SERVER_ID, message), OriginId);
         Logger.LogInformation("Player {PlayerName} #{PlayerId} sent a message to everyone:{Message}", Player.Name, Player.Id, message);
     }
 }

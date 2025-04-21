@@ -1,21 +1,13 @@
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.GameLogic.Bases;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Unity;
-using NitroxModel.DataStructures.Util;
-using NitroxModel.Helper;
-using NitroxModel.MultiplayerSession;
-using NitroxModel.Networking;
-using NitroxModel.Packets;
-using NitroxServer.Communication;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
@@ -28,7 +20,7 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
     EntityRegistry entityRegistry,
     IOptions<SubnauticaServerOptions> optionsProvider,
     NtpSyncer ntpSyncer)
-    : UnauthenticatedPacketProcessor<PlayerJoiningMultiplayerSession>
+    : IAnonPacketProcessor<PlayerJoiningMultiplayerSession>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly EntitySimulation entitySimulation = entitySimulation;
@@ -39,71 +31,66 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
     private readonly StoryTimingService storyTimingService = storyTimingService;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
 
-    public override void Process(PlayerJoiningMultiplayerSession packet, INitroxConnection connection)
+    public async Task Process(AnonProcessorContext context, PlayerJoiningMultiplayerSession packet)
     {
-        NitroxServer.Player player = playerService.AddConnectedPlayer(connection, packet.ReservationKey, out bool wasBrandNewPlayer);
-        NitroxId assignedEscapePodId = escapePodService.AssignPlayerToEscapePod(player.Id, out Optional<EscapePodWorldEntity> newlyCreatedEscapePod);
+        // TODO: Assign escape pod via database.
+        PeerId player = playerService.AddConnectedPlayer(context.Sender, packet.ReservationKey, out bool wasBrandNewPlayer);
+        // NitroxId assignedEscapePodId = escapePodService.AssignPlayerToEscapePod(player.Id, out Optional<EscapePodWorldEntity> newlyCreatedEscapePod);
+        // if (wasBrandNewPlayer)
+        // {
+        //     player.SubRootId = assignedEscapePodId;
+        // }
+        // if (newlyCreatedEscapePod.HasValue)
+        // {
+        //     SpawnEntities spawnNewEscapePod = new(newlyCreatedEscapePod.Value);
+        //     playerService.SendPacketToOtherPlayers(spawnNewEscapePod, player);
+        // }
 
-        if (wasBrandNewPlayer)
-        {
-            player.SubRootId = assignedEscapePodId;
-        }
-
-        if (newlyCreatedEscapePod.HasValue)
-        {
-            SpawnEntities spawnNewEscapePod = new(newlyCreatedEscapePod.Value);
-            playerService.SendPacketToOtherPlayers(spawnNewEscapePod, player);
-        }
-
+        // TODO: FIX - need to provide endpoint to processor context
         // Make players on localhost admin by default.
-        if (connection.Endpoint.Address.IsLocalhost())
-        {
-            Log.Info($"Granted admin to '{player.Name}' because they're playing on the host machine");
-            player.Permissions = Perms.ADMIN;
-        }
+        // if (connection.Endpoint.Address.IsLocalhost())
+        // {
+        //     Log.Info($"Granted admin to '{player.Name}' because they're playing on the host machine");
+        //     player.Permissions = Perms.ADMIN;
+        // }
 
-        List<SimulatedEntity> simulations = entitySimulation.AssignGlobalRootEntitiesAndGetData(player);
-
-        player.Entity = wasBrandNewPlayer ? SetupPlayerEntity(player) : RespawnExistingEntity(player);
-
-        List<GlobalRootEntity> globalRootEntities = worldEntityManager.GetGlobalRootEntities(true);
-        bool isFirstPlayer = playerService.GetConnectedPlayers().Count == 1;
-
-        InitialPlayerSync initialPlayerSync = new(player.GameObjectId,
-                                                  wasBrandNewPlayer,
-                                                  assignedEscapePodId,
-                                                  player.EquippedItems,
-                                                  player.UsedItems,
-                                                  player.QuickSlotsBindingIds,
-                                                  // TODO: FIX data here
-                                                  default,
-                                                  default,
-                                                  // world.GameData.PDAState.GetInitialPDAData(),
-                                                  // world.GameData.StoryGoals.GetInitialStoryGoalData(scheduleKeeper, player),
-                                                  player.Position,
-                                                  player.Rotation,
-                                                  player.SubRootId,
-                                                  player.Stats,
-                                                  GetOtherPlayers(player),
-                                                  globalRootEntities,
-                                                  simulations,
-                                                  player.GameMode,
-                                                  player.Permissions,
-                                                  wasBrandNewPlayer ? IntroCinematicMode.LOADING : IntroCinematicMode.COMPLETED,
-                                                  new SubnauticaPlayerPreferences(new Dictionary<string, PingInstancePreference>(player.PingInstancePreferences), player.PinnedRecipePreferences.ToList()),
-                                                  storyTimingService.GetTimeData(),
-                                                  isFirstPlayer,
-                                                  BuildingManager.GetEntitiesOperations(globalRootEntities),
-                                                  optionsProvider.Value.KeepInventoryOnDeath
-        );
-
-        player.SendPacket(initialPlayerSync);
-    }
-
-    private IEnumerable<PlayerContext> GetOtherPlayers(NitroxServer.Player player)
-    {
-        return playerService.GetConnectedPlayers().Where(p => p != player)
-                            .Select(p => p.PlayerContext);
+        // TODO: USE DATABASE
+        // List<SimulatedEntity> simulations = entitySimulation.AssignGlobalRootEntitiesAndGetData(player);
+        //
+        // player.Entity = wasBrandNewPlayer ? SetupPlayerEntity(player) : RespawnExistingEntity(player);
+        //
+        // List<GlobalRootEntity> globalRootEntities = worldEntityManager.GetGlobalRootEntities(true);
+        // bool isFirstPlayer = playerService.GetConnectedPlayersAsync().Count == 1;
+        //
+        // InitialPlayerSync initialPlayerSync = new(player.GameObjectId,
+        //                                           wasBrandNewPlayer,
+        //                                           assignedEscapePodId,
+        //                                           player.EquippedItems,
+        //                                           player.UsedItems,
+        //                                           player.QuickSlotsBindingIds,
+        //                                           // TODO: USE DATABASE HERE
+        //                                           default,
+        //                                           default,
+        //                                           // world.GameData.PDAState.GetInitialPDAData(),
+        //                                           // world.GameData.StoryGoals.GetInitialStoryGoalData(scheduleKeeper, player),
+        //                                           player.Position,
+        //                                           player.Rotation,
+        //                                           player.SubRootId,
+        //                                           player.Stats,
+        //                                           GetOtherPlayers(player),
+        //                                           globalRootEntities,
+        //                                           simulations,
+        //                                           player.GameMode,
+        //                                           player.Permissions,
+        //                                           wasBrandNewPlayer ? IntroCinematicMode.LOADING : IntroCinematicMode.COMPLETED,
+        //                                           new SubnauticaPlayerPreferences(new Dictionary<string, PingInstancePreference>(player.PingInstancePreferences), player.PinnedRecipePreferences.ToList()),
+        //                                           storyTimingService.GetTimeData(),
+        //                                           isFirstPlayer,
+        //                                           BuildingManager.GetEntitiesOperations(globalRootEntities),
+        //                                           optionsProvider.Value.KeepInventoryOnDeath
+        // );
+        //
+        // player.SendPacket(initialPlayerSync);
     }
 
     private PlayerWorldEntity SetupPlayerEntity(NitroxServer.Player player)

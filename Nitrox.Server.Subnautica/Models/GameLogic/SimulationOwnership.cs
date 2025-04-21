@@ -9,7 +9,7 @@ public class SimulationOwnershipData
     private readonly Lock locker = new();
     private readonly Dictionary<NitroxId, PlayerLock> playerLocksById = [];
 
-    public bool TryToAcquire(NitroxId id, NitroxServer.Player player, SimulationLockType requestedLock)
+    public bool TryToAcquire(NitroxId id, PeerId player, SimulationLockType requestedLock)
     {
         lock (locker)
         {
@@ -21,7 +21,7 @@ public class SimulationOwnershipData
             }
 
             // If this player owns the lock then they are already simulating
-            if (playerLock.Player == player)
+            if (playerLock.PlayerId == player)
             {
                 // update the lock type in case they are attempting to downgrade
                 playerLocksById[id] = new PlayerLock(player, requestedLock);
@@ -41,11 +41,11 @@ public class SimulationOwnershipData
         }
     }
 
-    public bool RevokeIfOwner(NitroxId id, NitroxServer.Player player)
+    public bool RevokeIfOwner(NitroxId id, PeerId player)
     {
         lock (locker)
         {
-            if (playerLocksById.TryGetValue(id, out PlayerLock playerLock) && playerLock.Player == player)
+            if (playerLocksById.TryGetValue(id, out PlayerLock playerLock) && playerLock.PlayerId == player)
             {
                 playerLocksById.Remove(id);
                 return true;
@@ -55,7 +55,7 @@ public class SimulationOwnershipData
         }
     }
 
-    public List<NitroxId> RevokeAllForOwner(NitroxServer.Player player)
+    public List<NitroxId> RevokeAllForOwner(PeerId player)
     {
         lock (locker)
         {
@@ -63,7 +63,7 @@ public class SimulationOwnershipData
 
             foreach (KeyValuePair<NitroxId, PlayerLock> idWithPlayerLock in playerLocksById)
             {
-                if (idWithPlayerLock.Value.Player == player)
+                if (idWithPlayerLock.Value.PlayerId == player)
                 {
                     revokedIds.Add(idWithPlayerLock.Key);
                 }
@@ -86,13 +86,13 @@ public class SimulationOwnershipData
         }
     }
 
-    public NitroxServer.Player GetPlayerForLock(NitroxId id)
+    public PeerId? GetPlayerForLock(NitroxId id)
     {
         lock (locker)
         {
             if (playerLocksById.TryGetValue(id, out PlayerLock playerLock))
             {
-                return playerLock.Player;
+                return playerLock.PlayerId;
             }
         }
         return null;
@@ -106,15 +106,9 @@ public class SimulationOwnershipData
         }
     }
 
-    public struct PlayerLock
+    public struct PlayerLock(PeerId playerId, SimulationLockType lockType)
     {
-        public NitroxServer.Player Player { get; }
-        public SimulationLockType LockType { get; set; }
-
-        public PlayerLock(NitroxServer.Player player, SimulationLockType lockType)
-        {
-            Player = player;
-            LockType = lockType;
-        }
+        public PeerId PlayerId { get; } = playerId;
+        public SimulationLockType LockType { get; set; } = lockType;
     }
 }

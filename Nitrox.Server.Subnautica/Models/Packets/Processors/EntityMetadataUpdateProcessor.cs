@@ -1,19 +1,19 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EntityMetadataUpdateProcessor(PlayerService playerService, EntityRegistry entityRegistry) : AuthenticatedPacketProcessor<EntityMetadataUpdate>
+internal class EntityMetadataUpdateProcessor(PlayerService playerService, EntityRegistry entityRegistry) : IAuthPacketProcessor<EntityMetadataUpdate>
 {
     private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
-    public override void Process(EntityMetadataUpdate packet, NitroxServer.Player sendingPlayer)
+    public async Task Process(AuthProcessorContext context, EntityMetadataUpdate packet)
     {
         if (!entityRegistry.TryGetEntityById(packet.Id, out Entity entity))
         {
@@ -21,27 +21,29 @@ internal class EntityMetadataUpdateProcessor(PlayerService playerService, Entity
             return;
         }
 
-        if (TryProcessMetadata(sendingPlayer, entity, packet.NewValue))
-        {
-            entity.Metadata = packet.NewValue;
-            SendUpdateToVisiblePlayers(packet, sendingPlayer, entity);
-        }
+        // TODO: FIX
+        // if (TryProcessMetadata(context.Sender, entity, packet.NewValue))
+        // {
+        //     entity.Metadata = packet.NewValue;
+        //     SendUpdateToVisiblePlayers(packet, context.Sender, entity);
+        // }
     }
 
-    private void SendUpdateToVisiblePlayers(EntityMetadataUpdate packet, NitroxServer.Player sendingPlayer, Entity entity)
+    private void SendUpdateToVisiblePlayers(EntityMetadataUpdate packet, PeerId sendingPlayer, Entity entity)
     {
-        foreach (NitroxServer.Player player in playerService.GetConnectedPlayers())
-        {
-            bool updateVisibleToPlayer = player.CanSee(entity);
-
-            if (player != sendingPlayer && updateVisibleToPlayer)
-            {
-                player.SendPacket(packet);
-            }
-        }
+        // TODO: FIX WITH DATABASE
+        // foreach (NitroxServer.Player player in playerService.GetConnectedPlayersAsync())
+        // {
+        //     bool updateVisibleToPlayer = player.CanSee(entity);
+        //
+        //     if (player != sendingPlayer && updateVisibleToPlayer)
+        //     {
+        //         player.SendPacket(packet);
+        //     }
+        // }
     }
 
-    private bool TryProcessMetadata(NitroxServer.Player sendingPlayer, Entity entity, EntityMetadata metadata)
+    private bool TryProcessMetadata(PeerId sendingPlayer, Entity entity, EntityMetadata metadata)
     {
         return metadata switch
         {
@@ -52,20 +54,23 @@ internal class EntityMetadataUpdateProcessor(PlayerService playerService, Entity
         };
     }
 
-    private bool ProcessPlayerMetadata(NitroxServer.Player sendingPlayer, Entity entity, PlayerMetadata metadata)
+    private bool ProcessPlayerMetadata(PeerId sendingPlayer, Entity entity, PlayerMetadata metadata)
     {
-        if (sendingPlayer.GameObjectId == entity.Id)
-        {
-            sendingPlayer.EquippedItems.Clear();
-            foreach (PlayerMetadata.EquippedItem item in metadata.EquippedItems)
-            {
-                sendingPlayer.EquippedItems.Add(item.Slot, item.Id);
-            }
+        // TODO: FIX WITH DATABASE
+        // if (sendingPlayer.GameObjectId == entity.Id)
+        // {
+        //     sendingPlayer.EquippedItems.Clear();
+        //     foreach (PlayerMetadata.EquippedItem item in metadata.EquippedItems)
+        //     {
+        //         sendingPlayer.EquippedItems.Add(item.Slot, item.Id);
+        //     }
+        //
+        //     return true;
+        // }
+        //
+        // Log.WarnOnce($"Player {sendingPlayer.Name} tried updating metadata of another player's entity {entity.Id}");
+        // return false;
 
-            return true;
-        }
-
-        Log.WarnOnce($"Player {sendingPlayer.Name} tried updating metadata of another player's entity {entity.Id}");
         return false;
     }
 }

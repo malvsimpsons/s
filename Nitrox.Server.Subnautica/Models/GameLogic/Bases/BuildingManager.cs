@@ -1,22 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Bases;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.GameLogic.Entities.Bases;
-using NitroxModel.Packets;
+using NitroxModel.Dto;
+using NitroxModel.Networking.Packets;
 using NitroxModel.Serialization;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 
-internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, IOptions<SubnauticaServerConfig> configProvider)
+internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, PlayerService playerService, IOptions<SubnauticaServerConfig> configProvider, ILogger<BuildingManager> logger)
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
     private readonly IOptions<SubnauticaServerConfig> configProvider = configProvider;
+    private readonly ILogger<BuildingManager> logger = logger;
+    private readonly PlayerService playerService = playerService;
 
     public bool AddGhost(PlaceGhost placeGhost)
     {
@@ -152,80 +157,84 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
         return true;
     }
 
-    public bool UpdateBase(NitroxServer.Player player, UpdateBase updateBase, out int operationId)
+    public bool UpdateBase(PeerId player, UpdateBase updateBase, out int operationId)
     {
-        if (!entityRegistry.TryGetEntityById<GhostEntity>(updateBase.FormerGhostId, out _))
-        {
-            Log.Error($"Trying to place a base from a non-registered ghost (GhostId: {updateBase.FormerGhostId})");
-            operationId = -1;
-            return false;
-        }
-        if (!entityRegistry.TryGetEntityById(updateBase.BaseId, out BuildEntity buildEntity))
-        {
-            Log.Error($"Trying to update a non-registered build (BaseId: {updateBase.BaseId})");
-            operationId = -1;
-            return false;
-        }
-        int deltaOperations = buildEntity.OperationId + 1 - updateBase.OperationId;
-        if (deltaOperations != 0 && configProvider.Value.SafeBuilding)
-        {
-            Log.Warn($"Ignoring an {nameof(UpdateBase)} packet from [{player.Name}] which is {Math.Abs(deltaOperations) + (deltaOperations > 0 ? " operations ahead" : " operations late")}");
-            NotifyPlayerDesync(player);
-            operationId = -1;
-            return false;
-        }
-
-        worldEntityManager.RemoveGlobalRootEntity(updateBase.FormerGhostId);
-        buildEntity.BaseData = updateBase.BaseData;
-
-        foreach (KeyValuePair<NitroxId, NitroxBaseFace> updatedChild in updateBase.UpdatedChildren)
-        {
-            if (entityRegistry.TryGetEntityById(updatedChild.Key, out InteriorPieceEntity childEntity))
-            {
-                childEntity.BaseFace = updatedChild.Value;
-            }
-        }
-        foreach (KeyValuePair<NitroxId, NitroxInt3> updatedMoonpool in updateBase.UpdatedMoonpools)
-        {
-            if (entityRegistry.TryGetEntityById(updatedMoonpool.Key, out MoonpoolEntity childEntity))
-            {
-                childEntity.Cell = updatedMoonpool.Value;
-            }
-        }
-        foreach (KeyValuePair<NitroxId, NitroxInt3> updatedMapRoom in updateBase.UpdatedMapRooms)
-        {
-            if (entityRegistry.TryGetEntityById(updatedMapRoom.Key, out MapRoomEntity childEntity))
-            {
-                childEntity.Cell = updatedMapRoom.Value;
-            }
-        }
-
-        if (updateBase.BuiltPieceEntity != null && updateBase.BuiltPieceEntity is GlobalRootEntity builtPieceEntity)
-        {
-            worldEntityManager.AddOrUpdateGlobalRootEntity(builtPieceEntity);
-        }
-
-        if (updateBase.ChildrenTransfer.Item1 != null && updateBase.ChildrenTransfer.Item2 != null)
-        {
-            // NB: we don't want certain entities to be transferred (e.g. planters)
-            entityRegistry.TransferChildren(updateBase.ChildrenTransfer.Item1, updateBase.ChildrenTransfer.Item2, entity => entity is not PlanterEntity);
-        }
-
-        // After transferring required children, we need to clean the waterparks that were potentially removed when being merged
-        List<NitroxId> removedChildIds = buildEntity.ChildEntities.OfType<InteriorPieceEntity>()
-            .Where(entity => entity.IsWaterPark).Select(childEntity => childEntity.Id)
-            .Except(updateBase.UpdatedChildren.Keys).ToList();
-
-        foreach (NitroxId removedChildId in removedChildIds)
-        {
-            if (entityRegistry.GetEntityById(removedChildId).HasValue)
-            {
-                worldEntityManager.RemoveGlobalRootEntity(removedChildId);
-            }
-        }
-        buildEntity.OperationId++;
-        operationId = buildEntity.OperationId;
+        // TODO: MADE THIS ASYNC SO CAN FETCH PLAYER NAME FOR LOG!
+        operationId = -1;
         return true;
+
+        // if (!entityRegistry.TryGetEntityById<GhostEntity>(updateBase.FormerGhostId, out _))
+        // {
+        //     Log.Error($"Trying to place a base from a non-registered ghost (GhostId: {updateBase.FormerGhostId})");
+        //     operationId = -1;
+        //     return false;
+        // }
+        // if (!entityRegistry.TryGetEntityById(updateBase.BaseId, out BuildEntity buildEntity))
+        // {
+        //     Log.Error($"Trying to update a non-registered build (BaseId: {updateBase.BaseId})");
+        //     operationId = -1;
+        //     return false;
+        // }
+        // int deltaOperations = buildEntity.OperationId + 1 - updateBase.OperationId;
+        // if (deltaOperations != 0 && configProvider.Value.SafeBuilding)
+        // {
+        //     logger.LogWarning("Ignoring an {TypeName} packet from [{PlayerName}] which is {Operation}", nameof(UpdateBase), player.Name, Math.Abs(deltaOperations) + (deltaOperations > 0 ? " operations ahead" : " operations late"));
+        //     NotifyPlayerDesync(player);
+        //     operationId = -1;
+        //     return false;
+        // }
+        //
+        // worldEntityManager.RemoveGlobalRootEntity(updateBase.FormerGhostId);
+        // buildEntity.BaseData = updateBase.BaseData;
+        //
+        // foreach (KeyValuePair<NitroxId, NitroxBaseFace> updatedChild in updateBase.UpdatedChildren)
+        // {
+        //     if (entityRegistry.TryGetEntityById(updatedChild.Key, out InteriorPieceEntity childEntity))
+        //     {
+        //         childEntity.BaseFace = updatedChild.Value;
+        //     }
+        // }
+        // foreach (KeyValuePair<NitroxId, NitroxInt3> updatedMoonpool in updateBase.UpdatedMoonpools)
+        // {
+        //     if (entityRegistry.TryGetEntityById(updatedMoonpool.Key, out MoonpoolEntity childEntity))
+        //     {
+        //         childEntity.Cell = updatedMoonpool.Value;
+        //     }
+        // }
+        // foreach (KeyValuePair<NitroxId, NitroxInt3> updatedMapRoom in updateBase.UpdatedMapRooms)
+        // {
+        //     if (entityRegistry.TryGetEntityById(updatedMapRoom.Key, out MapRoomEntity childEntity))
+        //     {
+        //         childEntity.Cell = updatedMapRoom.Value;
+        //     }
+        // }
+        //
+        // if (updateBase.BuiltPieceEntity != null && updateBase.BuiltPieceEntity is GlobalRootEntity builtPieceEntity)
+        // {
+        //     worldEntityManager.AddOrUpdateGlobalRootEntity(builtPieceEntity);
+        // }
+        //
+        // if (updateBase.ChildrenTransfer.Item1 != null && updateBase.ChildrenTransfer.Item2 != null)
+        // {
+        //     // NB: we don't want certain entities to be transferred (e.g. planters)
+        //     entityRegistry.TransferChildren(updateBase.ChildrenTransfer.Item1, updateBase.ChildrenTransfer.Item2, entity => entity is not PlanterEntity);
+        // }
+        //
+        // // After transferring required children, we need to clean the waterparks that were potentially removed when being merged
+        // List<NitroxId> removedChildIds = buildEntity.ChildEntities.OfType<InteriorPieceEntity>()
+        //     .Where(entity => entity.IsWaterPark).Select(childEntity => childEntity.Id)
+        //     .Except(updateBase.UpdatedChildren.Keys).ToList();
+        //
+        // foreach (NitroxId removedChildId in removedChildIds)
+        // {
+        //     if (entityRegistry.GetEntityById(removedChildId).HasValue)
+        //     {
+        //         worldEntityManager.RemoveGlobalRootEntity(removedChildId);
+        //     }
+        // }
+        // buildEntity.OperationId++;
+        // operationId = buildEntity.OperationId;
+        // return true;
     }
 
     public bool ReplaceBaseByGhost(BaseDeconstructed baseDeconstructed)
@@ -241,7 +250,7 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
         return true;
     }
 
-    public bool ReplacePieceByGhost(NitroxServer.Player player, PieceDeconstructed pieceDeconstructed, out Entity removedEntity, out int operationId)
+    public bool ReplacePieceByGhost(ConnectedPlayerDto player, PieceDeconstructed pieceDeconstructed, out Entity removedEntity, out int operationId)
     {
         if (!entityRegistry.TryGetEntityById(pieceDeconstructed.BaseId, out BuildEntity buildEntity))
         {
@@ -261,8 +270,8 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
         int deltaOperations = buildEntity.OperationId + 1 - pieceDeconstructed.OperationId;
         if (deltaOperations != 0 && configProvider.Value.SafeBuilding)
         {
-            Log.Warn($"Ignoring a {nameof(PieceDeconstructed)} packet from [{player.Name}] which is {Math.Abs(deltaOperations) + (deltaOperations > 0 ? " operations ahead" : " operations late")}");
-            NotifyPlayerDesync(player);
+            logger.LogWarning("Ignoring a {TypeName} packet from [{PlayerName}] which is {Operations}", nameof(PieceDeconstructed), player.Name, Math.Abs(deltaOperations) + (deltaOperations > 0 ? " operations ahead" : " operations late"));
+            NotifyPlayerDesync(player.Id);
             removedEntity = null;
             operationId = -1;
             return false;
@@ -305,10 +314,10 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
         return true;
     }
 
-    private void NotifyPlayerDesync(NitroxServer.Player player)
+    private void NotifyPlayerDesync(PeerId player)
     {
         Dictionary<NitroxId, int> operations = GetEntitiesOperations(worldEntityManager.GetGlobalRootEntities(true));
-        player.SendPacket(new BuildingDesyncWarning(operations));
+        playerService.SendPacket(new BuildingDesyncWarning(operations), player);
     }
 
     public static Dictionary<NitroxId, int> GetEntitiesOperations(List<GlobalRootEntity> entities)

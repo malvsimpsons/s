@@ -2,7 +2,7 @@ namespace Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 
 internal interface IArgConverter
 {
-    ConvertResult Convert(object from);
+    Task<ConvertResult> ConvertAsync(object from);
 }
 
 /// <summary>
@@ -10,7 +10,7 @@ internal interface IArgConverter
 /// </summary>
 internal interface IArgConverter<in TFrom, TTo> : IArgConverter
 {
-    ConvertResult Convert(TFrom from);
+    Task<ConvertResult> ConvertAsync(TFrom playerId);
 
-    ConvertResult IArgConverter.Convert(object from) => Convert(from is TFrom tFrom ? tFrom : default);
+    Task<ConvertResult> IArgConverter.ConvertAsync(object from) => ConvertAsync(from is TFrom tFrom ? tFrom : default);
 }

@@ -27,8 +27,6 @@ internal class BatchEntitySpawnerService(
     IUwePrefabFactory prefabFactory,
     IEntityBootstrapperManager entityBootstrapperManager,
     PrefabPlaceholderGroupsResource prefabResources,
-    IStateManager<WorldData> world,
-    IStateManager<PdaData> pda,
     SubnauticaServerRandom random,
     IOptions<SubnauticaServerOptions> options)
     : IHostedService
@@ -41,8 +39,6 @@ internal class BatchEntitySpawnerService(
     private readonly IOptions<SubnauticaServerOptions> options = options;
     private readonly Lock parsedBatchesLock = new();
 
-    private readonly IStateManager<PdaData> pda = pda;
-    private readonly IStateManager<WorldData> world = world;
     private readonly IUwePrefabFactory prefabFactory = prefabFactory;
     private readonly PrefabPlaceholderGroupsResource prefabResources = prefabResources;
     private readonly SubnauticaServerRandom random = random;
@@ -50,34 +46,38 @@ internal class BatchEntitySpawnerService(
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await pda.GetStateAsync(cancellationToken);
-        Task<WorldData> worldTask;
-        lock (parsedBatchesLock)
-        {
-            worldTask = world.GetStateAsync(cancellationToken);
-        }
-        await worldTask;
+        // TODO: USE DATABASE
+        // await pda.GetStateAsync(cancellationToken);
+        // Task<WorldData> worldTask;
+        // lock (parsedBatchesLock)
+        // {
+        //     worldTask = world.GetStateAsync(cancellationToken);
+        // }
+        // await worldTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public bool IsBatchSpawned(NitroxInt3 batchId)
     {
-        lock (parsedBatchesLock)
-        {
-            return world.State.ParsedBatchCells.Contains(batchId);
-        }
+        // TODO: USE DATABASE
+        // lock (parsedBatchesLock)
+        // {
+        //     return world.State.ParsedBatchCells.Contains(batchId);
+        // }
+        return true; // TODO REMOVE
     }
 
     public List<Entity> LoadUnspawnedEntities(NitroxInt3 batchId, bool fullCacheCreation = false)
     {
-        lock (parsedBatchesLock)
-        {
-            if (!world.State.ParsedBatchCells.Add(batchId))
-            {
-                return [];
-            }
-        }
+        // TODO: USE DATABASE
+        // lock (parsedBatchesLock)
+        // {
+        //     if (!world.State.ParsedBatchCells.Add(batchId))
+        //     {
+        //         return [];
+        //     }
+        // }
 
         DeterministicGenerator deterministicBatchGenerator = new(options.Value.Seed, batchId);
         List<EntitySpawnPoint> spawnPoints = batchCellsParser.ParseBatchData(batchId);
@@ -195,11 +195,12 @@ internal class BatchEntitySpawnerService(
                 {
                     if (prefab.IsFragment)
                     {
-                        if (pda.State.ScannerComplete.Contains(uweWorldEntity.TechType))
-                        {
-                            completeFragmentProbability += weightedProbability;
-                            continue;
-                        }
+                        // TODO: USE DATABASE
+                        // if (pda.State.ScannerComplete.Contains(uweWorldEntity.TechType))
+                        // {
+                        //     completeFragmentProbability += weightedProbability;
+                        //     continue;
+                        // }
                         fragmentProbability += weightedProbability;
                     }
                     prefab = prefab with { Probability = weightedProbability };

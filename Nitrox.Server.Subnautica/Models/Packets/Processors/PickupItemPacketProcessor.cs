@@ -1,23 +1,23 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Util;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
 internal sealed class PickupItemPacketProcessor(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, PlayerService playerService, SimulationOwnershipData simulationOwnershipData)
-    : AuthenticatedPacketProcessor<PickupItem>
+    : IAuthPacketProcessor<PickupItem>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
     private readonly PlayerService playerService = playerService;
     private readonly SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
 
-    public override void Process(PickupItem packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, PickupItem packet)
     {
         if (simulationOwnershipData.RevokeOwnerOfId(packet.Id))
         {
@@ -31,7 +31,7 @@ internal sealed class PickupItemPacketProcessor(EntityRegistry entityRegistry, W
         entityRegistry.AddOrUpdate(packet.Item);
 
         // Have other players respawn the item inside the inventory.
-        playerService.SendPacketToOtherPlayers(new SpawnEntities(packet.Item, forceRespawn: true), player);
+        context.ReplyToOthers(new SpawnEntities(packet.Item, forceRespawn: true));
     }
 
     private void StopTrackingExistingWorldEntity(NitroxId id)

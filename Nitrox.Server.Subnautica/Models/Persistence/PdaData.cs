@@ -3,6 +3,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Persistence;
 
@@ -11,7 +12,7 @@ internal record PdaData
 {
     /// <summary>
     /// Gets or sets the KnownTech construct which powers the popup shown to the user when a new TechType is discovered ("New Creature Discovered!")
-    /// The KnownTech construct uses both <see cref='NitroxModel.Packets.KnownTechEntryAdd.EntryCategory.KNOWN'>KnownTech.knownTech</see> and <see cref='NitroxModel.Packets.KnownTechEntryAdd.EntryCategory.ANALYZED'>KnownTech.analyzedTech</see>
+    /// The KnownTech construct uses both <see cref='KnownTechEntryAdd.EntryCategory.KNOWN'>KnownTech.knownTech</see> and <see cref='KnownTechEntryAdd.EntryCategory.ANALYZED'>KnownTech.analyzedTech</see>
     /// </summary>
     [DataMember(Order = 1)]
     public ThreadSafeList<NitroxTechType> KnownTechTypes { get; } = [];

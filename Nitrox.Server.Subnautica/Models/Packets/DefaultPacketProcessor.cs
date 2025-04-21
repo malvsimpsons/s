@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
+using NitroxModel.Dto;
+using NitroxModel.Networking;
+using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Packets.Processors.Core;
 
 namespace Nitrox.Server.Subnautica.Models.Packets;
 
@@ -11,7 +14,7 @@ namespace Nitrox.Server.Subnautica.Models.Packets;
 ///     The default packet processor for packets which don't define one. This processor will send those packets to other
 ///     players as they were received.
 /// </summary>
-internal sealed class DefaultPacketProcessor(PlayerService playerService, ILogger<DefaultPacketProcessor> logger) : AuthenticatedPacketProcessor<Packet>
+internal sealed class DefaultPacketProcessor(PlayerService playerService, ILogger<DefaultPacketProcessor> logger) : IAuthPacketProcessor<Packet>
 {
     /// <summary>
     ///     Packet types which don't have a server packet processor but should not be transmitted
@@ -46,18 +49,26 @@ internal sealed class DefaultPacketProcessor(PlayerService playerService, ILogge
 
     private readonly PlayerService playerService = playerService;
 
-    public override void Process(Packet packet, NitroxServer.Player player)
+    public async Task Process(Packet packet, PeerId peerId)
+    {
+
+    }
+
+    public async Task Process(AuthProcessorContext context, Packet packet)
     {
         if (!loggingPacketBlackList.Contains(packet.GetType()))
         {
-            logger.LogDebug("Using default packet processor for: {Packet} and player {PlayerId}", packet, player.Id);
+            logger.LogDebug("Using default packet processor for: {Packet} and player {PlayerId}", packet, context.Sender);
         }
 
         if (defaultPacketProcessorBlacklist.Contains(packet.GetType()))
         {
-            logger.LogErrorOnce("Player {PlayerName} [{PlayerId}] sent a packet which is blacklisted by the server. It's likely that the said player is using a modified version of Nitrox and action could be taken accordingly.", player.Name, player.Id);
-            return;
+            ConnectedPlayerDto player = await playerService.GetConnectedPlayerByIdAsync(context.Sender);
+            if (player != null)
+            {
+                logger.LogErrorOnce("Player {PlayerName} [{PlayerId}] sent a packet which is blacklisted by the server. It's likely that the said player is using a modified version of Nitrox and action could be taken accordingly.", player.Name, player.Id);
+            }
         }
-        playerService.SendPacketToOtherPlayers(packet, player);
+        context.ReplyToOthers(packet);
     }
 }

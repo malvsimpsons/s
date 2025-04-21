@@ -1,25 +1,26 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxServer.GameLogic.Bases;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class UpdateBaseProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService, GameLogic.EntitySimulation entitySimulation) : AuthenticatedPacketProcessor<UpdateBase>
+internal sealed class UpdateBaseProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService, GameLogic.EntitySimulation entitySimulation) : IAuthPacketProcessor<UpdateBase>
 {
-    public override void Process(UpdateBase packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, UpdateBase packet)
     {
-        if (buildingManager.UpdateBase(player, packet, out int operationId))
-        {
-            if (packet.BuiltPieceEntity is GlobalRootEntity entity)
-            {
-                entitySimulation.ClaimBuildPiece(entity, player);
-            }
-            // End-players can process elementary operations without this data (packet would be heavier for no reason)
-            packet.Deflate();
-            packet.OperationId = operationId;
-            playerService.SendPacketToOtherPlayers(packet, player);
-        }
+        // TODO: USE DATABASE
+        // if (buildingManager.UpdateBase(player, packet, out int operationId))
+        // {
+        //     if (packet.BuiltPieceEntity is GlobalRootEntity entity)
+        //     {
+        //         entitySimulation.ClaimBuildPiece(entity, player);
+        //     }
+        //     // End-players can process elementary operations without this data (packet would be heavier for no reason)
+        //     packet.Deflate();
+        //     packet.OperationId = operationId;
+        //     playerService.SendPacketToOtherPlayers(packet, player);
+        // }
     }
 }

@@ -8,6 +8,7 @@ using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.Helper;
 using NitroxModel_Subnautica.DataStructures;
+using NitroxModel.Core;
 using UnityEngine;
 using UWE;
 

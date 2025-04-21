@@ -10,11 +10,10 @@ using NitroxModel.DataStructures.GameLogic.Entities;
 namespace Nitrox.Server.Subnautica.Models.Commands.Debugging;
 
 [RequiresPermission(Perms.SUPERADMIN)]
-internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipData simulationOwnershipData, ILogger<QueryCommand> logger) : ICommandHandler<NitroxId>
+internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipData simulationOwnershipData) : ICommandHandler<NitroxId>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
-    private readonly ILogger<QueryCommand> logger = logger;
 
     [Description("Query the entity associated with the given NitroxId")]
     public Task Execute(ICommandContext context, [Description("NitroxId of an entity")] NitroxId entityId)
@@ -32,7 +31,7 @@ internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipDa
         }
         if (simulationOwnershipData.TryGetLock(entityId, out SimulationOwnershipData.PlayerLock playerLock))
         {
-            context.Reply($"Lock owner: {playerLock.Player.Name}");
+            context.Reply($"Lock owner player id: {playerLock.PlayerId}");
         }
         else
         {

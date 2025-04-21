@@ -3,51 +3,58 @@ using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nitrox.Server.Subnautica.Database;
+using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Packets;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using NitroxModel.Packets;
-using NitroxModel.Packets.Processors.Abstract;
-using NitroxServer.Communication;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Packets.Processors.Core;
 
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
 ///     Processes packets based on their type.
 /// </summary>
-internal sealed class PacketService(IEnumerable<PacketProcessor> packetProcessors, PlayerService playerService, DefaultPacketProcessor defaultProcessor, ILogger<PacketService> logger) : IHostedService
+internal sealed class PacketService(IEnumerable<IPacketProcessor> packetProcessors, PlayerService playerService, DefaultPacketProcessor defaultProcessor, IDbContextFactory<WorldDbContext> dbContextFactory, ILogger<PacketService> logger) : IHostedService
 {
     private readonly DefaultPacketProcessor defaultProcessor = defaultProcessor;
+    private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
     private readonly ILogger<PacketService> logger = logger;
-    private readonly IEnumerable<PacketProcessor> packetProcessors = packetProcessors;
+    private readonly IEnumerable<IPacketProcessor> packetProcessors = packetProcessors;
     private readonly PlayerService playerService = playerService;
-    private FrozenDictionary<Type, PacketProcessor> packetTypeToAnonProcessorLookup;
-    private FrozenDictionary<Type, PacketProcessor> packetTypeToAuthProcessorLookup;
+    private FrozenDictionary<Type, IPacketProcessor> packetTypeToAnonProcessorLookup;
+    private FrozenDictionary<Type, IPacketProcessor> packetTypeToAuthProcessorLookup;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        Dictionary<Type, PacketProcessor> authLookupBuilder = [];
-        Dictionary<Type, PacketProcessor> anonLookupBuilder = [];
-        foreach (PacketProcessor packetProcessor in packetProcessors)
+        Dictionary<Type, IPacketProcessor> authLookupBuilder = [];
+        Dictionary<Type, IPacketProcessor> anonLookupBuilder = [];
+        foreach (IPacketProcessor packetProcessor in packetProcessors)
         {
-            Type processorBaseType = packetProcessor.GetType().BaseType;
-            Type packetType = processorBaseType?.GetGenericArguments().FirstOrDefault();
-            if (!IsValidProcessor(packetType, packetProcessor))
-            {
-                throw new Exception("First type of a packet processor must be the packet type it can handle");
-            }
+            Type processorType = packetProcessor.GetType();
+            Type packetType = processorType.GetInterfaces()
+                                           .Where(i => typeof(IPacketProcessor).IsAssignableFrom(i))
+                                           .Select(i => i.GetGenericArguments().FirstOrDefault())
+                                           .FirstOrDefault(a => a != null && typeof(Packet).IsAssignableFrom(a) && a != typeof(Packet));
             if (packetType == null)
             {
-                continue;
+                if (processorType == typeof(DefaultPacketProcessor))
+                {
+                    continue;
+                }
+                throw new Exception("A packet processor must have an interface that specifies the packet type it can handle");
             }
-            if (processorBaseType.IsAssignableToGenericType(typeof(UnauthenticatedPacketProcessor<>)))
+            if (typeof(IAnonPacketProcessor).IsAssignableFrom(processorType))
             {
                 anonLookupBuilder[packetType] = packetProcessor;
             }
-            else if (processorBaseType.IsAssignableToGenericType(typeof(AuthenticatedPacketProcessor<>)))
+            else if (typeof(IAuthPacketProcessor).IsAssignableFrom(processorType))
             {
                 authLookupBuilder[packetType] = packetProcessor;
             }
@@ -60,52 +67,52 @@ internal sealed class PacketService(IEnumerable<PacketProcessor> packetProcessor
         logger.LogDebug("{Count} anonymous packet processors found and registered", packetTypeToAnonProcessorLookup.Count);
         packetTypeToAuthProcessorLookup = authLookupBuilder.ToFrozenDictionary();
         logger.LogDebug("{Count} authenticated packet processors found and registered", packetTypeToAuthProcessorLookup.Count);
-
         return Task.CompletedTask;
-
-        static bool IsValidProcessor(Type packetType, PacketProcessor processor)
-        {
-            if (packetType == null)
-            {
-                if (processor is DefaultPacketProcessor)
-                {
-                    return true;
-                }
-            }
-            else if (typeof(Packet).IsAssignableFrom(packetType))
-            {
-                return true;
-            }
-            return false;
-        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public void Process(Packet packet, INitroxConnection connection)
+    public async Task Process(PlayerSession session, Packet packet)
     {
-        NitroxServer.Player player = playerService.GetPlayer(connection);
-        PacketProcessor processor = defaultProcessor;
+        if (session is { Player.Id: var playerId } && playerId > 0)
+        {
+            await ProcessAuth(packet, playerId);
+        }
+        else
+        {
+            await ProcessAnon(packet, session.SessionId ?? throw new Exception("Session id must not be null"));
+        }
+    }
+
+    private async Task ProcessAnon(Packet packet, SessionId sessionId)
+    {
+        Type packetType = packet.GetType();
+        if (packetTypeToAnonProcessorLookup.TryGetValue(packetType, out IPacketProcessor processor) && processor is IAnonPacketProcessor anonProcessor)
+        {
+            // TODO: Use object pooling for context
+            await anonProcessor.Process(new AnonProcessorContext(sessionId, playerService), packet);
+        }
+        else
+        {
+            logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packetType);
+        }
+    }
+
+    private async Task ProcessAuth(Packet packet, PeerId peerId)
+    {
+        IPacketProcessor processor = defaultProcessor;
         Type packetType = packet.GetType();
 
         try
         {
-            if (player == null)
+            processor = packetTypeToAuthProcessorLookup.GetValueOrDefault(packetType, defaultProcessor);
+            if (processor is not IAuthPacketProcessor authProcessor)
             {
-                if (packetTypeToAnonProcessorLookup.TryGetValue(packetType, out processor))
-                {
-                    processor.ProcessPacket(packet, connection);
-                }
-                else
-                {
-                    logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packetType);
-                }
+                logger.LogWarning("No authenticated processor is defined for packet {TypeName}", packetType);
+                return;
             }
-            else
-            {
-                processor = packetTypeToAuthProcessorLookup.GetValueOrDefault(packetType, defaultProcessor);
-                processor.ProcessPacket(packet, player);
-            }
+            // TODO: Use object pooling for context
+            await authProcessor.Process(new AuthProcessorContext(peerId, playerService), packet);
         }
         catch (Exception ex)
         {

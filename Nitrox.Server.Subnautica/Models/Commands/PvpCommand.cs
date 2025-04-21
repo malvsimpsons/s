@@ -21,7 +21,7 @@ internal class PvpCommand(IOptions<SubnauticaServerConfig> configProvider) : ICo
                 break;
             case not null:
                 configProvider.Value.PvPEnabled = state; // TODO: Ensure it's persisted
-                context.MessageAll($"PvP is now {state}");
+                context.MessageAllAsync($"PvP is now {state}");
                 break;
         }
 

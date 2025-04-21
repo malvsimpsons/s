@@ -1,12 +1,13 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using NitroxModel.Packets;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class PlayerQuickSlotsBindingChangedProcessor : AuthenticatedPacketProcessor<PlayerQuickSlotsBindingChanged>
+internal class PlayerQuickSlotsBindingChangedProcessor : IAuthPacketProcessor<PlayerQuickSlotsBindingChanged>
 {
-    public override void Process(PlayerQuickSlotsBindingChanged packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, PlayerQuickSlotsBindingChanged packet)
     {
-        player.QuickSlotsBindingIds = packet.SlotItemIds;
+        // TODO: USE DATABASE
+        // player.QuickSlotsBindingIds = packet.SlotItemIds;
     }
 }

@@ -1,31 +1,28 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
+using NitroxModel.Dto;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class PvpAttackProcessor(PlayerService playerService, IOptions<SubnauticaServerOptions> configProvider) : AuthenticatedPacketProcessor<PvPAttack>
+internal class PvpAttackProcessor(PlayerService playerService, IOptions<SubnauticaServerOptions> configProvider) : IAuthPacketProcessor<PvpAttack>
 {
     private readonly PlayerService playerService = playerService;
     private readonly IOptions<SubnauticaServerOptions> configProvider = configProvider;
 
     // TODO: In the future, do a whole config for damage sources
-    private static readonly Dictionary<PvPAttack.AttackType, float> damageMultiplierByType = new()
+    private static readonly Dictionary<PvpAttack.AttackType, float> damageMultiplierByType = new()
     {
-        { PvPAttack.AttackType.KnifeHit, 0.5f },
-        { PvPAttack.AttackType.HeatbladeHit, 1f }
+        { PvpAttack.AttackType.KnifeHit, 0.5f },
+        { PvpAttack.AttackType.HeatbladeHit, 1f }
     };
 
-    public override void Process(PvPAttack packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, PvpAttack packet)
     {
         if (!configProvider.Value.PvpEnabled)
-        {
-            return;
-        }
-        if (!playerService.TryGetPlayerById(packet.TargetPlayerId, out NitroxServer.Player targetPlayer))
         {
             return;
         }
@@ -35,6 +32,6 @@ internal class PvpAttackProcessor(PlayerService playerService, IOptions<Subnauti
         }
 
         packet.Damage *= multiplier;
-        targetPlayer.SendPacket(packet);
+        playerService.SendPacket(packet, packet.TargetPlayerId);
     }
 }

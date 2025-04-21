@@ -1,22 +1,22 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
 internal class EntitySpawnedByClientProcessor(PlayerService playerService, EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, EntitySimulation entitySimulation)
-    : AuthenticatedPacketProcessor<EntitySpawnedByClient>
+    : IAuthPacketProcessor<EntitySpawnedByClient>
 {
     private readonly PlayerService playerManager = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
     private readonly EntitySimulation entitySimulation = entitySimulation;
 
-    public override void Process(EntitySpawnedByClient packet, NitroxServer.Player playerWhoSpawned)
+    public async Task Process(AuthProcessorContext context, EntitySpawnedByClient packet)
     {
         Entity entity = packet.Entity;
 
@@ -31,7 +31,7 @@ internal class EntitySpawnedByClientProcessor(PlayerService playerService, Entit
 
             if (packet.RequireSimulation)
             {
-                simulatedEntity = entitySimulation.AssignNewEntityToPlayer(entity, playerWhoSpawned);
+                simulatedEntity = entitySimulation.AssignNewEntityToPlayer(entity, context.Sender);
 
                 SimulationOwnershipChange ownershipChangePacket = new SimulationOwnershipChange(simulatedEntity);
                 playerManager.SendPacketToAllPlayers(ownershipChangePacket);
@@ -39,13 +39,14 @@ internal class EntitySpawnedByClientProcessor(PlayerService playerService, Entit
         }
 
         SpawnEntities spawnEntities = new(entity, simulatedEntity, packet.RequireRespawn);
-        foreach (NitroxServer.Player player in playerManager.GetConnectedPlayers())
-        {
-            bool isOtherPlayer = player != playerWhoSpawned;
-            if (isOtherPlayer && player.CanSee(entity))
-            {
-                player.SendPacket(spawnEntities);
-            }
-        }
+        // TODO: FIX WITH DATABASE
+        // foreach (NitroxServer.Player player in playerManager.GetConnectedPlayersAsync())
+        // {
+        //     bool isOtherPlayer = player != context.Sender;
+        //     if (isOtherPlayer && player.CanSee(entity))
+        //     {
+        //         player.SendPacket(spawnEntities);
+        //     }
+        // }
     }
 }

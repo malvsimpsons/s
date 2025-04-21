@@ -1,14 +1,18 @@
 ﻿using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Dto;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
-internal class PromoteCommand : ICommandHandler<NitroxServer.Player, Perms>
+internal class PromoteCommand(PlayerService playerService) : ICommandHandler<ConnectedPlayerDto, Perms>
 {
+    private readonly PlayerService playerService = playerService;
+
     [Description("Sets specific permissions to a user")]
-    public Task Execute(ICommandContext context, [Description("The username to change the permissions of")] NitroxServer.Player targetPlayer, [Description("Permission level")] Perms permissions)
+    public async Task Execute(ICommandContext context, [Description("The username to change the permissions of")] ConnectedPlayerDto targetPlayer, [Description("Permission level")] Perms permissions)
     {
         switch (context)
         {
@@ -19,15 +23,12 @@ internal class PromoteCommand : ICommandHandler<NitroxServer.Player, Perms>
                 context.Reply($"You're not allowed to update {targetPlayer.Name}'s permissions");
                 break;
             case not null:
-                //Allows a bounded permission hierarchy
-                targetPlayer.Permissions = permissions;
-
-                targetPlayer.SendPacket(new PermsChanged(targetPlayer.Permissions));
+                // TODO: USE DATAGBASE
+                // targetPlayer.Permissions = permissions; // Allows a bounded permission hierarchy
+                playerService.SendPacket(new PermsChanged(targetPlayer.Permissions), targetPlayer.Id);
                 context.Reply($"Updated {targetPlayer.Name}'s permissions to {permissions}");
-                context.Message(targetPlayer.Id, $"You've been promoted to {permissions}");
+                await context.MessageAsync(targetPlayer.Id, $"You've been promoted to {permissions}");
                 break;
         }
-
-        return Task.CompletedTask;
     }
 }

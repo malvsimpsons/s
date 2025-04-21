@@ -1,7 +1,7 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
-using NitroxServer.GameLogic.Entities;
+using NitroxModel.Networking;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
@@ -10,5 +10,5 @@ internal sealed class AggressiveWhenSeeTargetChangedProcessor(
     GameLogic.EntityRegistry entityRegistry
 ) : TransmitIfCanSeePacketProcessor<AggressiveWhenSeeTargetChanged>(playerService, entityRegistry)
 {
-    public override void Process(AggressiveWhenSeeTargetChanged packet, NitroxServer.Player sender) => TransmitIfCanSeeEntities(packet, sender, packet.CreatureId, packet.TargetId);
+    public override async Task Process(AuthProcessorContext context, AggressiveWhenSeeTargetChanged packet) => await TransmitIfCanSeeEntities(packet, context.Sender, packet.CreatureId, packet.TargetId);
 }

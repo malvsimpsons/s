@@ -1,6 +1,3 @@
-global using NitroxClient.Helpers;
-global using NitroxModel.Logger;
-global using static NitroxModel.Extensions;
 using System.IO;
 using System.Reflection;
 using Autofac;
@@ -9,7 +6,6 @@ using NitroxClient.Communication;
 using NitroxClient.Communication.Abstract;
 using NitroxClient.Communication.MultiplayerSession;
 using NitroxClient.Communication.NetworkingLayer.LiteNetLib;
-using NitroxClient.Communication.Packets.Processors.Abstract;
 using NitroxClient.Debuggers;
 using NitroxClient.GameLogic;
 using NitroxClient.GameLogic.ChatUI;
@@ -29,7 +25,6 @@ using NitroxModel.Core;
 using NitroxModel.GameLogic.FMOD;
 using NitroxModel.Helper;
 using NitroxModel.Networking;
-using NitroxModel_Subnautica.Helper;
 
 namespace NitroxClient
 {
@@ -142,7 +137,7 @@ namespace NitroxClient
         {
             containerBuilder
                 .RegisterAssemblyTypes(currentAssembly)
-                .AsClosedTypesOf(typeof(ClientPacketProcessor<>))
+                .AsClosedTypesOf(typeof(IClientPacketProcessor<>))
                 .InstancePerLifetimeScope();
         }
 

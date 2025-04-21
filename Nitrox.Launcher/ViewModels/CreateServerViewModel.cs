@@ -25,7 +25,7 @@ public partial class CreateServerViewModel : ModalViewModelBase
     private string name;
 
     [ObservableProperty]
-    private NitroxGameMode selectedGameMode = NitroxGameMode.SURVIVAL;
+    private SubnauticaGameMode selectedGameMode = SubnauticaGameMode.SURVIVAL;
 
     private string SavesFolderDir => keyValueStore.GetServerSavesPath();
 
@@ -38,7 +38,7 @@ public partial class CreateServerViewModel : ModalViewModelBase
         this.keyValueStore = keyValueStore;
     }
 
-    public void CreateEmptySave(string saveName, NitroxGameMode saveGameMode)
+    public void CreateEmptySave(string saveName, SubnauticaGameMode saveGameMode)
     {
         string saveDir = Path.Combine(SavesFolderDir, saveName);
         ServerEntry.CreateNew(saveDir, saveGameMode);

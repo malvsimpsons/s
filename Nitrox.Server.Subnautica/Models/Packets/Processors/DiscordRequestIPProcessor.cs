@@ -1,61 +1,52 @@
 ﻿using System.Net;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using NitroxModel.Helper;
-using NitroxModel.Packets;
-using NitroxModel.Serialization;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class DiscordRequestIPProcessor(IOptions<SubnauticaServerOptions> optionsProvider) : AuthenticatedPacketProcessor<DiscordRequestIP>
+internal class DiscordRequestIPProcessor(IOptions<SubnauticaServerOptions> optionsProvider) : IAuthPacketProcessor<DiscordRequestIP>
 {
     private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
 
     private string ipPort;
 
-    public override void Process(DiscordRequestIP packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, DiscordRequestIP packet)
     {
         if (string.IsNullOrEmpty(ipPort))
         {
-            Task.Run(() => ProcessPacketAsync(packet, player));
-            return;
+            string result = await GetIpAsync();
+            if (result == "")
+            {
+                Log.Error("Couldn't get external Ip for discord request.");
+                return;
+            }
+
+            packet.IpPort = ipPort = $"{result}:{optionsProvider.Value.ServerPort}";
+            context.ReplyToSender(packet);
         }
 
         packet.IpPort = ipPort;
-        player.SendPacket(packet);
-    }
-
-    private async Task ProcessPacketAsync(DiscordRequestIP packet, NitroxServer.Player player)
-    {
-        string result = await GetIpAsync();
-        if (result == "")
-        {
-            Log.Error("Couldn't get external Ip for discord request.");
-            return;
-        }
-
-        packet.IpPort = ipPort = $"{result}:{optionsProvider.Value.ServerPort}";
-        player.SendPacket(packet);
+        context.ReplyToSender(packet);
     }
 
     /// <summary>
-    /// Get the WAN IP address or the Hamachi IP address if the WAN IP address is not available.
+    ///     Get the WAN IP address or the Hamachi IP address if the WAN IP address is not available.
     /// </summary>
     /// <returns>Found IP or blank string if none found</returns>
     private static async Task<string> GetIpAsync()
     {
-        Task<IPAddress> wanIp = NetHelper.GetWanIpAsync();
-        Task<IPAddress> hamachiIp = Task.Run(NetHelper.GetHamachiIp);
-        if (await wanIp != null)
+        IPAddress wanIp = await NetHelper.GetWanIpAsync();
+        if (wanIp != null)
         {
-            return wanIp.Result.ToString();
+            return wanIp.ToString();
         }
-
-        if (await hamachiIp != null)
+        IPAddress hamachiIp = await Task.Run(NetHelper.GetHamachiIp);
+        if (hamachiIp != null)
         {
-            return hamachiIp.Result.ToString();
+            return hamachiIp.ToString();
         }
         return "";
     }

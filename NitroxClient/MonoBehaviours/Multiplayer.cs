@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using NitroxClient.Communication;
 using NitroxClient.Communication.Abstract;
 using NitroxClient.Communication.MultiplayerSession;
-using NitroxClient.Communication.Packets.Processors.Abstract;
 using NitroxClient.GameLogic;
 using NitroxClient.GameLogic.Bases;
 using NitroxClient.GameLogic.ChatUI;
@@ -15,8 +14,8 @@ using NitroxClient.MonoBehaviours.Discord;
 using NitroxClient.MonoBehaviours.Gui.MainMenu;
 using NitroxClient.MonoBehaviours.Gui.MainMenu.ServerJoin;
 using NitroxModel.Core;
-using NitroxModel.Packets;
-using NitroxModel.Packets.Processors.Abstract;
+using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Packets.Processors.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UWE;
@@ -26,7 +25,7 @@ namespace NitroxClient.MonoBehaviours
     public class Multiplayer : MonoBehaviour
     {
         public static Multiplayer Main;
-        private readonly Dictionary<Type, PacketProcessor> packetProcessorCache = new();
+        private readonly Dictionary<Type, IClientPacketProcessor<Packet>> packetProcessorCache = new();
         private IClient client;
         private IMultiplayerSession multiplayerSession;
         private PacketReceiver packetReceiver;
@@ -125,18 +124,18 @@ namespace NitroxClient.MonoBehaviours
 
         public void ProcessPackets()
         {
-            static PacketProcessor ResolveProcessor(Packet packet, Dictionary<Type, PacketProcessor> processorCache)
+            static IClientPacketProcessor<Packet> ResolveProcessor(Packet packet, Dictionary<Type, IClientPacketProcessor<Packet>> processorCache)
             {
                 Type packetType = packet.GetType();
-                if (processorCache.TryGetValue(packetType, out PacketProcessor processor))
+                if (processorCache.TryGetValue(packetType, out IClientPacketProcessor<Packet> processor))
                 {
                     return processor;
                 }
 
                 try
                 {
-                    Type packetProcessorType = typeof(ClientPacketProcessor<>).MakeGenericType(packetType);
-                    return processorCache[packetType] = (PacketProcessor)NitroxServiceLocator.LocateService(packetProcessorType);
+                    Type packetProcessorType = typeof(IClientPacketProcessor<>).MakeGenericType(packetType);
+                    return processorCache[packetType] = (IClientPacketProcessor<Packet>)NitroxServiceLocator.LocateService(packetProcessorType);
                 }
                 catch (Exception ex)
                 {
@@ -150,7 +149,7 @@ namespace NitroxClient.MonoBehaviours
             {
                 try
                 {
-                    ResolveProcessor(packet, processorCache)?.ProcessPacket(packet, null);
+                    ResolveProcessor(packet, processorCache)?.Process(null, packet);
                 }
                 catch (Exception ex)
                 {

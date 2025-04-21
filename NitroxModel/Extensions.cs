@@ -220,7 +220,7 @@ public static class Extensions
         return IsAssignableToGenericType(givenBaseType, genericType);
     }
 
-    public static bool IsHardcore(this SubnauticaServerConfig config) => config.GameMode == NitroxGameMode.HARDCORE;
+    public static bool IsHardcore(this SubnauticaServerConfig config) => config.GameMode == SubnauticaGameMode.HARDCORE;
     public static bool IsPasswordRequired(this SubnauticaServerConfig config) => config.ServerPassword != "";
 
 #if NET5_0_OR_GREATER

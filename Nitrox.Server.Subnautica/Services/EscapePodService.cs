@@ -24,6 +24,7 @@ internal sealed class EscapePodService(EntityRegistry entityRegistry, RandomStar
     private readonly ThreadSafeDictionary<ushort, EscapePodWorldEntity> escapePodsByPlayerId = new();
     private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
     private EscapePodWorldEntity podForNextPlayer;
+    private readonly RandomStartResource randomStart = randomStart;
 
     public NitroxId AssignPlayerToEscapePod(ushort playerId, out Optional<EscapePodWorldEntity> newlyCreatedPod)
     {

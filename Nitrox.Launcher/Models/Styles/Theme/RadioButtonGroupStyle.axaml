@@ -11,12 +11,12 @@
             <StackPanel Margin="10" Spacing="10">
                 <ThemeVariantScope RequestedThemeVariant="Dark">
                     <Border Background="#000000" Padding="10">
-                        <controls:RadioButtonGroup Classes="radioGroup" Enum="{x:Type server:NitroxGameMode}" />
+                        <controls:RadioButtonGroup Classes="radioGroup" Enum="{x:Type server:SubnauticaGameMode}" />
                     </Border>
                 </ThemeVariantScope>
                 <ThemeVariantScope RequestedThemeVariant="Light">
                     <Border Background="#FFFFFF" Padding="10">
-                        <controls:RadioButtonGroup Classes="radioGroup" Enum="{x:Type server:NitroxGameMode}" />
+                        <controls:RadioButtonGroup Classes="radioGroup" Enum="{x:Type server:SubnauticaGameMode}" />
                     </Border>
                 </ThemeVariantScope>
             </StackPanel>

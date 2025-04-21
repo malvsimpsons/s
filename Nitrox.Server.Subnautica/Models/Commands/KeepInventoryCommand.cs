@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
@@ -21,7 +21,7 @@ internal class KeepInventoryCommand(PlayerService playerService, IOptions<Config
         {
             serverConfig.Value.KeepInventoryOnDeath = newKeepInventoryState;
             playerService.SendPacketToAllPlayers(new KeepInventoryChanged(newKeepInventoryState));
-            context.MessageAll($"KeepInventoryOnDeath changed to \"{newKeepInventoryState}\" by {context.OriginName}");
+            context.MessageAllAsync($"KeepInventoryOnDeath changed to \"{newKeepInventoryState}\" by {context.OriginName}");
         }
         else
         {

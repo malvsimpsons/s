@@ -1,19 +1,19 @@
 using System;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.GameLogic.FMOD;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class FootstepPacketProcessor(PlayerService playerService, FmodService fmodService) : AuthenticatedPacketProcessor<FootstepPacket>
+internal class FootstepPacketProcessor(PlayerService playerService, FmodService fmodService) : IAuthPacketProcessor<FootstepPacket>
 {
-    private float footstepAudioRange; // To modify this value, modify the last value of the event:/player/footstep_precursor_base sound in the SoundWhitelist_Subnautica.csv file
-    private readonly PlayerService playerService = playerService;
     private readonly FmodService fmodService = fmodService;
+    private readonly PlayerService playerService = playerService;
+    private float footstepAudioRange; // To modify this value, modify the last value of the event:/player/footstep_precursor_base sound in the SoundWhitelist_Subnautica.csv file
 
-    public override void Process(FootstepPacket footstepPacket, NitroxServer.Player sendingPlayer)
+    public async Task Process(AuthProcessorContext context, FootstepPacket packet)
     {
         // TODO: Load this inside FmodService?
         fmodService.TryGetSoundData("event:/player/footstep_precursor_base", out SoundData soundData);
@@ -23,17 +23,18 @@ internal class FootstepPacketProcessor(PlayerService playerService, FmodService 
         }
         footstepAudioRange = soundData.Radius;
 
-        foreach (NitroxServer.Player player in playerService.GetConnectedPlayers())
-        {
-            if (NitroxVector3.Distance(player.Position, sendingPlayer.Position) >= footstepAudioRange ||
-                player == sendingPlayer)
-            {
-                continue;
-            }
-            if(player.SubRootId.Equals(sendingPlayer.SubRootId))
-            {
-                player.SendPacket(footstepPacket);
-            }
-        }
+        // TODO: FIX WITH DATABASE
+        // foreach (NitroxServer.Player player in playerService.GetConnectedPlayersAsync())
+        // {
+        //     if (NitroxVector3.Distance(player.Position, sendingPlayer.Position) >= footstepAudioRange ||
+        //         player == sendingPlayer)
+        //     {
+        //         continue;
+        //     }
+        //     if (player.SubRootId.Equals(sendingPlayer.SubRootId))
+        //     {
+        //         player.SendPacket(footstepPacket);
+        //     }
+        // }
     }
 }

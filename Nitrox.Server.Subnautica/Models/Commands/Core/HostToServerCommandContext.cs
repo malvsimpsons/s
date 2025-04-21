@@ -1,7 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Services;
+using NitroxModel.Core;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Dto;
+using NitroxModel.Networking;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Core;
 
@@ -12,7 +15,7 @@ internal sealed record HostToServerCommandContext : ICommandContext
     public ILogger Logger { get; set; }
     public CommandOrigin Origin { get; init; } = CommandOrigin.SERVER;
     public string OriginName => "SERVER";
-    public ushort OriginId { get; init; } = ChatMessage.SERVER_ID;
+    public PeerId OriginId { get; init; } = PeerId.SERVER_ID;
     public Perms Permissions { get; init; } = Perms.SUPERADMIN;
 
     public HostToServerCommandContext(PlayerService playerService)
@@ -20,18 +23,19 @@ internal sealed record HostToServerCommandContext : ICommandContext
         this.playerService = playerService;
     }
 
-    public void Message(ushort id, string message)
+    public async Task MessageAsync(PeerId id, string message)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
             return;
         }
-        if (!playerService.TryGetPlayerById(id, out NitroxServer.Player player))
+        ConnectedPlayerDto player = await playerService.GetConnectedPlayerByIdAsync(id);
+        if (player == null)
         {
             Logger.LogWarning("No player found with id {PlayerId}", id);
             return;
         }
-        player.SendPacket(new ChatMessage(OriginId, message));
+        playerService.SendPacketToOtherPlayers(new ChatMessage(id, message), OriginId);
     }
 
     public void Reply(string message)
@@ -43,7 +47,7 @@ internal sealed record HostToServerCommandContext : ICommandContext
         Logger.LogInformation(message);
     }
 
-    public void MessageAll(string message)
+    public async Task MessageAllAsync(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
         {

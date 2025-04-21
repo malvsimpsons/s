@@ -1,11 +1,17 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using AssetsTools.NET.Extra;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
+using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities;
@@ -18,7 +24,7 @@ using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using Nitrox.Server.Subnautica.Models.Serialization.Json;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
-using NitroxModel.Packets.Processors.Abstract;
+using NitroxModel.Networking.Packets.Processors.Core;
 using NitroxServer.GameLogic.Entities;
 using NitroxServer.GameLogic.Entities.Spawning;
 using ServiceScan.SourceGenerator;
@@ -58,6 +64,29 @@ public static partial class ServiceCollectionExtensions
                .AddSingleton<Func<CommandRegistry>>(provider => provider.GetRequiredService<CommandRegistry>)
                .AddCommandHandlers()
                .AddCommandArgConverters();
+    }
+
+    public static IServiceCollection AddDatabasePersistence(this IServiceCollection services, ServerStartOptions startOptions, bool enableSensitiveLogging = false)
+    {
+        // Pool db context as this server demands low-latency queries.
+        return services.AddPooledDbContextFactory<WorldDbContext>(options =>
+                       {
+                           // We use an in-memory database so EF tracking cache is redundant. However, change tracking should be enabled on a per-query level when writing to the database.
+                           options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                           options.EnableThreadSafetyChecks(Debugger.IsAttached);
+                           if (enableSensitiveLogging)
+                           {
+                               options.EnableSensitiveDataLogging();
+                           }
+
+                           SqliteConnectionStringBuilder sqlConnectionBuilder = new()
+                           {
+                               // Mode = SqliteOpenMode.Memory, // TODO: keep database in memory until server exit or "save"/"backup" command
+                               DataSource = Path.Combine(startOptions.GetServerSavePath(), "world.db")
+                           };
+                           options.UseSqlite(sqlConnectionBuilder.ToString());
+                       })
+                       .AddHostedSingletonService<DatabaseService>();
     }
 
     public static IServiceCollection AddSubnauticaEntityManagement(this IServiceCollection services) =>
@@ -125,7 +154,7 @@ public static partial class ServiceCollectionExtensions
     [GenerateServiceRegistrations(AssignableTo = typeof(IArgConverter), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
     private static partial IServiceCollection AddCommandArgConverters(this IServiceCollection services);
 
-    [GenerateServiceRegistrations(AssignableTo = typeof(PacketProcessor), Lifetime = ServiceLifetime.Singleton)]
+    [GenerateServiceRegistrations(AssignableTo = typeof(IPacketProcessor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddPacketProcessors(this IServiceCollection services);
 
     /// <summary>

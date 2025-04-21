@@ -28,7 +28,7 @@ internal sealed class RestartCommand(ILogger<RestartCommand> logger, IHostApplic
             return Task.CompletedTask;
         }
 
-        context.MessageAll("Server is restarting...");
+        context.MessageAllAsync("Server is restarting...");
 
         // TODO: STOP AND START SERVER
         lifetime.StopApplication();

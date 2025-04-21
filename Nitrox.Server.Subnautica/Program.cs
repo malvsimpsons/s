@@ -1,13 +1,17 @@
 using System;
+using System.Data.Common;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Nitrox.Server.Subnautica.Core;
+using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Serialization;
@@ -84,8 +88,8 @@ public class Program
         });
         // Nitrox config can be overriden by development.json or command line args if supplied.
         builder.Configuration
-               .AddNitroxConfigFile<SubnauticaServerOptions>(startOptions.GetServerConfigFilePath(), SubnauticaServerOptions.CONFIG_SECTION_PATH, optional: true, reloadOnChange: true)
-               .AddUpstreamJsonFile("server.Development.json", optional: true, reloadOnChange: true, skip: !builder.Environment.IsDevelopment())
+               .AddNitroxConfigFile<SubnauticaServerOptions>(startOptions.GetServerConfigFilePath(), SubnauticaServerOptions.CONFIG_SECTION_PATH, true, true)
+               .AddUpstreamJsonFile("server.Development.json", true, true, !builder.Environment.IsDevelopment())
                .AddCommandLine(args);
         builder.Logging
                .SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information)
@@ -141,9 +145,9 @@ public class Program
                .AddCommands(!startOptions.IsEmbedded);
         // Add APIs - everything else the server will need.
         builder.Services
+               .AddDatabasePersistence(startOptions, builder.Environment.IsDevelopment())
                .AddSubnauticaEntityManagement()
                .AddSubnauticaResources()
-               .AddPersistence() // TODO: Use SQLite instead.
                .AddHibernation()
                .AddKeyedSingleton<Stopwatch>(typeof(ServerStatusService), serverStartStopWatch)
                .AddHostedSingletonService<ServerStatusService>()

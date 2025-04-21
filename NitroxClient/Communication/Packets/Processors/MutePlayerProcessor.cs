@@ -1,11 +1,10 @@
-﻿using NitroxClient.Communication.Packets.Processors.Abstract;
-using NitroxClient.GameLogic;
+﻿using NitroxClient.GameLogic;
 using NitroxModel.DataStructures.Util;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace NitroxClient.Communication.Packets.Processors;
 
-public class MutePlayerProcessor : ClientPacketProcessor<MutePlayer>
+public class MutePlayerProcessor : IClientPacketProcessor<MutePlayer>
 {
     private readonly PlayerManager playerManager;
 
@@ -17,7 +16,7 @@ public class MutePlayerProcessor : ClientPacketProcessor<MutePlayer>
         this.playerManager = playerManager;
     }
 
-    public override void Process(MutePlayer packet)
+    public Task Process(IPacketProcessContext context, MutePlayer packet)
     {
         // We only need to notice if that's another player than local player
         Optional<RemotePlayer> player = playerManager.Find(packet.PlayerId);
@@ -26,5 +25,7 @@ public class MutePlayerProcessor : ClientPacketProcessor<MutePlayer>
             player.Value.PlayerContext.IsMuted = packet.Muted;
         }
         OnPlayerMuted(packet.PlayerId, packet.Muted);
+
+        return Task.CompletedTask;
     }
 }

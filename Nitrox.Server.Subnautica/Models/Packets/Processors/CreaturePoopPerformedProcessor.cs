@@ -1,7 +1,6 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
-using NitroxServer.GameLogic.Entities;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
@@ -10,5 +9,5 @@ internal sealed class CreaturePoopPerformedProcessor(
     GameLogic.EntityRegistry entityRegistry
 ) : TransmitIfCanSeePacketProcessor<CreaturePoopPerformed>(playerService, entityRegistry)
 {
-    public override void Process(CreaturePoopPerformed packet, NitroxServer.Player sender) => TransmitIfCanSeeEntities(packet, sender, packet.CreatureId);
+    public override async Task Process(AuthProcessorContext context, CreaturePoopPerformed packet) => await TransmitIfCanSeeEntities(packet, context.Sender, packet.CreatureId);
 }

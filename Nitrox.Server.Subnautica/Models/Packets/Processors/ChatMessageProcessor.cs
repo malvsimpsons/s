@@ -1,22 +1,19 @@
-﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
-using NitroxServer.GameLogic;
+﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class ChatMessageProcessor(PlayerService playerService) : AuthenticatedPacketProcessor<ChatMessage>
+internal class ChatMessageProcessor : IAuthPacketProcessor<ChatMessage>
 {
-    private readonly PlayerService playerManager = playerService;
-
-    public override void Process(ChatMessage packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, ChatMessage packet)
     {
-        if (player.PlayerContext.IsMuted)
-        {
-            player.SendPacket(new ChatMessage(ChatMessage.SERVER_ID, "You're currently muted"));
-            return;
-        }
-        Log.Info($"<{player.Name}>: {packet.Text}");
-        playerManager.SendPacketToAllPlayers(packet);
+        // TODO: FIX - need to get context by PeerId from a service.
+        // if (player.PlayerContext.IsMuted)
+        // {
+        //     player.SendPacket(new ChatMessage(ChatMessage.SERVER_ID, "You're currently muted"));
+        //     return;
+        // }
+        // Log.Info($"<{player.Name}>: {packet.Text}");
+        context.ReplyToAll(packet);
     }
 }

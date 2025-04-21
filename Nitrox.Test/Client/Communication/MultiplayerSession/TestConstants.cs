@@ -1,6 +1,5 @@
 ﻿using NitroxClient.Communication.Abstract;
 using NitroxModel.DataStructures.Util;
-using NitroxModel.MultiplayerSession;
 using NitroxModel.Packets;
 using NSubstitute;
 

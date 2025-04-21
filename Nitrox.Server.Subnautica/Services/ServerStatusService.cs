@@ -7,8 +7,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using NitroxModel.Core;
 using NitroxModel.Helper;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Services;
 
@@ -49,7 +50,7 @@ internal sealed class ServerStatusService([FromKeyedServices(typeof(ServerStatus
     public Task StoppingAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        playerService.SendPacketToAllPlayers(new ChatMessage(ChatMessage.SERVER_ID, "[BROADCAST] Server is shutting down..."));
+        playerService.SendPacketToAllPlayers(new ChatMessage(PeerId.SERVER_ID, "[BROADCAST] Server is shutting down..."));
         return Task.CompletedTask;
     }
 

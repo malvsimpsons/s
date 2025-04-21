@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using NitroxModel.Core;
 
 namespace NitroxServer.Serialization.World
 {

@@ -7,7 +7,7 @@ using Nitrox.Server.Subnautica.Models.Hibernation;
 using Nitrox.Server.Subnautica.Models.Persistence;
 using Nitrox.Server.Subnautica.Models.Persistence.Core;
 using NitroxModel.Networking;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxServer.Helper;
 
 namespace Nitrox.Server.Subnautica.Services;
@@ -15,7 +15,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Keeps track of (game) time.
 /// </summary>
-internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSyncer, IStateManager<StoryTimingData> stateProvider) : IHostedService, IHibernate
+internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSyncer) : IHostedService, IHibernate
 {
     public delegate void TimeSkippedEventHandler(double skippedSeconds);
 
@@ -34,7 +34,6 @@ internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSync
 
     private readonly NtpSyncer ntpSyncer = ntpSyncer;
     private readonly PlayerService playerService = playerService;
-    private readonly IStateManager<StoryTimingData> stateProvider = stateProvider;
 
     private readonly Stopwatch stopWatch = new();
 
@@ -53,8 +52,14 @@ internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSync
     /// </summary>
     public TimeSpan Elapsed
     {
-        get => stopWatch.Elapsed + stateProvider.State.Elapsed;
-        private set => stateProvider.State.Elapsed = value - stopWatch.Elapsed;
+        get => stopWatch.Elapsed;
+        set
+        {
+            // TODO: USE DATABASE
+        }
+        // TODO: USE DATABASE
+        // get => stopWatch.Elapsed + stateProvider.State.Elapsed;
+        // private set => stateProvider.State.Elapsed = value - stopWatch.Elapsed;
     }
 
     public TimeSpan RealTimeElapsed => stopWatch.Elapsed + Elapsed;
@@ -79,8 +84,6 @@ internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSync
             }
         });
         ntpSyncer.RequestNtpService();
-
-        await stateProvider.GetStateAsync(cancellationToken);
         ResyncTimer = MakeResyncTimer();
     }
 

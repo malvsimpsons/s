@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using NitroxClient.MonoBehaviours.Gui.HUD;
+using NitroxModel.Networking;
 using UnityEngine;
 
 namespace NitroxClient.GameLogic.HUD;
 
 public class PlayerVitalsManager
 {
-    private readonly Dictionary<ushort, RemotePlayerVitals> vitalsByPlayerId = new();
+    private readonly Dictionary<PeerId, RemotePlayerVitals> vitalsByPlayerId = new();
 
     public RemotePlayerVitals CreateOrFindForPlayer(RemotePlayer remotePlayer)
     {
@@ -17,7 +18,7 @@ public class PlayerVitalsManager
         return vitals;
     }
 
-    public void RemoveForPlayer(ushort playerId)
+    public void RemoveForPlayer(PeerId playerId)
     {
         if (vitalsByPlayerId.TryGetValue(playerId, out RemotePlayerVitals vitals))
         {
@@ -26,7 +27,7 @@ public class PlayerVitalsManager
         }
     }
 
-    public bool TryFindForPlayer(ushort playerId, out RemotePlayerVitals vitals)
+    public bool TryFindForPlayer(PeerId playerId, out RemotePlayerVitals vitals)
     {
         return vitalsByPlayerId.TryGetValue(playerId, out vitals);
     }

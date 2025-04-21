@@ -7,8 +7,8 @@ using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
-using NitroxModel.MultiplayerSession;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Session;
 using NitroxModel.Server;
 using NitroxModel.Serialization;
 using NitroxServer.Communication;
@@ -121,7 +121,7 @@ public class PlayerManager
         bool hasSeenPlayerBefore = player != null;
         ushort playerId = hasSeenPlayerBefore ? player.Id : ++currentPlayerId;
         NitroxId playerNitroxId = hasSeenPlayerBefore ? player.GameObjectId : new NitroxId();
-        NitroxGameMode gameMode = hasSeenPlayerBefore ? player.GameMode : serverConfig.GameMode;
+        SubnauticaGameMode gameMode = hasSeenPlayerBefore ? player.GameMode : serverConfig.GameMode;
         IntroCinematicMode introCinematicMode = hasSeenPlayerBefore ? IntroCinematicMode.COMPLETED : IntroCinematicMode.LOADING;
 
         // TODO: At some point, store the muted state of a player

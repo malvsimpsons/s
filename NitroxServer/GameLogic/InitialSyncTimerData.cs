@@ -1,5 +1,5 @@
 ﻿using System;
-using NitroxModel.MultiplayerSession;
+using NitroxModel.Networking.Session;
 using NitroxServer.Communication;
 
 namespace NitroxServer.GameLogic

@@ -11,7 +11,7 @@ internal sealed class BroadcastCommand : ICommandHandler<string>
     [Description("Broadcasts a message on the server")]
     public Task Execute(ICommandContext context, string messageToBroadcast)
     {
-        context.MessageAll(messageToBroadcast);
+        context.MessageAllAsync(messageToBroadcast);
         return Task.CompletedTask;
     }
 }

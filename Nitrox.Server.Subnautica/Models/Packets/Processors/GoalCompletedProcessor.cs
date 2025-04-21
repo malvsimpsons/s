@@ -1,12 +1,13 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using NitroxModel.Packets;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class GoalCompletedProcessor : AuthenticatedPacketProcessor<GoalCompleted>
+internal class GoalCompletedProcessor : IAuthPacketProcessor<GoalCompleted>
 {
-    public override void Process(GoalCompleted packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, GoalCompleted packet)
     {
-        player.PersonalCompletedGoalsWithTimestamp.Add(packet.CompletedGoal, packet.CompletionTime);
+        // TODO: USE DATABASE
+        // player.PersonalCompletedGoalsWithTimestamp.Add(packet.CompletedGoal, packet.CompletionTime);
     }
 }

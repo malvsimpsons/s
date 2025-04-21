@@ -1,21 +1,22 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
-using NitroxServer.GameLogic.Bases;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class PlaceModuleProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService, GameLogic.EntitySimulation entitySimulation) : AuthenticatedPacketProcessor<PlaceModule>
+internal sealed class PlaceModuleProcessor(GameLogic.Bases.BuildingManager buildingManager, GameLogic.EntitySimulation entitySimulation) : IAuthPacketProcessor<PlaceModule>
 {
-    public override void Process(PlaceModule packet, NitroxServer.Player player)
+    private readonly GameLogic.Bases.BuildingManager buildingManager = buildingManager;
+    private readonly GameLogic.EntitySimulation entitySimulation = entitySimulation;
+
+    public async Task Process(AuthProcessorContext context, PlaceModule packet)
     {
         if (buildingManager.AddModule(packet))
         {
             if (packet.ModuleEntity.ParentId == null)
             {
-                entitySimulation.ClaimBuildPiece(packet.ModuleEntity, player);
+                entitySimulation.ClaimBuildPiece(packet.ModuleEntity, context.Sender);
             }
-            playerService.SendPacketToOtherPlayers(packet, player);
+            context.ReplyToOthers(packet);
         }
     }
 }

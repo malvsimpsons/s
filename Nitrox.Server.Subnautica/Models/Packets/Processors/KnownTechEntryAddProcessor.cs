@@ -1,18 +1,14 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
-using NitroxServer.GameLogic;
-using NitroxServer.GameLogic.Unlockables;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class KnownTechEntryAddProcessor(PlayerService playerService) : AuthenticatedPacketProcessor<KnownTechEntryAdd>
+internal class KnownTechEntryAddProcessor : IAuthPacketProcessor<KnownTechEntryAdd>
 {
-    private readonly PlayerService playerService = playerService;
     // TODO: USE DATABASE
     // private readonly PdaStateData pdaStateData = pdaStateData;
 
-    public override void Process(KnownTechEntryAdd packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, KnownTechEntryAdd packet)
     {
         // TODO: USE DATABASE
         // switch (packet.Category)
@@ -25,6 +21,6 @@ internal class KnownTechEntryAddProcessor(PlayerService playerService) : Authent
         //         break;
         // }
 
-        playerService.SendPacketToOtherPlayers(packet, player);
+        context.ReplyToOthers(packet);
     }
 }

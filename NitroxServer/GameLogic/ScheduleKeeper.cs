@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxServer.GameLogic.Unlockables;
 
 namespace NitroxServer.GameLogic;
@@ -87,7 +87,7 @@ public class ScheduleKeeper
         if (becauseOfTime && !IsAlreadyRegistered(goalKey))
         {
             scheduledGoal.TimeExecute = ElapsedSecondsFloat + 15;
-            playerManager.SendPacketToAllPlayers(new Schedule(scheduledGoal.TimeExecute, goalKey, scheduledGoal.GoalType));
+            playerManager.SendPacketToAllPlayers(new Schedule(scheduledGoal.TimeExecute, goalKey, scheduledGoal.GoalCategory));
             return;
         }
         scheduledGoals.Remove(goalKey);

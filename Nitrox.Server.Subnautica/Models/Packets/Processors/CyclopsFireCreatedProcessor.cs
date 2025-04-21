@@ -1,15 +1,12 @@
-﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using Nitrox.Server.Subnautica.Services;
+﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using NitroxModel_Subnautica.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-class CyclopsFireCreatedProcessor(PlayerService playerService) : AuthenticatedPacketProcessor<CyclopsFireCreated>
+internal class CyclopsFireCreatedProcessor : IAuthPacketProcessor<CyclopsFireCreated>
 {
-    private readonly PlayerService playerService = playerService;
-
-    public override void Process(CyclopsFireCreated packet, NitroxServer.Player simulatingPlayer)
+    public async Task Process(AuthProcessorContext context, CyclopsFireCreated packet)
     {
-        playerService.SendPacketToOtherPlayers(packet, simulatingPlayer);
+        context.ReplyToOthers(packet);
     }
 }

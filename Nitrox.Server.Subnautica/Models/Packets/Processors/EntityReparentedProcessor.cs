@@ -1,17 +1,17 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EntityReparentedProcessor(EntityRegistry entityRegistry, PlayerService playerService) : AuthenticatedPacketProcessor<EntityReparented>
+internal class EntityReparentedProcessor(EntityRegistry entityRegistry, PlayerService playerService) : IAuthPacketProcessor<EntityReparented>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly PlayerService playerManager = playerService;
 
-    public override void Process(EntityReparented packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, EntityReparented packet)
     {
         if (!entityRegistry.TryGetEntityById(packet.Id, out Entity entity))
         {
@@ -23,8 +23,8 @@ internal class EntityReparentedProcessor(EntityRegistry entityRegistry, PlayerSe
             Log.Error($"Couldn't find parent entity for {packet.NewParentId}");
             return;
         }
-        
+
         entityRegistry.ReparentEntity(packet.Id, packet.NewParentId);
-        playerManager.SendPacketToOtherPlayers(packet, player);
+        context.ReplyToOthers(packet);
     }
 }

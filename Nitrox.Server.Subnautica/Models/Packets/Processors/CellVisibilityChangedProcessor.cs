@@ -1,21 +1,26 @@
 using System.Collections.Generic;
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking;
+using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Packets.Processors.Core;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class CellVisibilityChangedProcessor(EntitySimulation entitySimulation, WorldEntityManager worldEntityManager) : AuthenticatedPacketProcessor<CellVisibilityChanged>
+internal class CellVisibilityChangedProcessor(EntitySimulation entitySimulation, WorldEntityManager worldEntityManager, PlayerService playerService) : IAuthPacketProcessor<CellVisibilityChanged>
 {
     private readonly EntitySimulation entitySimulation = entitySimulation;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
+    private readonly PlayerService playerService = playerService;
 
-    public override void Process(CellVisibilityChanged packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, CellVisibilityChanged packet)
     {
-        player.AddCells(packet.Added);
-        player.RemoveCells(packet.Removed);
+        // TODO: Use database services to change visible cells.
+        // sender.AddCells(packet.Added);
+        // sender.RemoveCells(packet.Removed);
 
         List<Entity> totalEntities = [];
         List<SimulatedEntity> totalSimulationChanges = [];
@@ -24,13 +29,15 @@ internal class CellVisibilityChangedProcessor(EntitySimulation entitySimulation,
         {
             worldEntityManager.LoadUnspawnedEntities(addedCell.BatchId, false);
 
-            totalSimulationChanges.AddRange(entitySimulation.GetSimulationChangesForCell(player, addedCell));
+            // TODO: Use database services
+            // totalSimulationChanges.AddRange(entitySimulation.GetSimulationChangesForCell(sender, addedCell));
             totalEntities.AddRange(worldEntityManager.GetEntities(addedCell));
         }
 
         foreach (AbsoluteEntityCell removedCell in packet.Removed)
         {
-            entitySimulation.FillWithRemovedCells(player, removedCell, totalSimulationChanges);
+            // TODO: Use database services
+            // entitySimulation.FillWithRemovedCells(sender, removedCell, totalSimulationChanges);
         }
 
         // Simulation update must be broadcasted before the entities are spawned
@@ -42,7 +49,7 @@ internal class CellVisibilityChangedProcessor(EntitySimulation entitySimulation,
         if (totalEntities.Count > 0)
         {
             SpawnEntities batchEntities = new(totalEntities);
-            player.SendPacket(batchEntities);
+            context.ReplyToSender(batchEntities);
         }
     }
 }

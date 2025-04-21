@@ -12,6 +12,7 @@ using HanumanInstitute.MvvmDialogs;
 using Nitrox.Launcher.Models.Design;
 using Nitrox.Launcher.Models.Utils;
 using Nitrox.Launcher.ViewModels;
+using NitroxModel.Core;
 using NitroxModel.Helper;
 using NitroxModel.Logger;
 using NitroxModel.Server;
@@ -269,6 +270,6 @@ public class ServerService : IMessageReceiver, INotifyPropertyChanged
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(saveName);
         string serverPath = Path.Combine(keyValueStore.GetServerSavesPath(), saveName);
-        return (await GetServersAsync()).FirstOrDefault(s => s.Name == saveName) ?? ServerEntry.FromDirectory(serverPath) ?? ServerEntry.CreateNew(serverPath, NitroxGameMode.SURVIVAL);
+        return (await GetServersAsync()).FirstOrDefault(s => s.Name == saveName) ?? ServerEntry.FromDirectory(serverPath) ?? ServerEntry.CreateNew(serverPath, SubnauticaGameMode.SURVIVAL);
     }
 }

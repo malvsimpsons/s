@@ -7,11 +7,11 @@ namespace Nitrox.Server.Subnautica.Models.Commands.ArgConverters;
 /// </summary>
 internal class WordToBoolArgConverter : IArgConverter<string, bool>
 {
-    public ConvertResult Convert(string from) =>
-        from switch
+    public Task<ConvertResult> ConvertAsync(string playerId) =>
+        Task.FromResult(playerId switch
         {
             "on" or "enable" or "1" => ConvertResult.Ok(true),
             "off" or "disable" or "0" => ConvertResult.Ok(false),
             _ => ConvertResult.Fail()
-        };
+        });
 }

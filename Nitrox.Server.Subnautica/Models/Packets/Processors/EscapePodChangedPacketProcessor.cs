@@ -1,19 +1,18 @@
 ﻿using Microsoft.Extensions.Logging;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EscapePodChangedPacketProcessor(PlayerService playerService, ILogger<EscapePodChangedPacketProcessor> logger) : AuthenticatedPacketProcessor<EscapePodChanged>
+internal class EscapePodChangedPacketProcessor(ILogger<EscapePodChangedPacketProcessor> logger) : IAuthPacketProcessor<EscapePodChanged>
 {
-    private readonly PlayerService playerService = playerService;
     private readonly ILogger<EscapePodChangedPacketProcessor> logger = logger;
 
-    public override void Process(EscapePodChanged packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, EscapePodChanged packet)
     {
         logger.LogDebug("Processing packet {Packet}", packet);
-        player.SubRootId = packet.EscapePodId;
-        playerService.SendPacketToOtherPlayers(packet, player);
+        // TODO: USE DATABASE HERE
+        // player.SubRootId = packet.EscapePodId;
+        context.ReplyToOthers(packet);
     }
 }

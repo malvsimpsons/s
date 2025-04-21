@@ -1,9 +1,9 @@
 using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Persistence.Core;
 using Nitrox.Server.Subnautica.Services;
+using NitroxModel.Core;
 using NitroxModel.Helper;
 using NitroxServer.Helper;
 
@@ -12,9 +12,9 @@ namespace Nitrox.Server.Subnautica.Models.Persistence.Managers;
 internal class StoryTimingStateManager(IOptions<SubnauticaServerOptions> optionsProvider) : IStateManager<StoryTimingData>
 {
     /// <summary>
-    ///     Initial game world time in Subnautica is 480s
+    ///     Initial game world time in Subnautica is -480s
     /// </summary>
-    public const int INITIAL_TIME = 480;
+    public const int INITIAL_TIME = -480;
 
     private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
 
@@ -23,12 +23,14 @@ internal class StoryTimingStateManager(IOptions<SubnauticaServerOptions> options
 
     public StoryTimingData CreateDefault()
     {
-        StoryTimingData obj = new();
-        obj.Elapsed = TimeSpan.FromSeconds(INITIAL_TIME); // TODO: Verify correct (-480 or +480)
-        obj.AuroraCountdownStartTime = TimeSpan.FromMilliseconds(GenerateDeterministicAuroraTime(optionsProvider.Value.Seed));
-        obj.AuroraWarningStartTime = default;
-        // +27 is from CrashedShipExploder.IsExploded, -480 is from the default time in Subnautica.
-        obj.AuroraRealExplosionTime = TimeSpan.FromSeconds(27).Subtract(TimeSpan.FromSeconds(INITIAL_TIME));
+        StoryTimingData obj = new()
+        {
+            Elapsed = TimeSpan.FromSeconds(INITIAL_TIME), // TODO: Verify correct (-480 or +480)
+            AuroraCountdownStartTime = TimeSpan.FromMilliseconds(GenerateDeterministicAuroraTime(optionsProvider.Value.Seed)),
+            AuroraWarningStartTime = TimeSpan.Zero,
+            // +27 is from CrashedShipExploder.IsExploded, -480 is from the default time in Subnautica.
+            AuroraRealExplosionTime = TimeSpan.FromSeconds(27).Add(TimeSpan.FromSeconds(INITIAL_TIME))
+        };
         return obj;
     }
 
@@ -83,8 +85,8 @@ internal class SaveVersionStateManager : IStateManager<SaveVersionData>
 {
     public string GroupKey => "Version";
 
-    public SaveVersionData CreateDefault() => new(NitroxEnvironment.Version);
-
     public TaskCompletionSource<object> CompletionSource { get; set; }
     public SaveVersionData State { get; set; }
+
+    public SaveVersionData CreateDefault() => new(NitroxEnvironment.Version);
 }

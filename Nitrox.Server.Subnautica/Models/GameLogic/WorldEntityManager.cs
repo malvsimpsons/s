@@ -9,7 +9,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.Helper;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic;
 
@@ -325,31 +325,32 @@ internal class WorldEntityManager
 
     private void EntitySwitchedCells(WorldEntity entity, AbsoluteEntityCell oldCell, AbsoluteEntityCell newCell)
     {
-        if (entity is GlobalRootEntity)
-        {
-            return; // We don't care what cell a global root entity resides in.  Only phasing entities.
-        }
-
-        if (oldCell != newCell)
-        {
-            lock (worldEntitiesLock)
-            {
-                // Specifically remove entity from oldCell
-                UnregisterWorldEntityFromCell(entity.Id, oldCell);
-
-                // Automatically add entity to its new cell
-                RegisterWorldEntityInCell(entity, newCell);
-
-                // It can happen for some players that the entity moves to a loaded cell of theirs, but that they hadn't spawned it in the first place
-                foreach (NitroxServer.Player player in playerService.ConnectedPlayers())
-                {
-                    if (player.HasCellLoaded(newCell) && !player.HasCellLoaded(oldCell))
-                    {
-                        player.SendPacket(new SpawnEntities(entity));
-                    }
-                }
-            }
-        }
+        // TODO: USE DATABASE
+        // if (entity is GlobalRootEntity)
+        // {
+        //     return; // We don't care what cell a global root entity resides in.  Only phasing entities.
+        // }
+        //
+        // if (oldCell != newCell)
+        // {
+        //     lock (worldEntitiesLock)
+        //     {
+        //         // Specifically remove entity from oldCell
+        //         UnregisterWorldEntityFromCell(entity.Id, oldCell);
+        //
+        //         // Automatically add entity to its new cell
+        //         RegisterWorldEntityInCell(entity, newCell);
+        //
+        //         // It can happen for some players that the entity moves to a loaded cell of theirs, but that they hadn't spawned it in the first place
+        //         foreach (NitroxServer.Player player in playerService.ConnectedPlayers())
+        //         {
+        //             if (player.HasCellLoaded(newCell) && !player.HasCellLoaded(oldCell))
+        //             {
+        //                 player.SendPacket(new SpawnEntities(entity));
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     /// <summary>

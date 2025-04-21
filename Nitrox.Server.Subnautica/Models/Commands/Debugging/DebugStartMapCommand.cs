@@ -7,7 +7,7 @@ using Nitrox.Server.Subnautica.Models.Resources.Parsers;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.Unity;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Debugging;
 

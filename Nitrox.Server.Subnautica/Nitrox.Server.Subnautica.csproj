@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Nitrox.Server.Subnautica.Database\Nitrox.Server.Subnautica.Database.csproj" />
         <ProjectReference Include="..\NitroxModel-Subnautica\NitroxModel-Subnautica.csproj" />
         <ProjectReference Include="..\NitroxServer\NitroxServer.csproj" />
     </ItemGroup>

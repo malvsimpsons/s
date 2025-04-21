@@ -3,11 +3,10 @@ using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
-using NitroxModel.Helper;
+using NitroxModel.Core;
 
 namespace Nitrox.Server.Subnautica.Services;
 

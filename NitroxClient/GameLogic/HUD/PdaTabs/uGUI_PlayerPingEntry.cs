@@ -8,7 +8,7 @@ using NitroxClient.MonoBehaviours.Gui.Modals;
 using NitroxModel_Subnautica.DataStructures;
 using NitroxModel.Core;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using UnityEngine;
 using UnityEngine.UI;
 using UWE;

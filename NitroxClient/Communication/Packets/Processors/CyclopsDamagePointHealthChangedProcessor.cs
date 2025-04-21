@@ -1,5 +1,4 @@
 ﻿using NitroxClient.Communication.Abstract;
-using NitroxClient.Communication.Packets.Processors.Abstract;
 using NitroxClient.MonoBehaviours;
 using NitroxClient.Unity.Helper;
 using NitroxModel_Subnautica.Packets;
@@ -7,7 +6,7 @@ using UnityEngine;
 
 namespace NitroxClient.Communication.Packets.Processors
 {
-    public class CyclopsDamagePointHealthChangedProcessor : ClientPacketProcessor<CyclopsDamagePointRepaired>
+    public class CyclopsDamagePointHealthChangedProcessor : IClientPacketProcessor<CyclopsDamagePointRepaired>
     {
         private readonly IPacketSender packetSender;
 
@@ -16,7 +15,7 @@ namespace NitroxClient.Communication.Packets.Processors
             this.packetSender = packetSender;
         }
 
-        public override void Process(CyclopsDamagePointRepaired packet)
+        public Task Process(IPacketProcessContext context, CyclopsDamagePointRepaired packet)
         {
             GameObject gameObject = NitroxEntity.RequireObjectFrom(packet.Id);
             SubRoot cyclops = gameObject.RequireComponent<SubRoot>();
@@ -26,6 +25,8 @@ namespace NitroxClient.Communication.Packets.Processors
             {
                 cyclops.damageManager.damagePoints[packet.DamagePointIndex].liveMixin.AddHealth(packet.RepairAmount);
             }
+
+            return Task.CompletedTask;
         }
     }
 }

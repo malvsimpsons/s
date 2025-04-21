@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Linq;
-using NitroxClient.Communication.Packets.Processors.Abstract;
 using NitroxClient.GameLogic;
 using NitroxClient.GameLogic.ChatUI;
 using NitroxClient.GameLogic.Settings;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
-using NitroxModel.Packets;
 using NitroxModel_Subnautica.DataStructures;
+using NitroxModel.Networking;
+using NitroxModel.Networking.Packets;
 using UnityEngine;
 
 namespace NitroxClient.Communication.Packets.Processors
 {
-    class ChatMessageProcessor : ClientPacketProcessor<ChatMessage>
+    class ChatMessageProcessor : IClientPacketProcessor<ChatMessage>
     {
         private readonly PlayerManager remotePlayerManager;
         private readonly LocalPlayer localPlayer;
@@ -27,9 +27,9 @@ namespace NitroxClient.Communication.Packets.Processors
             this.playerChatManager = playerChatManager;
         }
 
-        public override void Process(ChatMessage message)
+        public Task Process(IPacketProcessContext context, ChatMessage message)
         {
-            if (message.PlayerId != ChatMessage.SERVER_ID)
+            if (message.PlayerId != PeerId.SERVER_ID)
             {
                 LogClientMessage(message);
             }
@@ -37,6 +37,7 @@ namespace NitroxClient.Communication.Packets.Processors
             {
                 LogServerMessage(message);
             }
+            return Task.CompletedTask;
         }
 
         private void LogClientMessage(ChatMessage message)

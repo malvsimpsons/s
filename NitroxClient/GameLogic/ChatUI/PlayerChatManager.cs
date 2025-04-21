@@ -2,8 +2,9 @@
 using NitroxClient.Communication.Abstract;
 using NitroxClient.GameLogic.Settings;
 using NitroxClient.MonoBehaviours.Gui.Chat;
+using NitroxModel.Core;
 using NitroxModel.Helper;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using UnityEngine;
 using UnityEngine.UI;
 using UWE;

@@ -3,7 +3,7 @@ using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
@@ -13,7 +13,7 @@ internal class MuteCommand(PlayerService playerService) : ICommandHandler<Nitrox
     private readonly PlayerService playerService = playerService;
 
     [Description("Prevents a user from chatting")]
-    public Task Execute(ICommandContext context, [Description("Player to mute")] NitroxServer.Player targetPlayer)
+    public async Task Execute(ICommandContext context, [Description("Player to mute")] NitroxServer.Player targetPlayer)
     {
         switch (context)
         {
@@ -30,13 +30,11 @@ internal class MuteCommand(PlayerService playerService) : ICommandHandler<Nitrox
             case not null:
                 targetPlayer.PlayerContext.IsMuted = true;
                 playerService.SendPacketToAllPlayers(new MutePlayer(targetPlayer.Id, targetPlayer.PlayerContext.IsMuted));
-                context.Message(targetPlayer.Id, "You're now muted");
+                await context.MessageAsync(targetPlayer.Id, "You're now muted");
                 context.Reply($"Muted {targetPlayer.Name}");
                 break;
             default:
                 throw new ArgumentNullException(nameof(context), "Expected command context to not be null");
         }
-
-        return Task.CompletedTask;
     }
 }

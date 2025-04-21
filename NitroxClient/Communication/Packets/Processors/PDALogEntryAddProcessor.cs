@@ -1,10 +1,9 @@
 ﻿using NitroxClient.Communication.Abstract;
-using NitroxClient.Communication.Packets.Processors.Abstract;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace NitroxClient.Communication.Packets.Processors
 {
-    public class PDALogEntryAddProcessor : ClientPacketProcessor<PDALogEntryAdd>
+    public class PDALogEntryAddProcessor : IClientPacketProcessor<PDALogEntryAdd>
     {
         private readonly IPacketSender packetSender;
 
@@ -13,12 +12,14 @@ namespace NitroxClient.Communication.Packets.Processors
             this.packetSender = packetSender;
         }
 
-        public override void Process(PDALogEntryAdd packet)
+        public Task Process(IPacketProcessContext context, PDALogEntryAdd packet)
         {
             using (PacketSuppressor<PDALogEntryAdd>.Suppress())
             {
                 PDALog.Add(packet.Key);
             }
+
+            return Task.CompletedTask;
         }
     }
 }

@@ -168,6 +168,15 @@ namespace NitroxModel.DataStructures
             }
         }
 
+        public TValue TryGetValueOrDefault(TKey key, TValue defaultValue = default)
+        {
+            if (TryGetValue(key, out TValue value))
+            {
+                return value;
+            }
+            return defaultValue;
+        }
+
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
             lock (locker)

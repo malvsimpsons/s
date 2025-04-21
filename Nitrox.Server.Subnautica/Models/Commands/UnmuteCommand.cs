@@ -2,7 +2,7 @@
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
@@ -12,7 +12,7 @@ internal class UnmuteCommand(PlayerService playerService) : ICommandHandler<Nitr
     private readonly PlayerService playerService = playerService;
 
     [Description("Removes a mute from a player")]
-    public Task Execute(ICommandContext context, [Description("Player to unmute")] NitroxServer.Player targetPlayer)
+    public async Task Execute(ICommandContext context, [Description("Player to unmute")] NitroxServer.Player targetPlayer)
     {
         switch (context)
         {
@@ -29,11 +29,9 @@ internal class UnmuteCommand(PlayerService playerService) : ICommandHandler<Nitr
             case not null:
                 targetPlayer.PlayerContext.IsMuted = false;
                 playerService.SendPacketToAllPlayers(new MutePlayer(targetPlayer.Id, targetPlayer.PlayerContext.IsMuted));
-                context.Message(targetPlayer.Id, "You're no longer muted");
+                await context.MessageAsync(targetPlayer.Id, "You're no longer muted");
                 context.Reply($"Unmuted {targetPlayer.Name}");
                 break;
         }
-
-        return Task.CompletedTask;
     }
 }

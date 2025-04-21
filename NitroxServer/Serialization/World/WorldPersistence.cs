@@ -112,7 +112,7 @@ public class WorldPersistence
         return CreateFreshWorld();
     }
 
-    public World CreateWorld(PersistedWorldData pWorldData, NitroxGameMode gameMode)
+    public World CreateWorld(PersistedWorldData pWorldData, SubnauticaGameMode gameMode)
     {
         string seed = pWorldData.WorldData.Seed;
         if (string.IsNullOrWhiteSpace(seed))

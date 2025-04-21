@@ -24,12 +24,12 @@ public sealed partial class SubnauticaServerOptions
     [RegularExpression(@"\w+")]
     public string ServerPassword { get; set; } = "";
 
-    public NitroxGameMode GameMode { get; set; }
+    public SubnauticaGameMode GameMode { get; set; }
 
     [Range(30001, int.MaxValue)]
     public int InitialSyncTimeout { get; set; } = 300000;
 
-    public bool IsHardcore => GameMode == NitroxGameMode.HARDCORE;
+    public bool IsHardcore => GameMode == SubnauticaGameMode.HARDCORE;
 
     [PropertyDescription("Possible values:", typeof(Perms))]
     public Perms DefaultPlayerPerm { get; set; } = Perms.DEFAULT;

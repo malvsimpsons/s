@@ -1,6 +1,6 @@
 using System;
-using static NitroxModel.Packets.PlaySunbeamEvent;
-using static NitroxModel.Packets.PlaySunbeamEvent.SunbeamEvent;
+using static NitroxModel.Networking.Packets.PlaySunbeamEvent;
+using static NitroxModel.Networking.Packets.PlaySunbeamEvent.SunbeamEvent;
 
 namespace NitroxModel.Subnautica.Extensions;
 

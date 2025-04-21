@@ -1,6 +1,6 @@
 using System;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxServer.Helper;
 using NitroxServer.GameLogic.Unlockables;
 

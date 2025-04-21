@@ -17,16 +17,16 @@ internal class TimeCommand(TimeService timeService) : ICommandHandler<StoryTimin
         {
             case StoryTimingService.TimeModification.DAY:
                 timeService.ChangeTime(StoryTimingService.TimeModification.DAY);
-                context.MessageAll("Time set to day");
+                context.MessageAllAsync("Time set to day");
                 break;
             case StoryTimingService.TimeModification.NIGHT:
                 timeService.ChangeTime(StoryTimingService.TimeModification.NIGHT);
-                context.MessageAll("Time set to night");
+                context.MessageAllAsync("Time set to night");
                 break;
             case StoryTimingService.TimeModification.SKIP:
             default:
                 timeService.ChangeTime(StoryTimingService.TimeModification.SKIP);
-                context.MessageAll("Skipped time");
+                context.MessageAllAsync("Skipped time");
                 break;
         }
 

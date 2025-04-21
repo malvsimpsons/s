@@ -5,7 +5,7 @@ using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic;
@@ -29,7 +29,7 @@ internal sealed class EntitySimulation
         this.simulationWhitelist = simulationWhitelist;
     }
 
-    public List<SimulatedEntity> GetSimulationChangesForCell(NitroxServer.Player player, AbsoluteEntityCell cell)
+    public List<SimulatedEntity> GetSimulationChangesForCell(PeerId player, AbsoluteEntityCell cell)
     {
         List<WorldEntity> entities = worldEntityManager.GetEntities(cell);
         List<WorldEntity> addedEntities = FilterSimulatableEntities(player, entities);
@@ -39,17 +39,18 @@ internal sealed class EntitySimulation
         foreach (WorldEntity entity in addedEntities)
         {
             bool doesEntityMove = ShouldSimulateEntityMovement(entity);
-            ownershipChanges.Add(new SimulatedEntity(entity.Id, player.Id, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE));
+            ownershipChanges.Add(new SimulatedEntity(entity.Id, player, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE));
         }
 
         return ownershipChanges;
     }
 
-    public void FillWithRemovedCells(NitroxServer.Player player, AbsoluteEntityCell removedCell, List<SimulatedEntity> ownershipChanges)
+    public void FillWithRemovedCells(PeerId player, AbsoluteEntityCell removedCell, List<SimulatedEntity> ownershipChanges)
     {
-        List<WorldEntity> entities = worldEntityManager.GetEntities(removedCell);
-        IEnumerable<WorldEntity> revokedEntities = entities.Where(entity => !player.CanSee(entity) && simulationOwnershipData.RevokeIfOwner(entity.Id, player));
-        AssignEntitiesToOtherPlayers(player, revokedEntities, ownershipChanges);
+        // TODO: USE DATABASE
+        // List<WorldEntity> entities = worldEntityManager.GetEntities(removedCell);
+        // IEnumerable<WorldEntity> revokedEntities = entities.Where(entity => !player.CanSee(entity) && simulationOwnershipData.RevokeIfOwner(entity.Id, player));
+        // AssignEntitiesToOtherPlayers(player, revokedEntities, ownershipChanges);
     }
 
     public void BroadcastSimulationChanges(List<SimulatedEntity> ownershipChanges)
@@ -61,7 +62,7 @@ internal sealed class EntitySimulation
         }
     }
 
-    public List<SimulatedEntity> CalculateSimulationChangesFromPlayerDisconnect(NitroxServer.Player player)
+    public List<SimulatedEntity> CalculateSimulationChangesFromPlayerDisconnect(PeerId player)
     {
         List<SimulatedEntity> ownershipChanges = new();
 
@@ -73,18 +74,18 @@ internal sealed class EntitySimulation
         return ownershipChanges;
     }
 
-    public SimulatedEntity AssignNewEntityToPlayer(Entity entity, NitroxServer.Player player, bool shouldEntityMove = true)
+    public SimulatedEntity AssignNewEntityToPlayer(Entity entity, PeerId player, bool shouldEntityMove = true)
     {
         if (simulationOwnershipData.TryToAcquire(entity.Id, player, DEFAULT_ENTITY_SIMULATION_LOCKTYPE))
         {
             bool doesEntityMove = shouldEntityMove && entity is WorldEntity worldEntity && ShouldSimulateEntityMovement(worldEntity);
-            return new SimulatedEntity(entity.Id, player.Id, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE);
+            return new SimulatedEntity(entity.Id, player, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE);
         }
 
         throw new Exception($"New entity was already being simulated by someone else: {entity.Id}");
     }
 
-    public List<SimulatedEntity> AssignGlobalRootEntitiesAndGetData(NitroxServer.Player player)
+    public List<SimulatedEntity> AssignGlobalRootEntitiesAndGetData(PeerId player)
     {
         List<SimulatedEntity> simulatedEntities = new();
         foreach (GlobalRootEntity entity in worldEntityManager.GetGlobalRootEntities())
@@ -95,51 +96,56 @@ internal sealed class EntitySimulation
                 continue;
             }
             bool doesEntityMove = ShouldSimulateEntityMovement(entity);
-            SimulatedEntity simulatedEntity = new(entity.Id, playerLock.Player.Id, doesEntityMove, playerLock.LockType);
+            SimulatedEntity simulatedEntity = new(entity.Id, playerLock.PlayerId, doesEntityMove, playerLock.LockType);
             simulatedEntities.Add(simulatedEntity);
         }
         return simulatedEntities;
     }
 
-    private void AssignEntitiesToOtherPlayers(NitroxServer.Player oldPlayer, IEnumerable<Entity> entities, List<SimulatedEntity> ownershipChanges)
+    private void AssignEntitiesToOtherPlayers(PeerId oldPlayer, IEnumerable<Entity> entities, List<SimulatedEntity> ownershipChanges)
     {
-        List<NitroxServer.Player> otherPlayers = playerService.GetConnectedPlayersExcept(oldPlayer);
-
-        foreach (Entity entity in entities)
-        {
-            if (TryAssignEntityToPlayers(otherPlayers, entity, out SimulatedEntity simulatedEntity))
-            {
-                ownershipChanges.Add(simulatedEntity);
-            }
-        }
+        // TODO: USE DATABASE
+        // List<PeerId> otherPlayers = playerService.GetConnectedPlayersExcept(oldPlayer);
+        //
+        // foreach (Entity entity in entities)
+        // {
+        //     if (TryAssignEntityToPlayers(otherPlayers, entity, out SimulatedEntity simulatedEntity))
+        //     {
+        //         ownershipChanges.Add(simulatedEntity);
+        //     }
+        // }
     }
 
-    public bool TryAssignEntityToPlayers(List<NitroxServer.Player> players, Entity entity, out SimulatedEntity simulatedEntity)
+    public bool TryAssignEntityToPlayers(List<PeerId> players, Entity entity, out SimulatedEntity simulatedEntity)
     {
         NitroxId id = entity.Id;
-        
-        foreach (NitroxServer.Player player in players)
-        {
-            if (player.CanSee(entity) && simulationOwnershipData.TryToAcquire(id, player, DEFAULT_ENTITY_SIMULATION_LOCKTYPE))
-            {
-                bool doesEntityMove = entity is WorldEntity worldEntity && ShouldSimulateEntityMovement(worldEntity);
 
-                Log.Verbose($"Player {player.Name} has taken over simulating {id}");
-                simulatedEntity = new(id, player.Id, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE);
-                return true;
-            }
-        }
+        // TODO: USE DATABASE
+        // foreach (PeerId player in players)
+        // {
+        //     if (player.CanSee(entity) && simulationOwnershipData.TryToAcquire(id, player, DEFAULT_ENTITY_SIMULATION_LOCKTYPE))
+        //     {
+        //         bool doesEntityMove = entity is WorldEntity worldEntity && ShouldSimulateEntityMovement(worldEntity);
+        //
+        //         Log.Verbose($"Player {player.Name} has taken over simulating {id}");
+        //         simulatedEntity = new(id, player.Id, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE);
+        //         return true;
+        //     }
+        // }
         
         simulatedEntity = null;
         return false;
     }
 
-    private List<WorldEntity> FilterSimulatableEntities(NitroxServer.Player player, List<WorldEntity> entities)
+    private List<WorldEntity> FilterSimulatableEntities(PeerId player, List<WorldEntity> entities)
     {
-        return entities.Where(entity => {
-            bool isEligibleForSimulation = player.CanSee(entity) && ShouldSimulateEntity(entity);
-            return isEligibleForSimulation && simulationOwnershipData.TryToAcquire(entity.Id, player, DEFAULT_ENTITY_SIMULATION_LOCKTYPE);
-        }).ToList();
+        return [];
+
+        // TODO: USE DATABASE
+        // return entities.Where(entity => {
+        //     bool isEligibleForSimulation = player.CanSee(entity) && ShouldSimulateEntity(entity);
+        //     return isEligibleForSimulation && simulationOwnershipData.TryToAcquire(entity.Id, player, DEFAULT_ENTITY_SIMULATION_LOCKTYPE);
+        // }).ToList();
     }
 
     public bool ShouldSimulateEntity(WorldEntity entity)
@@ -162,7 +168,7 @@ internal sealed class EntitySimulation
         simulationOwnershipData.RevokeOwnerOfId(id);
     }
 
-    public void ClaimBuildPiece(Entity entity, NitroxServer.Player player)
+    public void ClaimBuildPiece(Entity entity, PeerId player)
     {
         SimulatedEntity simulatedEntity = AssignNewEntityToPlayer(entity, player, false);
         SimulationOwnershipChange ownershipChangePacket = new(simulatedEntity);

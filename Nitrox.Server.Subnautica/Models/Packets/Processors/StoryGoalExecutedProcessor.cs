@@ -1,12 +1,11 @@
 using Microsoft.Extensions.Logging;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class StoryGoalExecutedProcessor(PlayerService playerService, StoryScheduleService storyScheduleService, ILogger<StoryGoalExecutedProcessor> logger)
-    : AuthenticatedPacketProcessor<StoryGoalExecuted>
+internal sealed class StoryGoalExecutedProcessor(PlayerService playerService, StoryScheduleService storyScheduleService, ILogger<StoryGoalExecutedProcessor> logger) : IAuthPacketProcessor<StoryGoalExecuted>
 {
     private readonly PlayerService playerService = playerService;
     // TODO: USE DATABASE
@@ -15,7 +14,7 @@ internal sealed class StoryGoalExecutedProcessor(PlayerService playerService, St
     private readonly StoryScheduleService storyScheduleService = storyScheduleService;
     private readonly ILogger<StoryGoalExecutedProcessor> logger = logger;
 
-    public override void Process(StoryGoalExecuted packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, StoryGoalExecuted packet)
     {
         logger.LogDebug("Processing {Packet}", packet);
         // TODO: USE DATABASE
@@ -38,7 +37,6 @@ internal sealed class StoryGoalExecutedProcessor(PlayerService playerService, St
         // }
 
         storyScheduleService.UnScheduleGoal(packet.Key);
-
-        playerService.SendPacketToOtherPlayers(packet, player);
+        context.ReplyToOthers(packet);
     }
 }

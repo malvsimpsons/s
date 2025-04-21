@@ -1,7 +1,6 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Packets;
-using NitroxServer.GameLogic.Entities;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
@@ -10,5 +9,5 @@ internal sealed class AttackCyclopsTargetChangedProcessor(
     GameLogic.EntityRegistry entityRegistry
 ) : TransmitIfCanSeePacketProcessor<AttackCyclopsTargetChanged>(playerService, entityRegistry)
 {
-    public override void Process(AttackCyclopsTargetChanged packet, NitroxServer.Player sender) => TransmitIfCanSeeEntities(packet, sender, packet.CreatureId, packet.TargetId);
+    public override Task Process(AuthProcessorContext context, AttackCyclopsTargetChanged packet) => TransmitIfCanSeeEntities(packet, context.Sender, packet.CreatureId, packet.TargetId);
 }

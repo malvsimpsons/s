@@ -1,19 +1,19 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EntityDestroyedPacketProcessor(PlayerService playerService, EntitySimulation entitySimulation, WorldEntityManager worldEntityManager) : AuthenticatedPacketProcessor<EntityDestroyed>
+internal class EntityDestroyedPacketProcessor(PlayerService playerService, EntitySimulation entitySimulation, WorldEntityManager worldEntityManager) : IAuthPacketProcessor<EntityDestroyed>
 {
-    private readonly PlayerService playerManager = playerService;
+    private readonly PlayerService playerService = playerService;
     private readonly EntitySimulation entitySimulation = entitySimulation;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
 
-    public override void Process(EntityDestroyed packet, NitroxServer.Player destroyingPlayer)
+    public async Task Process(AuthProcessorContext context, EntityDestroyed packet)
     {
         entitySimulation.EntityDestroyed(packet.Id);
 
@@ -24,14 +24,15 @@ internal class EntityDestroyedPacketProcessor(PlayerService playerService, Entit
                 worldEntityManager.MovePlayerChildrenToRoot(vehicleWorldEntity);
             }
 
-            foreach (NitroxServer.Player player in playerManager.GetConnectedPlayers())
-            {
-                bool isOtherPlayer = player != destroyingPlayer;
-                if (isOtherPlayer && player.CanSee(entity))
-                {
-                    player.SendPacket(packet);
-                }
-            }
+            // TODO: FIX THIS WITH THE DATABASE!
+            // foreach (PeerId player in playerManager.GetConnectedPlayersAsync())
+            // {
+            //     bool isOtherPlayer = player != context.Sender;
+            //     if (isOtherPlayer && player.CanSee(entity))
+            //     {
+            //          playerService.SendPacket(packet, player);
+            //     }
+            // }
         }
     }
 }

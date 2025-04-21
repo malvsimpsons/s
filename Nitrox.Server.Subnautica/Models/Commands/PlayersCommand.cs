@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Services;
+using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
@@ -16,13 +16,12 @@ internal class PlayersCommand(IOptions<SubnauticaServerOptions> serverOptionsPro
     private readonly IOptions<SubnauticaServerOptions> serverOptionsProvider = serverOptionsProvider;
 
     [Description("Shows who's online")]
-    public Task Execute(ICommandContext context)
+    public async Task Execute(ICommandContext context)
     {
         SubnauticaServerOptions options = serverOptionsProvider.Value;
 
-        IList<string> players = playerService.GetConnectedPlayers().Select(player => player.Name).ToArray();
-        context.Reply($"List of players ({players.Count}/{options.MaxConnections}):{Environment.NewLine}{string.Join(", ", players)}");
-
-        return Task.CompletedTask;
+        ConnectedPlayerDto[] players = await playerService.GetConnectedPlayersAsync();
+        string playerNamesWithIds = string.Join(", ", players.OrderBy(p => p.Name).Select(p => $"{p.Name} (#{p.Id})"));
+        context.Reply($"List of players ({players.Length}/{options.MaxConnections}):{Environment.NewLine}{playerNamesWithIds}");
     }
 }

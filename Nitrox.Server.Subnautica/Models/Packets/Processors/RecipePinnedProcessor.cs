@@ -1,19 +1,20 @@
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Abstract;
-using NitroxModel.Packets;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-public class PinnedRecipeProcessor : AuthenticatedPacketProcessor<RecipePinned>
+internal class PinnedRecipeProcessor : IAuthPacketProcessor<RecipePinned>
 {
-    public override void Process(RecipePinned packet, NitroxServer.Player player)
+    public async Task Process(AuthProcessorContext context, RecipePinned packet)
     {
-        if (packet.Pinned)
-        {
-            player.PinnedRecipePreferences.Add(packet.TechType);
-        }
-        else
-        {
-            player.PinnedRecipePreferences.Remove(packet.TechType);
-        }        
+        // TODO: USE DATABASE
+        // if (packet.Pinned)
+        // {
+        //     player.PinnedRecipePreferences.Add(packet.TechType);
+        // }
+        // else
+        // {
+        //     player.PinnedRecipePreferences.Remove(packet.TechType);
+        // }
     }
 }

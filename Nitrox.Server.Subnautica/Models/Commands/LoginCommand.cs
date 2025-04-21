@@ -18,7 +18,8 @@ internal class LoginCommand(IOptions<Configuration.SubnauticaServerOptions> opti
             case PlayerToServerCommandContext { Player: { Permissions: < Perms.ADMIN } player }:
                 if (optionsProvider.Value.AdminPassword == adminPassword)
                 {
-                    player.Permissions = Perms.ADMIN;
+                    // TODO: USE DATABASE
+                    // player.Permissions = Perms.ADMIN;
                     context.Reply($"You've been made {nameof(Perms.ADMIN)} on this server!");
                 }
                 else
