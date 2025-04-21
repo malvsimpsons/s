@@ -9,5 +9,9 @@ namespace Nitrox.Server.Subnautica.Models.Commands;
 internal sealed class BroadcastCommand : ICommandHandler<string>
 {
     [Description("Broadcasts a message on the server")]
-    public void Execute(ICommandContext context, string messageToBroadcast) => context.MessageAll(messageToBroadcast);
+    public Task Execute(ICommandContext context, string messageToBroadcast)
+    {
+        context.MessageAll(messageToBroadcast);
+        return Task.CompletedTask;
+    }
 }

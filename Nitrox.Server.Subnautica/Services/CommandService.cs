@@ -1,10 +1,9 @@
 extern alias JB;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
@@ -20,6 +19,8 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
     private const int MAX_ARGS = 8;
     private readonly ILogger<CommandService> logger = logger;
     private readonly ILoggerFactory loggerFactory = loggerFactory;
+    private readonly Channel<Task> runningCommands = Channel.CreateUnbounded<Task>();
+    private Task commandWaiterTask;
 
     private readonly CommandRegistry registry = registry;
 
@@ -122,9 +123,30 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
         RunHandler(handler, args[.. (handler.Parameters.Length + 1)], inputText.ToString());
     }
 
-    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        commandWaiterTask = Task.Factory.StartNew(() => EnsureCommandsAreProcessedAsync(cancellationToken), cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        return Task.CompletedTask;
+    }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    private async Task EnsureCommandsAreProcessedAsync(CancellationToken cancellationToken = default)
+    {
+        await foreach (Task task in runningCommands.Reader.ReadAllAsync(cancellationToken))
+        {
+            if (task == null)
+            {
+                continue;
+            }
+            await task;
+        }
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        logger.LogDebug("Waiting for commands to finish processing...");
+        await commandWaiterTask;
+        logger.LogDebug("Done waiting for commands");
+    }
 
     public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
@@ -145,20 +167,16 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
             context.Logger = loggerFactory.CreateLogger(handler.Owner.GetType());
         }
 
-        logger.LogTrace("Executing command {Command}", inputText);
-        Stopwatch sw = Stopwatch.StartNew();
         try
         {
-            handler.Invoke(args);
+            if (!runningCommands.Writer.TryWrite(handler.InvokeAsync(args)))
+            {
+                logger.LogError("Failed to track command task");
+            }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while executing command {Command}", inputText);
-        }
-        finally
-        {
-            sw.Stop();
-            logger.LogDebug("Command execution took {TimeSpan}ms", sw.Elapsed.TotalMilliseconds);
         }
     }
 }

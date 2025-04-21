@@ -12,7 +12,7 @@ internal class AutoSaveCommand(IOptions<SubnauticaServerConfig> serverOptionsPro
     private readonly IOptions<SubnauticaServerConfig> serverOptionsProvider = serverOptionsProvider;
 
     [Description("Whether autosave should be on or off")]
-    public void Execute(ICommandContext context, bool toggle)
+    public Task Execute(ICommandContext context, bool toggle)
     {
         if (toggle)
         {
@@ -24,5 +24,6 @@ internal class AutoSaveCommand(IOptions<SubnauticaServerConfig> serverOptionsPro
             serverOptionsProvider.Value.DisableAutoSave = true;
             context.Reply("Disabled periodical saving");
         }
+        return Task.CompletedTask;
     }
 }

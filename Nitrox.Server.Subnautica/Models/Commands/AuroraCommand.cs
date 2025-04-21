@@ -14,7 +14,7 @@ internal class AuroraCommand(StoryTimingService storyManager) : ICommandHandler<
     private readonly StoryTimingService storyManager = storyManager;
 
     [Description("Which action to apply to Aurora")]
-    public void Execute(ICommandContext context, AuroraAction action)
+    public Task Execute(ICommandContext context, AuroraAction action)
     {
         switch (action)
         {
@@ -30,6 +30,7 @@ internal class AuroraCommand(StoryTimingService storyManager) : ICommandHandler<
             default:
                 throw new ArgumentOutOfRangeException(nameof(action), action, null);
         }
+        return Task.CompletedTask;
     }
 
     public enum AuroraAction

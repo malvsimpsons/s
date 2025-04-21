@@ -17,7 +17,7 @@ internal class PlayerCommand(GameLogic.SimulationOwnershipData simulationOwnersh
     private readonly ILogger<PlayerCommand> logger = logger;
 
     [Description("Lists all visible cells of a player, their simulated entities per cell and the player's visible out of cell entities")]
-    public void Execute(ICommandContext context, [Description("name of the target player")] NitroxServer.Player player)
+    public Task Execute(ICommandContext context, [Description("name of the target player")] NitroxServer.Player player)
     {
         List<AbsoluteEntityCell> visibleCells = player.GetVisibleCells();
 
@@ -42,6 +42,8 @@ internal class PlayerCommand(GameLogic.SimulationOwnershipData simulationOwnersh
             }
         }
         logger.LogInformation($"\nOut of cell entities:\n{string.Join(", ", player.OutOfCellVisibleEntities)}");
+
+        return Task.CompletedTask;
     }
 }
 #endif

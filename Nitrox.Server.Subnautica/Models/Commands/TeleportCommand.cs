@@ -13,7 +13,7 @@ namespace Nitrox.Server.Subnautica.Models.Commands;
 internal sealed class TeleportCommand : ICommandHandler<int, int, int>
 {
     [Description("Teleports yourself to a specific location")]
-    public void Execute(ICommandContext context, [Description("x coordinate")] int x, [Description("y coordinate")] int y, [Description("z coordinate")] int z)
+    public Task Execute(ICommandContext context, [Description("x coordinate")] int x, [Description("y coordinate")] int y, [Description("z coordinate")] int z)
     {
         switch (context)
         {
@@ -25,5 +25,7 @@ internal sealed class TeleportCommand : ICommandHandler<int, int, int>
             default:
                 throw new ArgumentOutOfRangeException(nameof(context), "Only players can teleport themselves");
         }
+
+        return Task.CompletedTask;
     }
 }

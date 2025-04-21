@@ -12,5 +12,9 @@ internal sealed class StopCommand(IHostApplicationLifetime lifetime) : ICommandH
     private readonly IHostApplicationLifetime lifetime = lifetime;
 
     [Description("Gracefully stops the server")]
-    public void Execute(ICommandContext context) => lifetime.StopApplication();
+    public Task Execute(ICommandContext context)
+    {
+        lifetime.StopApplication();
+        return Task.CompletedTask;
+    }
 }

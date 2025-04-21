@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using NitroxModel.DataStructures.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Core;
@@ -64,7 +65,7 @@ public record CommandHandlerEntry
         execute = derivedHandler.execute;
     }
 
-    public void Invoke(params Span<object> args) => execute.Invoke(Owner, args);
+    public Task InvokeAsync(params Span<object> args) => (Task)execute.Invoke(Owner, args);
 
     public override string ToString() => ToDisplayString(true);
 

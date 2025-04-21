@@ -9,7 +9,7 @@ namespace Nitrox.Server.Subnautica.Models.Commands;
 internal class BackCommand : ICommandHandler
 {
     [Description("Teleports you back on your last location")]
-    public void Execute(ICommandContext context)
+    public Task Execute(ICommandContext context)
     {
         switch (context)
         {
@@ -18,12 +18,13 @@ internal class BackCommand : ICommandHandler
                 if (player.LastStoredPosition == null)
                 {
                     context.Reply("No previous location...");
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 player.Teleport(player.LastStoredPosition.Value, player.LastStoredSubRootID);
                 context.Reply($"Teleported back to {player.LastStoredPosition.Value}");
                 break;
         }
+        return Task.CompletedTask;
     }
 }

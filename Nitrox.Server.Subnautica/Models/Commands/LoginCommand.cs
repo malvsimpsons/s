@@ -11,7 +11,7 @@ internal class LoginCommand(IOptions<Configuration.SubnauticaServerOptions> opti
     private readonly IOptions<Configuration.SubnauticaServerOptions> optionsProvider = optionsProvider;
 
     [Description("Log in to server as admin (requires password)")]
-    public void Execute(ICommandContext context, [Description("The admin password for the server")] string adminPassword)
+    public Task Execute(ICommandContext context, [Description("The admin password for the server")] string adminPassword)
     {
         switch (context)
         {
@@ -28,7 +28,9 @@ internal class LoginCommand(IOptions<Configuration.SubnauticaServerOptions> opti
                 break;
             default:
                 context.Reply("You already have admin permissions");
-                return;
+                break;
         }
+
+        return Task.CompletedTask;
     }
 }

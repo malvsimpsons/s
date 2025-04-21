@@ -16,11 +16,13 @@ internal class PlayersCommand(IOptions<SubnauticaServerOptions> serverOptionsPro
     private readonly IOptions<SubnauticaServerOptions> serverOptionsProvider = serverOptionsProvider;
 
     [Description("Shows who's online")]
-    public void Execute(ICommandContext context)
+    public Task Execute(ICommandContext context)
     {
         SubnauticaServerOptions options = serverOptionsProvider.Value;
 
         IList<string> players = playerService.GetConnectedPlayers().Select(player => player.Name).ToArray();
         context.Reply($"List of players ({players.Count}/{options.MaxConnections}):{Environment.NewLine}{string.Join(", ", players)}");
+
+        return Task.CompletedTask;
     }
 }

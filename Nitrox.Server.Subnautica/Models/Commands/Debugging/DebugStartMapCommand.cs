@@ -19,12 +19,14 @@ internal class DebugStartMapCommand(IOptions<Configuration.SubnauticaServerOptio
     private readonly PlayerService playerService = playerService;
 
     [Description("Spawns blocks at spawn positions")]
-    public void Execute(ICommandContext context)
+    public Task Execute(ICommandContext context)
     {
         List<NitroxVector3> randomStartPositions = randomStart.RandomStartGenerator.GenerateRandomStartPositions(optionsProvider.Value.Seed);
 
         playerService.SendPacketToAllPlayers(new DebugStartMapPacket(randomStartPositions));
         context.Reply($"Rendered {randomStartPositions.Count} spawn positions");
+
+        return Task.CompletedTask;
     }
 }
 #endif

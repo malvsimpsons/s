@@ -17,20 +17,20 @@ internal sealed class KickCommand(PlayerService playerService, EntitySimulation 
     private readonly PlayerService playerService = playerService;
 
     [Description("Kicks a player from the server")]
-    public void Execute(ICommandContext context, NitroxServer.Player playerToKick, string reason = "")
+    public Task Execute(ICommandContext context, NitroxServer.Player playerToKick, string reason = "")
     {
         reason ??= "";
         if (context.OriginId == playerToKick.Id)
         {
             context.Reply("You can't kick yourself");
-            return;
+            return Task.CompletedTask;
         }
 
         switch (context.Origin)
         {
             case CommandOrigin.PLAYER when playerToKick.Permissions >= context.Permissions:
                 context.Reply($"You're not allowed to kick {playerToKick.Name}");
-                return;
+                break;
             case CommandOrigin.PLAYER:
             case CommandOrigin.SERVER:
                 playerToKick.SendPacket(new PlayerKicked(reason));
@@ -49,5 +49,6 @@ internal sealed class KickCommand(PlayerService playerService, EntitySimulation 
             default:
                 throw new ArgumentOutOfRangeException(nameof(context.Origin), "The origin of this command is unsupported");
         }
+        return Task.CompletedTask;
     }
 }

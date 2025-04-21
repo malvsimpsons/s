@@ -12,12 +12,14 @@ internal class SaveCommand(PersistenceService persistenceService) : ICommandHand
     private readonly PersistenceService persistenceService = persistenceService;
 
     [Description("Saves the world")]
-    public void Execute(ICommandContext context)
+    public Task Execute(ICommandContext context)
     {
         context.MessageAll("World is saving...");
 
         // TODO: Run save action on server.
         // persistenceService.SaveAsync() (allow async command execute)
         // NitroxServer.Server.Instance.Save();
+
+        return Task.CompletedTask;
     }
 }

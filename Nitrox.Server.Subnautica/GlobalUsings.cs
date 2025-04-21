@@ -1,3 +1,4 @@
+global using System.Threading.Tasks;
 global using NitroxModel;
 global using NitroxModel.Logger;
 global using NitroxModel.Subnautica.Extensions;

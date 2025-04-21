@@ -8,9 +8,11 @@ namespace Nitrox.Server.Subnautica.Models.Commands;
 internal class SummaryCommand : ICommandHandler
 {
     [Description("Shows persisted data")]
-    public void Execute(ICommandContext context)
+    public Task Execute(ICommandContext context)
     {
         // TODO: Fix save summary
         // context.Reply(server.GetSaveSummary(context.Permissions));
+
+        return Task.CompletedTask;
     }
 }

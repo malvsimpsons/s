@@ -9,7 +9,7 @@ namespace Nitrox.Server.Subnautica.Models.Commands;
 internal class DeopCommand : ICommandHandler<NitroxServer.Player>
 {
     [Description("Removes admin rights from user")]
-    public void Execute(ICommandContext context, [Description("Username to remove admin rights from")] NitroxServer.Player targetPlayer)
+    public Task Execute(ICommandContext context, [Description("Username to remove admin rights from")] NitroxServer.Player targetPlayer)
     {
         targetPlayer.Permissions = Perms.PLAYER;
 
@@ -17,5 +17,6 @@ internal class DeopCommand : ICommandHandler<NitroxServer.Player>
         targetPlayer.SendPacket(new PermsChanged(targetPlayer.Permissions));
         context.Message(targetPlayer.Id, $"You were demoted to {targetPlayer.Permissions}");
         context.Reply($"Updated {targetPlayer.Name}'s permissions to {targetPlayer.Permissions}");
+        return Task.CompletedTask;
     }
 }

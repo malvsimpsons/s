@@ -15,7 +15,7 @@ internal class KeepInventoryCommand(PlayerService playerService, IOptions<Config
     private readonly IOptions<Configuration.SubnauticaServerOptions> serverConfig = optionsProvider;
 
     [Description("Sets \"keep inventory\" setting to on/off. If \"on\", players won't lose items when they die.")]
-    public void Execute(ICommandContext context, [Description("The true/false state to set keep inventory on death to")] bool newKeepInventoryState)
+    public Task Execute(ICommandContext context, [Description("The true/false state to set keep inventory on death to")] bool newKeepInventoryState)
     {
         if (serverConfig.Value.KeepInventoryOnDeath != newKeepInventoryState)
         {
@@ -27,5 +27,6 @@ internal class KeepInventoryCommand(PlayerService playerService, IOptions<Config
         {
             context.Reply($"KeepInventoryOnDeath already set to {newKeepInventoryState}");
         }
+        return Task.CompletedTask;
     }
 }

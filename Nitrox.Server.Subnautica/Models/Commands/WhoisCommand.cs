@@ -7,7 +7,7 @@ namespace Nitrox.Server.Subnautica.Models.Commands;
 internal class WhoisCommand : ICommandHandler<NitroxServer.Player>
 {
     [Description("Shows information about a player")]
-    public void Execute(ICommandContext context, [Description("The players name")] NitroxServer.Player player)
+    public Task Execute(ICommandContext context, [Description("The players name")] NitroxServer.Player player)
     {
         StringBuilder builder = new($"==== {player.Name} ====\n");
         builder.AppendLine($"ID: {player.Id}");
@@ -19,5 +19,7 @@ internal class WhoisCommand : ICommandHandler<NitroxServer.Player>
         builder.AppendLine($"Infection: {player.Stats.InfectionAmount}");
 
         context.Reply(builder.ToString());
+
+        return Task.CompletedTask;
     }
 }

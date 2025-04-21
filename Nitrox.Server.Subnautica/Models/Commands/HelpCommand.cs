@@ -20,7 +20,7 @@ internal sealed class HelpCommand(Func<CommandRegistry> registryProvider) : ICom
     private readonly Func<CommandRegistry> registryProvider = registryProvider;
 
     [Description("Shows this help page")]
-    public void Execute(ICommandContext context)
+    public Task Execute(ICommandContext context)
     {
         StringBuilder sb = new();
         sb.AppendLine("~~~ COMMAND HELP PAGE ~~~");
@@ -38,15 +38,17 @@ internal sealed class HelpCommand(Func<CommandRegistry> registryProvider) : ICom
             sb.AppendLine(handler.ToString());
         }
         context.Reply(sb.Remove(sb.Length - Environment.NewLine.Length, Environment.NewLine.Length).ToString());
+        return Task.CompletedTask;
     }
 
     [Description("Shows the help page of the given command")]
-    public void Execute(ICommandContext context, string commandName)
+    public Task Execute(ICommandContext context, string commandName)
     {
         if (!TryShowHelpForCommand(context, commandName))
         {
             context.Reply($"No command exists with the name {commandName}");
         }
+        return Task.CompletedTask;
     }
 
     private bool TryShowHelpForCommand(ICommandContext context, string commandName)

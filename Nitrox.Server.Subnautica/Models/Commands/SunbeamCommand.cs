@@ -16,5 +16,10 @@ internal sealed class SunbeamCommand(StoryTimingService storyTimingService) : IC
     private readonly StoryTimingService storyTimingService = storyTimingService;
 
     [Description("Start sunbeam events")]
-    public void Execute(ICommandContext context, [Description("Which Sunbeam event to start")] PlaySunbeamEvent.SunbeamEvent sunbeamEvent) => storyTimingService.StartSunbeamEvent(sunbeamEvent.ToSubnauticaStoryKey());
+    public Task Execute(ICommandContext context, [Description("Which Sunbeam event to start")] PlaySunbeamEvent.SunbeamEvent sunbeamEvent)
+    {
+        storyTimingService.StartSunbeamEvent(sunbeamEvent.ToSubnauticaStoryKey());
+
+        return Task.CompletedTask;
+    }
 }

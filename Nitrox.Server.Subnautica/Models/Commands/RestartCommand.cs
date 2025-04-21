@@ -12,12 +12,12 @@ internal sealed class RestartCommand(ILogger<RestartCommand> logger, IHostApplic
     private readonly IHostApplicationLifetime lifetime = lifetime;
 
     [Description("Restarts the server")]
-    public void Execute(ICommandContext context)
+    public Task Execute(ICommandContext context)
     {
         if (Debugger.IsAttached)
         {
             logger.LogError("Server can not be restarted while a debugger is attached.");
-            return;
+            return Task.CompletedTask;
         }
 
         using Process currentProcess = Process.GetCurrentProcess();
@@ -25,7 +25,7 @@ internal sealed class RestartCommand(ILogger<RestartCommand> logger, IHostApplic
         if (program == null)
         {
             logger.LogError("Failed to get location of server.");
-            return;
+            return Task.CompletedTask;
         }
 
         context.MessageAll("Server is restarting...");
@@ -33,5 +33,7 @@ internal sealed class RestartCommand(ILogger<RestartCommand> logger, IHostApplic
         // TODO: STOP AND START SERVER
         lifetime.StopApplication();
         // using Process proc = Process.Start(program);
+
+        return Task.CompletedTask;
     }
 }

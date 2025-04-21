@@ -9,7 +9,7 @@ namespace Nitrox.Server.Subnautica.Models.Commands;
 internal class OpCommand : ICommandHandler<NitroxServer.Player>
 {
     [Description("Sets a user as admin")]
-    public void Execute(ICommandContext context, [Description("The player to make an admin")] NitroxServer.Player targetPlayer)
+    public Task Execute(ICommandContext context, [Description("The player to make an admin")] NitroxServer.Player targetPlayer)
     {
         switch (context)
         {
@@ -24,5 +24,7 @@ internal class OpCommand : ICommandHandler<NitroxServer.Player>
                 context.Reply($"Updated {targetPlayer.Name}'s permissions to {targetPlayer.Permissions}");
                 break;
         }
+
+        return Task.CompletedTask;
     }
 }

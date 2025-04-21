@@ -13,28 +13,30 @@ internal class MuteCommand(PlayerService playerService) : ICommandHandler<Nitrox
     private readonly PlayerService playerService = playerService;
 
     [Description("Prevents a user from chatting")]
-    public void Execute(ICommandContext context, [Description("Player to mute")] NitroxServer.Player targetPlayer)
+    public Task Execute(ICommandContext context, [Description("Player to mute")] NitroxServer.Player targetPlayer)
     {
         switch (context)
         {
             case not null when context.OriginId == targetPlayer.Id:
                 context.Reply("You can't mute yourself");
-                return;
+                break;
             case { Permissions: var contextPerms } when contextPerms < targetPlayer.Permissions:
                 context.Reply($"You're not allowed to mute {targetPlayer.Name}");
-                return;
+                break;
             case not null when targetPlayer is { PlayerContext.IsMuted: true }:
                 context.Reply($"{targetPlayer.Name} is already muted");
                 targetPlayer.SendPacket(new MutePlayer(targetPlayer.Id, targetPlayer.PlayerContext.IsMuted)); // TODO: Is sending this packet necessary?
-                return;
+                break;
             case not null:
                 targetPlayer.PlayerContext.IsMuted = true;
                 playerService.SendPacketToAllPlayers(new MutePlayer(targetPlayer.Id, targetPlayer.PlayerContext.IsMuted));
                 context.Message(targetPlayer.Id, "You're now muted");
                 context.Reply($"Muted {targetPlayer.Name}");
-                return;
+                break;
             default:
                 throw new ArgumentNullException(nameof(context), "Expected command context to not be null");
         }
+
+        return Task.CompletedTask;
     }
 }

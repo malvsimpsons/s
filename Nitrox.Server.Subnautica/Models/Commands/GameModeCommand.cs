@@ -14,13 +14,13 @@ internal class GameModeCommand(PlayerService playerService) : ICommandHandler<Ni
     private readonly PlayerService playerService = playerService;
 
     [Description("Changes a player's gamemode")]
-    public void Execute(ICommandContext context, NitroxGameMode gameMode, NitroxServer.Player targetPlayer = null)
+    public Task Execute(ICommandContext context, NitroxGameMode gameMode, NitroxServer.Player targetPlayer = null)
     {
         switch (context.Origin)
         {
             case CommandOrigin.SERVER when targetPlayer == null:
                 context.Reply("Console can't use the gamemode command without providing a player name.");
-                return;
+                return Task.CompletedTask;
             case CommandOrigin.PLAYER when context is PlayerToServerCommandContext playerContext:
                 // The target player if not set, is the player who sent the command
                 targetPlayer ??= playerContext.Player;
@@ -43,5 +43,6 @@ internal class GameModeCommand(PlayerService playerService) : ICommandHandler<Ni
                 }
                 break;
         }
+        return Task.CompletedTask;
     }
 }

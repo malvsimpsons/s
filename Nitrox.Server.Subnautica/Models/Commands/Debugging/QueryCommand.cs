@@ -17,12 +17,12 @@ internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipDa
     private readonly ILogger<QueryCommand> logger = logger;
 
     [Description("Query the entity associated with the given NitroxId")]
-    public void Execute(ICommandContext context, [Description("NitroxId of an entity")] NitroxId entityId)
+    public Task Execute(ICommandContext context, [Description("NitroxId of an entity")] NitroxId entityId)
     {
         if (!entityRegistry.TryGetEntityById(entityId, out Entity entity))
         {
             context.Reply($"Entity with id {entityId} not found");
-            return;
+            return Task.CompletedTask;
         }
 
         context.Reply(entity.ToString());
@@ -38,6 +38,8 @@ internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipDa
         {
             context.Reply("Not locked");
         }
+
+        return Task.CompletedTask;
     }
 }
 #endif

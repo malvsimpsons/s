@@ -11,7 +11,7 @@ internal class TimeCommand(TimeService timeService) : ICommandHandler<StoryTimin
     private readonly TimeService timeService = timeService;
 
     [Description("Changes the map time")]
-    public void Execute(ICommandContext context, [Description("Time to change to")] StoryTimingService.TimeModification time)
+    public Task Execute(ICommandContext context, [Description("Time to change to")] StoryTimingService.TimeModification time)
     {
         switch (time)
         {
@@ -29,5 +29,7 @@ internal class TimeCommand(TimeService timeService) : ICommandHandler<StoryTimin
                 context.MessageAll("Skipped time");
                 break;
         }
+
+        return Task.CompletedTask;
     }
 }
