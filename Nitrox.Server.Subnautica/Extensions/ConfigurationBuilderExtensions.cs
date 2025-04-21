@@ -9,7 +9,7 @@ namespace Nitrox.Server.Subnautica.Extensions;
 
 internal static class ConfigurationBuilderExtensions
 {
-    public static IConfigurationBuilder AddNitroxConfigFile<TOptions>(this IConfigurationBuilder configurationBuilder, string filePath, string configSectionPath = "", bool optional = true) where TOptions : class, new()
+    public static IConfigurationBuilder AddNitroxConfigFile<TOptions>(this IConfigurationBuilder configurationBuilder, string filePath, string configSectionPath = "", bool optional = false, bool reloadOnChange = false) where TOptions : class, new()
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         string dirPath = Path.GetDirectoryName(filePath);
@@ -19,28 +19,93 @@ internal static class ConfigurationBuilderExtensions
             NitroxConfig.CreateFile<TOptions>(filePath);
         }
 
-        // Link the config to a relative path within the working directory so that IOptionsMonitor<T> works. See https://github.com/dotnet/runtime/issues/114833
-        try
+        if (reloadOnChange)
         {
-            FileInfo configFile = new(Path.GetFileName(filePath));
-            if (configFile.Exists && configFile.LinkTarget != null)
+            // Link the config to a relative path within the working directory so that IOptionsMonitor<T> works. See https://github.com/dotnet/runtime/issues/114833
+            try
             {
-                configFile.Delete();
+                FileInfo configFile = new(Path.GetFileName(filePath));
+                if (configFile.Exists && configFile.LinkTarget != null)
+                {
+                    configFile.Delete();
+                }
+                configFile.CreateAsSymbolicLink(filePath);
+                // Fix targets to point to symbolic link instead.
+                dirPath = AppContext.BaseDirectory;
+                filePath = configFile.Name; // Now a relative path.
             }
-            configFile.CreateAsSymbolicLink(filePath);
-            // Fix targets to point to symbolic link instead.
-            dirPath = AppContext.BaseDirectory;
-            filePath = configFile.Name; // Now a relative path.
-        }
-        catch (IOException)
-        {
-            // ignored - config change detection isn't critical for server.
+            catch (IOException)
+            {
+                if (!optional)
+                {
+                    throw;
+                }
+            }
         }
 
-        return configurationBuilder.Add(new NitroxConfigurationSource(filePath, configSectionPath, optional, new PhysicalFileProvider(dirPath)
+        PhysicalFileProvider fileProvider = new(dirPath)
         {
             UsePollingFileWatcher = true,
             UseActivePolling = true
-        }));
+        };
+        return configurationBuilder.Add(new NitroxConfigurationSource(filePath, configSectionPath, optional, fileProvider)
+        {
+            ReloadOnChange = reloadOnChange,
+            Optional = optional
+        });
+    }
+
+    /// <summary>
+    ///     Adds the first JSON file matching the file name in any parent directory of <see cref="AppContext.BaseDirectory" />.
+    /// </summary>
+    /// <remarks>
+    ///     This function symbolic links the first parent JSON file found. Required because change detection does not work with
+    ///     parent files.
+    /// </remarks>
+    public static IConfigurationBuilder AddUpstreamJsonFile(this IConfigurationBuilder builder, string fileName, bool optional = false, bool reloadOnChange = false, bool skip = false)
+    {
+        if (skip)
+        {
+            return builder;
+        }
+
+        if (reloadOnChange)
+        {
+            try
+            {
+                // Symbolic link the first parent JSON file found. Required for change detection when file is in a parent directory.
+                string current = AppContext.BaseDirectory.TrimEnd('/', '\\');
+                while ((current = Path.GetDirectoryName(current)) is not null)
+                {
+                    string parentAppSettingsFile = Path.Combine(current, fileName);
+                    if (File.Exists(parentAppSettingsFile))
+                    {
+                        FileInfo appSettingsFile = new(Path.Combine(AppContext.BaseDirectory, fileName));
+                        if (appSettingsFile.Exists && appSettingsFile.LinkTarget != null)
+                        {
+                            appSettingsFile.Delete();
+                        }
+                        appSettingsFile.CreateAsSymbolicLink(parentAppSettingsFile);
+                        break;
+                    }
+                }
+            }
+            catch (IOException)
+            {
+                if (!optional)
+                {
+                    throw;
+                }
+            }
+        }
+
+        // On Linux, polling is needed to detect file changes.
+        builder.AddJsonFile(new PhysicalFileProvider(AppContext.BaseDirectory)
+        {
+            UseActivePolling = OperatingSystem.IsLinux(),
+            UsePollingFileWatcher = OperatingSystem.IsLinux()
+        }, fileName, optional, reloadOnChange);
+
+        return builder;
     }
 }

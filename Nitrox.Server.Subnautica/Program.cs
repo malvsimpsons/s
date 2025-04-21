@@ -1,34 +1,25 @@
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Nitrox.Server.Subnautica.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
-using Nitrox.Server.Subnautica.Models.GameLogic;
-using Nitrox.Server.Subnautica.Models.GameLogic.Bases;
-using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 using Nitrox.Server.Subnautica.Models.Helper;
-using Nitrox.Server.Subnautica.Models.Resources;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Helper;
 using NitroxModel.Networking;
-using NitroxServer.GameLogic.Entities.Spawning;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Nitrox.Server.Subnautica;
 
 public class Program
 {
-    private const string APPSETTINGS_DEVELOPMENT_JSON = "server.Development.json";
-
     private static ServerStartOptions startOptions;
     private static readonly Stopwatch serverStartStopWatch = new();
     private static readonly Lazy<string> newWorldSeed = new(() => StringHelper.GenerateRandomString(10));
@@ -98,34 +89,10 @@ public class Program
             ApplicationName = "Nitrox.Server.Subnautica"
         });
         // Nitrox config can be overriden by development.json or command line args if supplied.
-        builder.Configuration.AddNitroxConfigFile<SubnauticaServerOptions>(startOptions.GetServerConfigFilePath(), SubnauticaServerOptions.CONFIG_SECTION_PATH);
-        if (builder.Environment.IsDevelopment())
-        {
-            // Symbolic link the first parent config.json found to the working directory.
-            string current = AppContext.BaseDirectory.TrimEnd('/', '\\');
-            while ((current = Path.GetDirectoryName(current)) is not null)
-            {
-                string parentAppSettingsFile = Path.Combine(current, APPSETTINGS_DEVELOPMENT_JSON);
-                if (File.Exists(parentAppSettingsFile))
-                {
-                    FileInfo appSettingsFile = new(Path.Combine(AppContext.BaseDirectory, APPSETTINGS_DEVELOPMENT_JSON));
-                    if (appSettingsFile.Exists && appSettingsFile.LinkTarget != null)
-                    {
-                        appSettingsFile.Delete();
-                    }
-                    appSettingsFile.CreateAsSymbolicLink(parentAppSettingsFile);
-                    break;
-                }
-            }
-
-            // On Linux, polling is needed to detect file changes.
-            builder.Configuration.AddJsonFile(new PhysicalFileProvider(AppContext.BaseDirectory)
-            {
-                UseActivePolling = OperatingSystem.IsLinux(),
-                UsePollingFileWatcher = OperatingSystem.IsLinux()
-            }, APPSETTINGS_DEVELOPMENT_JSON, true, true);
-        }
-        builder.Configuration.AddCommandLine(args);
+        builder.Configuration
+               .AddNitroxConfigFile<SubnauticaServerOptions>(startOptions.GetServerConfigFilePath(), SubnauticaServerOptions.CONFIG_SECTION_PATH, optional: true, reloadOnChange: true)
+               .AddUpstreamJsonFile("server.Development.json", optional: true, reloadOnChange: true, skip: !builder.Environment.IsDevelopment())
+               .AddCommandLine(args);
         builder.Logging
                .SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information)
                .AddFilter("Nitrox.Server.Subnautica", level => level > LogLevel.Trace || (level == LogLevel.Trace && Debugger.IsAttached))
