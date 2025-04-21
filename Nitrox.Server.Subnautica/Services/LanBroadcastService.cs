@@ -73,7 +73,10 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
 
     private void UpdateServiceState(SubnauticaServerOptions options, bool runAsUser = false)
     {
-        logger.LogDebug("Adjusting to option changes...");
+        if (runAsUser)
+        {
+            logger.LogDebug("Adjusting to option changes...");
+        }
         if (options.LANDiscoveryEnabled)
         {
             if (!StartListening())
