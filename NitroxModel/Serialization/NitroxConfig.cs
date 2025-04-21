@@ -59,7 +59,7 @@ public static class NitroxConfig
             using StreamReader reader = new(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
             HashSet<MemberInfo> unserializedMembers = new(typeCachedDict.Values);
 
-            foreach (KeyValuePair<string, string> pair in NitroxConfig.Parse(reader))
+            foreach (KeyValuePair<string, string> pair in Parse(reader))
             {
                 // Ignore case for property names in file.
                 if (!typeCachedDict.TryGetValue(pair.Key.ToLowerInvariant(), out MemberInfo member))
@@ -116,12 +116,11 @@ public static class NitroxConfig
         }
     }
 
-    public static void CreateFile<TConfig>(string filePath) where TConfig : class, new()
+    public static void CreateFile<TConfig>(string filePath, TConfig config) where TConfig : class
     {
         lock (locker)
         {
             Type type = typeof(TConfig);
-            TConfig config = new();
             Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary<TConfig>();
             try
             {
@@ -154,6 +153,8 @@ public static class NitroxConfig
             }
         }
     }
+
+    public static void CreateFile<TConfig>(string filePath) where TConfig : class, new() => CreateFile(filePath, new TConfig());
 
     private static Dictionary<string, MemberInfo> GetTypeCacheDictionary<T>() where T : class
     {
@@ -260,7 +261,7 @@ public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
 
     public void Serialize(string saveDir)
     {
-        NitroxConfig.CreateFile<T>(Path.Combine(saveDir, FileName));
+        NitroxConfig.CreateFile(Path.Combine(saveDir, FileName), this);
     }
 
     /// <summary>
