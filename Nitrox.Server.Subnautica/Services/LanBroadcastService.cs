@@ -13,20 +13,26 @@ using NitroxModel.Constants;
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
-///     Broadcasts the server port over LAN. Clients listening for this broadcast automatically add this server to the server list.
-///     TODO: Verify this works when changing ports at runtime via config.
+///     Broadcasts the server port over LAN. Clients listening for this broadcast automatically add this server to the
+///     server list.
 /// </summary>
-internal class LanBroadcastService(IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LanBroadcastService> logger) : BackgroundService
+internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> optionsProvider, ILogger<LanBroadcastService> logger) : BackgroundService
 {
+    private const int ACTIVE_POLL_INTERVAL_MS = 100;
+    private const int INACTIVE_POLL_INTERVAL_MS = (int)(5 * TimeSpan.MillisecondsPerSecond);
+
     private readonly ILogger<LanBroadcastService> logger = logger;
-    private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
-    private readonly PeriodicTimer pollTimer = new(TimeSpan.FromMilliseconds(100));
+    private readonly IOptionsMonitor<SubnauticaServerOptions> optionsProvider = optionsProvider;
+    private readonly PeriodicTimer pollTimer = new(TimeSpan.FromMilliseconds(ACTIVE_POLL_INTERVAL_MS));
     private EventBasedNetListener listener;
+    private int selectedPort;
 
     private NetManager server;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        IDisposable optionsListenerDisposable = optionsProvider.OnChange(OptionsChanged);
+        stoppingToken.Register(() => optionsListenerDisposable?.Dispose());
         listener = new EventBasedNetListener();
         listener.NetworkReceiveUnconnectedEvent += NetworkReceiveUnconnected;
         server = new NetManager(listener)
@@ -36,24 +42,21 @@ internal class LanBroadcastService(IOptions<SubnauticaServerOptions> optionsProv
             UnconnectedMessagesEnabled = true
         };
 
-        int selectedPort = 0;
-        foreach (int port in LANDiscoveryConstants.BROADCAST_PORTS)
+        UpdateServiceState(optionsProvider.CurrentValue);
+        if (!server.IsRunning)
         {
-            if (server.Start(port))
-            {
-                selectedPort = port;
-                break;
-            }
+            return;
         }
 
-        logger.LogInformation("started");
-        logger.LogDebug("broadcasting on port {Port}", selectedPort);
         try
         {
-            while (true)
+            while (!stoppingToken.IsCancellationRequested)
             {
                 await pollTimer.WaitForNextTickAsync(stoppingToken);
-                server.PollEvents();
+                if (server.IsRunning)
+                {
+                    server.PollEvents();
+                }
             }
         }
         catch (OperationCanceledException)
@@ -64,6 +67,65 @@ internal class LanBroadcastService(IOptions<SubnauticaServerOptions> optionsProv
             logger.LogDebug("stopped");
             throw;
         }
+    }
+
+    private void OptionsChanged(SubnauticaServerOptions options) => UpdateServiceState(options, true);
+
+    private void UpdateServiceState(SubnauticaServerOptions options, bool runAsUser = false)
+    {
+        logger.LogDebug("Adjusting to option changes...");
+        if (options.LANDiscoveryEnabled)
+        {
+            if (!StartListening())
+            {
+                return;
+            }
+            pollTimer.Period = TimeSpan.FromMilliseconds(ACTIVE_POLL_INTERVAL_MS);
+            if (runAsUser)
+            {
+                logger.LogInformation("enabled");
+            }
+            logger.LogDebug("broadcasting on port {Port}", selectedPort);
+        }
+        else
+        {
+            server.Stop();
+            pollTimer.Period = TimeSpan.FromMilliseconds(INACTIVE_POLL_INTERVAL_MS);
+            if (runAsUser)
+            {
+                logger.LogInformation("disabled");
+            }
+        }
+    }
+
+    private bool StartListening()
+    {
+        if (selectedPort != 0)
+        {
+            if (server.Start(selectedPort))
+            {
+                return true;
+            }
+        }
+
+        foreach (int port in LANDiscoveryConstants.BROADCAST_PORTS)
+        {
+            if (port == selectedPort)
+            {
+                continue;
+            }
+            if (server.Start(port))
+            {
+                selectedPort = port;
+                break;
+            }
+        }
+        if (selectedPort == 0)
+        {
+            logger.LogError("None of the broadcast ports are available");
+            return false;
+        }
+        return true;
     }
 
     private void NetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
@@ -78,7 +140,7 @@ internal class LanBroadcastService(IOptions<SubnauticaServerOptions> optionsProv
             return;
         }
 
-        ushort port = optionsProvider.Value.Port;
+        ushort port = optionsProvider.CurrentValue.Port;
         logger.LogDebug("Broadcasting server port {Port} over LAN...", port);
         NetDataWriter writer = new();
         writer.Put(LANDiscoveryConstants.BROADCAST_RESPONSE_STRING);
