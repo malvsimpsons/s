@@ -1,12 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Nitrox.Server.Subnautica.Models.Hibernation;
-using Nitrox.Server.Subnautica.Models.Persistence;
-using Nitrox.Server.Subnautica.Models.Persistence.Core;
-using NitroxModel.Networking;
 using NitroxModel.Networking.Packets;
 using NitroxServer.Helper;
 

@@ -18,7 +18,6 @@ using Nitrox.Server.Subnautica.Models.GameLogic.Entities;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 using Nitrox.Server.Subnautica.Models.Hibernation;
 using Nitrox.Server.Subnautica.Models.Packets;
-using Nitrox.Server.Subnautica.Models.Persistence.Core;
 using Nitrox.Server.Subnautica.Models.Resources;
 using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using Nitrox.Server.Subnautica.Models.Serialization.Json;
@@ -114,33 +113,11 @@ public static partial class ServiceCollectionExtensions
             .AddTransient<IMonoBehaviourTemplateGenerator, ThreadSafeMonoCecilTempGenerator>();
 
     /// <summary>
-    ///     Adds server persistence for all defined state known by the server.
-    /// </summary>
-    public static IServiceCollection AddPersistence(this IServiceCollection services) =>
-        services
-            .AddHostedSingletonService<PersistenceService>()
-            .AddPersistableState()
-            .AddSingleton(provider =>
-            {
-                JsonSerializerOptions options = new()
-                {
-                    AllowTrailingCommas = true,
-                    WriteIndented = provider.GetRequiredService<IHostEnvironment>().IsDevelopment()
-                };
-                options.Converters.Add(new NitroxIdConverter());
-                options.Converters.Add(new TechTypeConverter());
-                return options;
-            });
-
-    /// <summary>
     ///     Allows the server to go into hibernation when no players are connected.
     /// </summary>
     public static IServiceCollection AddHibernation(this IServiceCollection services) =>
         services.AddHostedSingletonService<HibernationService>()
                 .AddHibernators();
-
-    [GenerateServiceRegistrations(AssignableTo = typeof(IStateManager), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
-    private static partial IServiceCollection AddPersistableState(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IGameResource), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
     private static partial IServiceCollection AddGameResources(this IServiceCollection services);

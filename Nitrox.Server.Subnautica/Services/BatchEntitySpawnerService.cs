@@ -6,8 +6,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
-using Nitrox.Server.Subnautica.Models.Persistence;
-using Nitrox.Server.Subnautica.Models.Persistence.Core;
 using Nitrox.Server.Subnautica.Models.Resources;
 using Nitrox.Server.Subnautica.Models.Resources.Parsers;
 using NitroxModel.DataStructures;
