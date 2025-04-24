@@ -1,22 +1,17 @@
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using LiteNetLib;
 using LiteNetLib.Utils;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Configuration;
-using Nitrox.Server.Subnautica.Models.GameLogic;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using NitroxModel.Networking.Packets;
-using NitroxServer.Communication.LiteNetLib;
 
 namespace Nitrox.Server.Subnautica.Services;
 
@@ -25,27 +20,23 @@ namespace Nitrox.Server.Subnautica.Services;
 /// </summary>
 internal class LiteNetLibService : BackgroundService
 {
-    private readonly EntitySimulation entitySimulation;
     private readonly IHostEnvironment hostEnvironment;
+    private readonly SessionRepository sessionRepository;
     private readonly EventBasedNetListener listener;
-    private readonly Lock lnlPeerIdToSessionLocker = new();
-    private readonly Dictionary<int, SessionObject> lnlPeerIdToSession = [];
     private readonly ILogger<LiteNetLibService> logger;
     private readonly IOptions<SubnauticaServerOptions> optionsProvider;
     private readonly PacketService packetService;
     private readonly PlayerService playerService;
-    private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
     private readonly NetManager server;
-    private readonly IDbContextFactory<WorldDbContext> dbContextFactory;
+    private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
 
-    public LiteNetLibService(PacketService packetService, PlayerService playerService, EntitySimulation entitySimulation, IOptions<SubnauticaServerOptions> optionsProvider, IHostEnvironment hostEnvironment, IDbContextFactory<WorldDbContext> dbContextFactory, ILogger<LiteNetLibService> logger)
+    public LiteNetLibService(PacketService packetService, PlayerService playerService, IOptions<SubnauticaServerOptions> optionsProvider, IHostEnvironment hostEnvironment, SessionRepository sessionRepository, ILogger<LiteNetLibService> logger)
     {
         this.packetService = packetService;
         this.playerService = playerService;
-        this.entitySimulation = entitySimulation;
         this.optionsProvider = optionsProvider;
         this.hostEnvironment = hostEnvironment;
-        this.dbContextFactory = dbContextFactory;
+        this.sessionRepository = sessionRepository;
         this.logger = logger;
         listener = new EventBasedNetListener();
         server = new NetManager(listener);
@@ -56,7 +47,7 @@ internal class LiteNetLibService : BackgroundService
         Packet.InitSerializer();
 
         listener.PeerConnectedEvent += PeerConnected;
-        listener.PeerDisconnectedEvent += (peer, _) => ClientDisconnected(GetSession(peer.Id));
+        listener.PeerDisconnectedEvent += (peer, _) => ClientDisconnected(peer);
         listener.NetworkReceiveEvent += NetworkDataReceived;
         listener.ConnectionRequestEvent += OnConnectionRequest;
 
@@ -85,11 +76,7 @@ internal class LiteNetLibService : BackgroundService
         catch (OperationCanceledException)
         {
             playerService.SendPacketToAllPlayers(new ServerStopped());
-            while (server.PoolCount > 0)
-            {
-                server.PollEvents();
-                await Task.Delay(15, CancellationToken.None);
-            }
+            await Task.Delay(500, CancellationToken.None); // TODO: Need async function to wait for all packets to be sent away.
             server.Stop();
             logger.LogDebug("stopped");
             listener.ClearPeerConnectedEvent();
@@ -102,53 +89,44 @@ internal class LiteNetLibService : BackgroundService
 
     private void OnConnectionRequest(ConnectionRequest request)
     {
-        // TODO: Check if we have session IDs available (from database)
-
-        if (server.ConnectedPeersCount < optionsProvider.Value.MaxConnections)
-        {
-            request.AcceptIfKey("nitrox");
-        }
-        else
+        if (request.Data.GetString() != "nitrox")
         {
             request.Reject();
+            return;
         }
-    }
-
-    private void ClientDisconnected(SessionObject session)
-    {
-        Debug.Assert(session != null);
-
-        // TODO: Move this outside of LiteNetLib service.
-        // if (player != null)
-        // {
-        //     playerService.Disconnect(session.Id);
-        //
-        //     Disconnect disconnect = new(player.Id);
-        //     playerService.SendPacketToAllPlayers(disconnect);
-        //
-        //     List<SimulatedEntity> ownershipChanges = entitySimulation.CalculateSimulationChangesFromPlayerDisconnect(player);
-        //
-        //     if (ownershipChanges.Count > 0)
-        //     {
-        //         SimulationOwnershipChange ownershipChange = new(ownershipChanges);
-        //         playerService.SendPacketToAllPlayers(ownershipChange);
-        //     }
-        // }
-        // else
-        // {
-        //     playerService.NonPlayerDisconnected(connection);
-        // }
-    }
-
-    private void PeerConnected(NetPeer peer)
-    {
-        lock (lnlPeerIdToSessionLocker)
+        if (server.ConnectedPeersCount >= optionsProvider.Value.MaxConnections)
         {
-            // 0 session id will be fixed by ProcessPacket().
-            lnlPeerIdToSession[peer.Id] = new SessionObject(0, new(peer));
+            request.Reject();
+            return;
         }
-        logger.LogInformation("Connection made by {Address}:{Port}", peer.Address, peer.Port);
+
+        if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request)))
+        {
+            logger.LogWarning("Failed to queue client connect request task for {Address}:{Port}", request.RemoteEndPoint.Address.ToString(), request.RemoteEndPoint.Port);
+        }
+
+        static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request)
+        {
+            PlayerSession session = await sessionRepository.GetOrCreateSessionAsync(request.RemoteEndPoint.Address.ToString(), (ushort)request.RemoteEndPoint.Port);
+            if (session == null)
+            {
+                request.Reject();
+                return;
+            }
+            request.Accept();
+        }
     }
+
+    private void ClientDisconnected(NetPeer peer)
+    {
+        string address = peer.Address.ToString();
+        if (!taskChannel.Writer.TryWrite(sessionRepository.DeleteSessionAsync(address, (ushort)peer.Port)))
+        {
+            logger.LogWarning("Failed to queue client disconnect task for {Address}:{Port}", address, peer.Port);
+        }
+    }
+
+    private void PeerConnected(NetPeer peer) => logger.LogInformation("Connection made by {Address}:{Port}", peer.Address, peer.Port);
 
     private void NetworkDataReceived(NetPeer peer, NetDataReader reader, byte channel, DeliveryMethod deliveryMethod)
     {
@@ -158,11 +136,9 @@ internal class LiteNetLibService : BackgroundService
         {
             reader.GetBytes(packetData, packetDataLength);
             Packet packet = Packet.Deserialize(packetData);
-            SessionObject sessionObject = GetSession(peer.Id);
-            Debug.Assert(sessionObject != null);
-            if (!taskChannel.Writer.TryWrite(ProcessPacket(sessionObject, packet)))
+            if (!taskChannel.Writer.TryWrite(ProcessPacket(peer, packet)))
             {
-                logger.LogError("Failed to queue packet processor task for packet type {TypeName} by session id {SessionId}", packet.GetType().Name, sessionObject.Id);
+                logger.LogError("Failed to queue packet processor task for packet type {TypeName} from {Address}:{Port}", packet.GetType().Name, peer.Address, peer.Port);
             }
         }
         finally
@@ -171,55 +147,10 @@ internal class LiteNetLibService : BackgroundService
         }
     }
 
-    private async Task ProcessPacket(SessionObject session, Packet packet)
+    private async Task ProcessPacket(NetPeer peer, Packet packet)
     {
-        PlayerSession playerSession = null;
-        await using (WorldDbContext db = await dbContextFactory.CreateDbContextAsync())
-        {
-            if (session.Id != 0)
-            {
-                playerSession = await db.PlayerSessions
-                                        .AsTracking()
-                                        .Include(s => s.Player)
-                                        .Where(s => s.SessionId == session.Id)
-                                        .FirstOrDefaultAsync();
-            }
-            if (playerSession == null)
-            {
-                playerSession = new PlayerSession();
-                db.PlayerSessions.Add(playerSession);
-                if (await db.SaveChangesAsync() != 1)
-                {
-                    logger.LogError("Failed to create session for {EndPoint}", session.Connection.Endpoint);
-                    return;
-                }
-            }
-        }
-        lock (lnlPeerIdToSessionLocker)
-        {
-            session.Id = playerSession.SessionId ?? throw new Exception("Failed to generate session id for new connection");
-        }
-
-        await packetService.Process(playerSession, packet);
-    }
-
-    private SessionObject GetSession(int lnlPeerId)
-    {
-        lock (lnlPeerIdToSessionLocker)
-        {
-            if (lnlPeerIdToSession.TryGetValue(lnlPeerId, out SessionObject obj))
-            {
-                return obj;
-            }
-        }
-        return null;
-    }
-
-    /// <summary>
-    ///     Internal session object to track which Nitrox session id belong to a LiteNetLib connection.
-    /// </summary>
-    private record SessionObject(SessionId Id, LiteNetLibConnection Connection)
-    {
-        public SessionId Id { get; set; } = Id;
+        PlayerSession session = await sessionRepository.GetOrCreateSessionAsync(peer.Address.ToString(), (ushort)peer.Port);
+        logger.LogTrace("Incoming packet {TypeName} by session #{SessionId}", packet.GetType().Name, session.SessionId);
+        await packetService.Process(session, packet);
     }
 }

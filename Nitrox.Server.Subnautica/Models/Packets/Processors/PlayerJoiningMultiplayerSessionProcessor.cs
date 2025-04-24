@@ -18,14 +18,12 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
     WorldEntityManager worldEntityManager,
     EscapePodService escapePodService,
     EntityRegistry entityRegistry,
-    IOptions<SubnauticaServerOptions> optionsProvider,
-    NtpSyncer ntpSyncer)
+    IOptions<SubnauticaServerOptions> optionsProvider)
     : IAnonPacketProcessor<PlayerJoiningMultiplayerSession>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly EntitySimulation entitySimulation = entitySimulation;
     private readonly EscapePodService escapePodService = escapePodService;
-    private readonly NtpSyncer ntpSyncer = ntpSyncer;
     private readonly PlayerService playerService = playerService;
     private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
     private readonly StoryTimingService storyTimingService = storyTimingService;

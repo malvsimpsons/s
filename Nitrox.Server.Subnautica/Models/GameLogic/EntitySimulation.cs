@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using Nitrox.Server.Subnautica.Database.Models;
+using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
@@ -10,7 +11,7 @@ using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic;
 
-internal sealed class EntitySimulation
+internal sealed class EntitySimulation : ISessionCleaner
 {
     private const SimulationLockType DEFAULT_ENTITY_SIMULATION_LOCKTYPE = SimulationLockType.TRANSIENT;
 
@@ -173,5 +174,17 @@ internal sealed class EntitySimulation
         SimulatedEntity simulatedEntity = AssignNewEntityToPlayer(entity, player, false);
         SimulationOwnershipChange ownershipChangePacket = new(simulatedEntity);
         playerService.SendPacketToAllPlayers(ownershipChangePacket);
+    }
+
+    public Task CleanSessionAsync(PlayerSession disconnectedSession)
+    {
+        List<SimulatedEntity> ownershipChanges = CalculateSimulationChangesFromPlayerDisconnect(disconnectedSession.Player.Id);
+
+        if (ownershipChanges.Count > 0)
+        {
+            SimulationOwnershipChange ownershipChange = new(ownershipChanges);
+            playerService.SendPacketToAllPlayers(ownershipChange);
+        }
+        return Task.CompletedTask;
     }
 }

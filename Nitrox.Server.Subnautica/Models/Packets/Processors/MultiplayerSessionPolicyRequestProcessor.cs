@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using NitroxModel.Networking.Packets;
-using NitroxServer.Communication;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 

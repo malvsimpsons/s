@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using AssetsTools.NET.Extra;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +19,8 @@ using Nitrox.Server.Subnautica.Models.Hibernation;
 using Nitrox.Server.Subnautica.Models.Packets;
 using Nitrox.Server.Subnautica.Models.Resources;
 using Nitrox.Server.Subnautica.Models.Resources.Helper;
-using Nitrox.Server.Subnautica.Models.Serialization.Json;
+using Nitrox.Server.Subnautica.Models.Respositories;
+using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.Networking.Packets.Processors.Core;
@@ -80,12 +80,12 @@ public static partial class ServiceCollectionExtensions
 
                            SqliteConnectionStringBuilder sqlConnectionBuilder = new()
                            {
-                               // Mode = SqliteOpenMode.Memory, // TODO: keep database in memory until server exit or "save"/"backup" command
                                DataSource = Path.Combine(startOptions.GetServerSavePath(), "world.db")
                            };
                            options.UseSqlite(sqlConnectionBuilder.ToString());
                        })
-                       .AddHostedSingletonService<DatabaseService>();
+                       .AddHostedSingletonService<DatabaseService>()
+                       .AddSingleton<SessionRepository>();
     }
 
     public static IServiceCollection AddSubnauticaEntityManagement(this IServiceCollection services) =>
@@ -97,6 +97,7 @@ public static partial class ServiceCollectionExtensions
             .AddSingleton<IEntityBootstrapperManager, SubnauticaEntityBootstrapperManager>()
             .AddSingleton<SimulationOwnershipData>()
             .AddSingleton<EntitySimulation>()
+            .AddSingleton<ISessionCleaner, EntitySimulation>(provider => provider.GetRequiredService<EntitySimulation>())
             .AddSingleton<Models.GameLogic.EntityRegistry>()
             .AddSingleton<BatchEntitySpawnerService>()
             .AddSingleton<EntitySpawnPointFactory, SubnauticaEntitySpawnPointFactory>()

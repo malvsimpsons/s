@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Nitrox.Server.Subnautica.Database.Models;
 
-[Table("PlayerStats")]
-public record PlayerStats
+[Table("PlayerSurvivalStats")]
+public record PlayerSurvivalStats
 {
     [ForeignKey(nameof(Models.Player.Id))]
     public Player Player { get; set; }

@@ -8,18 +8,19 @@ using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.Dto;
 using NitroxModel.Networking.Packets;
 using NitroxModel.Networking.Session;
-using NitroxServer.Communication;
 
 namespace Nitrox.Server.Subnautica.Services;
 
-internal sealed class PlayerService(IOptions<SubnauticaServerOptions> serverConfig, IDbContextFactory<WorldDbContext> dbContextFactory) : IHostedService
+internal sealed class PlayerService(IOptions<SubnauticaServerOptions> serverConfig, DatabaseService databaseService) : IHostedService, ISessionCleaner
 {
     private readonly IOptions<SubnauticaServerOptions> serverConfig = serverConfig;
-    private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
+
+    private readonly DatabaseService databaseService = databaseService;
     // TODO: Use DATABASE
     // private ThreadSafeDictionary<string, NitroxPlayer> allPlayersByName = [];
     // private readonly ThreadSafeDictionary<ushort, NitroxPlayer> connectedPlayersById = [];
@@ -36,7 +37,7 @@ internal sealed class PlayerService(IOptions<SubnauticaServerOptions> serverConf
 
     public async Task<ConnectedPlayerDto[]> GetConnectedPlayersAsync()
     {
-        await using WorldDbContext db = await dbContextFactory.CreateDbContextAsync();
+        await using WorldDbContext db = await databaseService.GetDbContextAsync();
         return await db.PlayerSessions
                             .Include(p => p.Player)
                             .Select(s => s.ToConnectedPlayerDto())
@@ -48,7 +49,7 @@ internal sealed class PlayerService(IOptions<SubnauticaServerOptions> serverConf
     /// </summary>
     public async Task<ConnectedPlayerDto[]> GetConnectedPlayersByNameAsync(string name)
     {
-        await using WorldDbContext db = await dbContextFactory.CreateDbContextAsync();
+        await using WorldDbContext db = await databaseService.GetDbContextAsync();
         PlayerSession[] sessions = await db.PlayerSessions
                                                  .Include(p => p.Player)
                                                  .Where(p => p.Player.Name == name)
@@ -58,7 +59,7 @@ internal sealed class PlayerService(IOptions<SubnauticaServerOptions> serverConf
 
     public async Task<ConnectedPlayerDto> GetConnectedPlayerByIdAsync(PeerId id)
     {
-        await using WorldDbContext db = await dbContextFactory.CreateDbContextAsync();
+        await using WorldDbContext db = await databaseService.GetDbContextAsync();
         PlayerSession session = await db.PlayerSessions
                                                     .Include(p => p.Player)
                                                     .Where(p => p.Player.Id == id)
@@ -152,13 +153,6 @@ internal sealed class PlayerService(IOptions<SubnauticaServerOptions> serverConf
 
         // TODO: FIX
         return new MultiplayerSessionReservation(correlationId, 1, "bla");
-    }
-
-    [Obsolete("DO NOT USE !!!")]
-    public void NonPlayerDisconnected(INitroxConnection connection)
-    {
-        // Remove any requests sent by the connection from the join queue
-        // JoinQueue = new(JoinQueue.Where(pair => !Equals(pair.Key, connection)));
     }
 
     [Obsolete("DO NOT USE !!!")]
@@ -393,5 +387,11 @@ internal sealed class PlayerService(IOptions<SubnauticaServerOptions> serverConf
         // LastStoredPosition = playerTeleported.DestinationFrom;
         // LastStoredSubRootID = subRootID;
         // SendPacket(playerTeleported, player.Id);
+    }
+
+    public Task CleanSessionAsync(PlayerSession disconnectedSession)
+    {
+        SendPacketToAllPlayers(new Disconnect(disconnectedSession.Player.Id));
+        return Task.CompletedTask;
     }
 }

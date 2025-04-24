@@ -40,7 +40,7 @@ public record Player
     /// </summary>
     public bool IsPermaDeath { get; set; }
 
-    // TODO: Store this as session data, not here.
+    // TODO: Store this
     // public List<NitroxTechType> UsedItems { get; set; } = [];
     // public Optional<NitroxId>[] QuickSlotsBindingIds { get; set; } = [];
     // public Dictionary<string, NitroxId> EquippedItems { get; set; } = [];

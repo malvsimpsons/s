@@ -1,8 +1,11 @@
 namespace NitroxModel.Networking;
 
 /// <summary>
-///     Gets the connection id. Is 0 for server. Starts from 1 if player, matching the ID in the database.
+///     Gets the connection id. Is 0 for server. Starts from 1 if player.
 /// </summary>
+/// <remarks>
+///     This matches the ID in the database.
+/// </remarks>
 public readonly record struct PeerId
 {
     public const uint SERVER_ID = 0;

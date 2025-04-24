@@ -25,4 +25,6 @@ public readonly record struct SessionId
     {
         return new SessionId(id);
     }
+
+    public override string ToString() => id.ToString();
 }

@@ -1,23 +1,18 @@
 using System;
-using System.Data.Common;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Nitrox.Server.Subnautica.Core;
-using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
+using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Helper;
-using NitroxModel.Networking;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Nitrox.Server.Subnautica;
@@ -94,8 +89,7 @@ public class Program
         builder.Logging
                .SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information)
                .AddFilter("Nitrox.Server.Subnautica", level => level > LogLevel.Trace || (level == LogLevel.Trace && Debugger.IsAttached))
-               .AddFilter($"{nameof(Microsoft)}.{nameof(Microsoft.Extensions)}.{nameof(Microsoft.Extensions.Hosting)}", LogLevel.Warning)
-               .AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information)
+               .AddFilter("Microsoft", LogLevel.Warning)
                .AddNitroxConsole(options =>
                {
                    options.ColorBehavior = startOptions.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled;
@@ -155,6 +149,7 @@ public class Program
                .AddHostedSingletonService<LanBroadcastService>()
                .AddHostedSingletonService<TimeService>()
                .AddHostedSingletonService<PlayerService>()
+               .AddSingleton<ISessionCleaner, PlayerService>(provider => provider.GetRequiredService<PlayerService>())
                .AddHostedSingletonService<StoryTimingService>() // TODO: Merge story services together?
                .AddHostedSingletonService<StoryScheduleService>()
                .AddHostedSingletonService<FmodService>()

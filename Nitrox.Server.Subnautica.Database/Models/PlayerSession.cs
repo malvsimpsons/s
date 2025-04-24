@@ -4,6 +4,12 @@ using NitroxModel.Networking;
 
 namespace Nitrox.Server.Subnautica.Database.Models;
 
+/// <summary>
+///     The active sessions table. Deleting a session will also purge all session data (FOREIGN KEY CASCADE DELETE).
+/// </summary>
+/// <remarks>
+///     On startup, should ensure this table is truncated.
+/// </remarks>
 [Table("PlayerSessions")]
 public record PlayerSession
 {
@@ -11,5 +17,30 @@ public record PlayerSession
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public SessionId? SessionId { get; set; }
 
+    /// <summary>
+    ///     Gets the player reference. Can be <c>NULL</c>.
+    /// </summary>
+    /// <remarks>
+    ///     <b>Is <c>NULL</c> if</b>:
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>Client is not playing yet but is connected. Like when entering player name or server password.</description>
+    ///         </item>
+    ///     </list>
+    ///     If client disconnects, this session will (soon) be destroyed. Allowing
+    ///     the same player data to be reused <i>with proper authentication</i>.
+    /// </remarks>
     public Player Player { get; set; }
+
+    /// <summary>
+    ///     Gets the endpoint address of the client. Can be IPv4 or IPv6.
+    /// </summary>
+    [Required]
+    public string Address { get; set; }
+
+    /// <summary>
+    ///     Gets the port of the client.
+    /// </summary>
+    [Required]
+    public ushort Port { get; set; }
 }
