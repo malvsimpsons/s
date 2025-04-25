@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Database;
@@ -11,8 +13,16 @@ namespace Nitrox.Server.Subnautica.Models.Respositories;
 
 internal class SessionRepository(DatabaseService databaseService, Func<ISessionCleaner[]> sessionCleanersProvider, ILogger<SessionRepository> logger)
 {
+    /// <summary>
+    ///     Minutes to wait before letting a session id be reused.
+    /// </summary>
+    private const int SESSION_ID_REUSE_LOCK_IN_MINUTES = 5;
+
     private readonly DatabaseService databaseService = databaseService;
     private readonly ILogger<SessionRepository> logger = logger;
+    private readonly Lock sessionIdLock = new();
+    private readonly SortedList<DateTimeOffset, SessionId> usedSessionIds = [];
+    private ushort nextSessionId = 1;
     private ISessionCleaner[] sessionCleaners;
 
     public async Task<PlayerSession> GetOrCreateSessionAsync(string address, ushort port)
@@ -27,6 +37,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
         {
             playerSession = new PlayerSession
             {
+                Id = GetNextSessionId(),
                 Address = address,
                 Port = port
             };
@@ -45,18 +56,18 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
         return await db.PlayerSessions
-                                              .Include(s => s.Player)
-                                              .Where(s => s.Player.Id == peerId)
-                                              .FirstOrDefaultAsync();
+                       .Include(s => s.Player)
+                       .Where(s => s.Player.Id == peerId)
+                       .FirstOrDefaultAsync();
     }
 
-    public async Task DeleteSessionAsync(string address, ushort port)
+    public async Task DeleteSessionAsync(SessionId sessionId)
     {
         await using (WorldDbContext db = await databaseService.GetDbContextAsync())
         {
             PlayerSession session = await db.PlayerSessions
                                             .Include(s => s.Player)
-                                            .Where(s => s.Address == address && s.Port == port)
+                                            .Where(s => s.Id == sessionId)
                                             .FirstOrDefaultAsync();
             if (session == null)
             {
@@ -69,10 +80,38 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
             db.Remove(session);
             if (await db.SaveChangesAsync() <= 0)
             {
-                logger.LogWarning("Failed to delete session data of {Address}:{Port}", address, port);
+                logger.LogWarning("Failed to delete session data on session id {SessionId}", sessionId);
                 return;
             }
-            logger.LogTrace("Session data of disconnected client {Address}:{Port} has been removed", address, port);
+            MarkSessionIdAsUsed(sessionId);
+            logger.LogTrace("Session data by id {SessionId} has been removed", sessionId);
+        }
+    }
+
+    private SessionId GetNextSessionId()
+    {
+        lock (sessionIdLock)
+        {
+            (DateTimeOffset timeThreshold, SessionId sessionId) = usedSessionIds.FirstOrDefault();
+            if (sessionId > 0 && timeThreshold <= DateTimeOffset.UtcNow)
+            {
+                usedSessionIds.Remove(timeThreshold);
+                return sessionId;
+            }
+
+            return nextSessionId++;
+        }
+    }
+
+    private void MarkSessionIdAsUsed(SessionId sessionId)
+    {
+        lock (sessionIdLock)
+        {
+            if (usedSessionIds.ContainsValue(sessionId))
+            {
+                throw new Exception($"Tried to add duplicate session id {sessionId} to used session ids");
+            }
+            usedSessionIds.Add(DateTimeOffset.UtcNow.AddMinutes(SESSION_ID_REUSE_LOCK_IN_MINUTES), sessionId);
         }
     }
 

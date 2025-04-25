@@ -14,18 +14,17 @@ internal class KeepInventoryCommand(IServerPacketSender packetSender, IOptions<C
     private readonly IOptions<Configuration.SubnauticaServerOptions> serverConfig = optionsProvider;
 
     [Description("Sets \"keep inventory\" setting to on/off. If \"on\", players won't lose items when they die.")]
-    public Task Execute(ICommandContext context, [Description("The true/false state to set keep inventory on death to")] bool newKeepInventoryState)
+    public async Task Execute(ICommandContext context, [Description("The true/false state to set keep inventory on death to")] bool newKeepInventoryState)
     {
         if (serverConfig.Value.KeepInventoryOnDeath != newKeepInventoryState)
         {
             serverConfig.Value.KeepInventoryOnDeath = newKeepInventoryState;
-            packetSender.SendPacketToAll(new KeepInventoryChanged(newKeepInventoryState));
-            context.MessageAllAsync($"KeepInventoryOnDeath changed to \"{newKeepInventoryState}\" by {context.OriginName}");
+            await packetSender.SendPacketToAll(new KeepInventoryChanged(newKeepInventoryState));
+            await context.MessageAllAsync($"KeepInventoryOnDeath changed to \"{newKeepInventoryState}\" by {context.OriginName}");
         }
         else
         {
-            context.ReplyAsync($"KeepInventoryOnDeath already set to {newKeepInventoryState}");
+            await context.ReplyAsync($"KeepInventoryOnDeath already set to {newKeepInventoryState}");
         }
-        return Task.CompletedTask;
     }
 }

@@ -34,5 +34,5 @@ public record StoryGoal
     /// </summary>
     [Required]
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public DateTimeOffset Changed { get; set; } = DateTimeOffset.Now;
+    public DateTimeOffset Changed { get; set; } = DateTimeOffset.Now; // TODO: VERIFY THIS WORKS
 }

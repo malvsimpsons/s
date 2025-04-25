@@ -102,7 +102,6 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
             {
                 SendPacket(serverStopped, peer);
             }
-            peersBySessionId.Clear();
             await Task.Delay(500, CancellationToken.None); // TODO: Need async function to wait for all packets to be sent away.
             server.Stop();
             logger.LogDebug("stopped");
@@ -146,10 +145,17 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
 
     private void ClientDisconnected(NetPeer peer)
     {
-        string address = peer.Address.ToString();
-        if (!taskChannel.Writer.TryWrite(sessionRepository.DeleteSessionAsync(address, (ushort)peer.Port)))
+        SessionId? sessionId = null;
+        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
         {
-            logger.LogWarning("Failed to queue client disconnect task for {Address}:{Port}", address, peer.Port);
+            if (pair.Value.Id == peer.Id)
+            {
+                sessionId = pair.Key;
+            }
+        }
+        if (!sessionId.HasValue || !taskChannel.Writer.TryWrite(sessionRepository.DeleteSessionAsync(sessionId.Value)))
+        {
+            logger.LogWarning("Failed to queue client disconnect task for {EndPoint}", peer as EndPoint);
         }
     }
 
@@ -192,13 +198,13 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
                     await authProcessor.Process(new AuthProcessorContext((session.Player.Id, session.Id), this), packet);
                     break;
                 default:
-                    logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packet.GetType());
+                    logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packet.GetType().Name);
                     break;
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in packet processor {TypeName}", packetProcessor.GetType());
+            logger.LogError(ex, "Error in packet processor {TypeName}", packetProcessor.GetType().Name);
         }
     }
 
@@ -207,7 +213,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         PlayerSession session = await sessionRepository.GetSessionAsync(peerId);
         if (session == null)
         {
-            logger.LogWarning("Cannot send packet {TypeName} as no session is known for player id {PlayerId}", packet?.GetType(), peerId);
+            logger.LogWarning("Cannot send packet {TypeName} as no session is known for player id {PlayerId}", packet?.GetType().Name, peerId);
             return;
         }
         await SendPacket(packet, session.Id);
@@ -290,7 +296,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         }
         else
         {
-            logger.LogInformation("Session id #{SessionId} on {EndPoint} disconnected", disconnectedSession.Id, peer as EndPoint);
+            logger.LogInformation("Session #{SessionId} on {EndPoint} disconnected", disconnectedSession.Id, peer as EndPoint);
         }
         Disconnect disconnectPacket = new(disconnectedSession.Id);
         foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
