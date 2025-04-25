@@ -25,7 +25,7 @@ internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbConte
     public async Task StartingAsync(CancellationToken cancellationToken)
     {
         // Ensure database is up-to-date.
-        await using WorldDbContext db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using WorldDbContext db = await GetDbContextAsync();
         if (hostEnvironment.IsDevelopment())
         {
             // In development, ensure database is up-to-date with latest EF model. Not preserving data is (usually) fine.
@@ -55,12 +55,7 @@ internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbConte
 
     public async Task StoppedAsync(CancellationToken cancellationToken)
     {
-        await using (WorldDbContext db = await dbContextFactory.CreateDbContextAsync(CancellationToken.None))
-        {
-            // Tells SQLite to flush WAL files into the .db file.
-            await ExecutePragma(db, "journal_mode=delete");
-        }
-        SqliteConnection.ClearAllPools(); // See https://github.com/dotnet/efcore/issues/26580#issuecomment-2668483600
+        // SqliteConnection.ClearAllPools(); // See https://github.com/dotnet/efcore/issues/26580#issuecomment-2668483600
     }
 
     public async Task<WorldDbContext> GetDbContextAsync() => await dbContextFactory.CreateDbContextAsync();

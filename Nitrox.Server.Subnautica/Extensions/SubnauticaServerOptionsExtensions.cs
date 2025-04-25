@@ -1,7 +1,4 @@
-using System.IO;
-using System.Runtime.InteropServices;
 using Nitrox.Server.Subnautica.Models.Configuration;
-using NitroxModel.Helper;
 using NitroxModel.Server;
 
 namespace Nitrox.Server.Subnautica.Extensions;

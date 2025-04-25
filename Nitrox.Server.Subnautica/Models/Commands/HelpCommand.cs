@@ -37,7 +37,7 @@ internal sealed class HelpCommand(Func<CommandRegistry> registryProvider) : ICom
             }
             sb.AppendLine(handler.ToString());
         }
-        context.Reply(sb.Remove(sb.Length - Environment.NewLine.Length, Environment.NewLine.Length).ToString());
+        context.ReplyAsync(sb.Remove(sb.Length - Environment.NewLine.Length, Environment.NewLine.Length).ToString());
         return Task.CompletedTask;
     }
 
@@ -46,7 +46,7 @@ internal sealed class HelpCommand(Func<CommandRegistry> registryProvider) : ICom
     {
         if (!TryShowHelpForCommand(context, commandName))
         {
-            context.Reply($"No command exists with the name {commandName}");
+            context.ReplyAsync($"No command exists with the name {commandName}");
         }
         return Task.CompletedTask;
     }
@@ -95,7 +95,7 @@ internal sealed class HelpCommand(Func<CommandRegistry> registryProvider) : ICom
                 sb.Append(handler.ToDisplayString(false));
             }
         }
-        context.Reply(sb.ToString());
+        context.ReplyAsync(sb.ToString());
         return true;
     }
 }

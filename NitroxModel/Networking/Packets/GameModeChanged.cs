@@ -6,18 +6,18 @@ namespace NitroxModel.Networking.Packets;
 [Serializable]
 public class GameModeChanged : Packet
 {
-    public PeerId PlayerId { get; }
+    public SessionId PlayerId { get; }
     public bool AllPlayers { get; }
     public SubnauticaGameMode GameMode { get; }
 
-    public GameModeChanged(PeerId playerId, bool allPlayers, SubnauticaGameMode gameMode)
+    public GameModeChanged(SessionId playerId, bool allPlayers, SubnauticaGameMode gameMode)
     {
         PlayerId = playerId;
         AllPlayers = allPlayers;
         GameMode = gameMode;
     }
 
-    public static GameModeChanged ForPlayer(PeerId playerId, SubnauticaGameMode gameMode)
+    public static GameModeChanged ForPlayer(SessionId playerId, SubnauticaGameMode gameMode)
     {
         return new(playerId, false, gameMode);
     }

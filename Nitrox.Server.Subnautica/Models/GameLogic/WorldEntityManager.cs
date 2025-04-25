@@ -9,7 +9,6 @@ using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.Helper;
-using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic;
 
@@ -30,7 +29,6 @@ internal class WorldEntityManager
     private readonly Dictionary<NitroxId, GlobalRootEntity> globalRootEntitiesById;
 
     private readonly Lock globalRootEntitiesLock = new();
-    private readonly PlayerService playerService;
 
     /// <summary>
     ///     World entities can disappear if you go out of range.
@@ -39,7 +37,7 @@ internal class WorldEntityManager
 
     private readonly Lock worldEntitiesLock = new();
 
-    public WorldEntityManager(EntityRegistry entityRegistry, BatchEntitySpawnerService batchEntitySpawnerService, PlayerService playerService)
+    public WorldEntityManager(EntityRegistry entityRegistry, BatchEntitySpawnerService batchEntitySpawnerService)
     {
         List<WorldEntity> worldEntities = entityRegistry.GetEntities<WorldEntity>();
 
@@ -50,7 +48,6 @@ internal class WorldEntityManager
                                            .ToDictionary(group => group.Key, group => group.ToDictionary(entity => entity.Id, entity => entity));
         this.entityRegistry = entityRegistry;
         this.batchEntitySpawnerService = batchEntitySpawnerService;
-        this.playerService = playerService;
     }
 
     public List<GlobalRootEntity> GetGlobalRootEntities(bool rootOnly = false)

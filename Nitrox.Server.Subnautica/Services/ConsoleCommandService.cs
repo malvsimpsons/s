@@ -1,10 +1,11 @@
 using System;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using NitroxModel.DataStructures;
 
 namespace Nitrox.Server.Subnautica.Services;
@@ -12,17 +13,18 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Reads console input and handles input history.
 /// </summary>
-internal sealed class ConsoleCommandService(CommandService commandService, PlayerService playerService, ILogger<ConsoleCommandService> logger) : BackgroundService
+internal sealed class ConsoleCommandService(CommandService commandService, PlayerRepository playerRepository, IServerPacketSender packetSender, ILogger<ConsoleCommandService> logger) : BackgroundService
 {
     private readonly CommandService commandService = commandService;
     private readonly CircularBuffer<string> inputHistory = new(1000);
     private readonly ILogger<ConsoleCommandService> logger = logger;
-    private readonly PlayerService playerService = playerService;
+    private readonly PlayerRepository playerRepository = playerRepository;
+    private readonly IServerPacketSender packetSender = packetSender;
     private int currentHistoryIndex;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) => await HandleConsoleInputAsync(stoppingToken);
 
-    private void SubmitInput(string input) => commandService.ExecuteCommand(input, new HostToServerCommandContext(playerService));
+    private void SubmitInput(string input) => commandService.ExecuteCommand(input, new HostToServerCommandContext(playerRepository, packetSender));
 
     /// <summary>
     ///     Handles per-key input of the console.

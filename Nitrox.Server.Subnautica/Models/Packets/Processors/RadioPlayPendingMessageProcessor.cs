@@ -4,11 +4,10 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class RadioPlayPendingMessageProcessor(PlayerService playerService) : IAuthPacketProcessor<RadioPlayPendingMessage>
+internal class RadioPlayPendingMessageProcessor : IAuthPacketProcessor<RadioPlayPendingMessage>
 {
     // TODO: USE DATABASE
     // private readonly StoryGoalData storyGoalData = storyGoalData;
-    private readonly PlayerService playerService = playerService;
 
     public async Task Process(AuthProcessorContext context, RadioPlayPendingMessage packet)
     {
@@ -17,6 +16,6 @@ internal class RadioPlayPendingMessageProcessor(PlayerService playerService) : I
         // {
         //     Log.Warn($"Tried to remove the latest radio message but the radio queue is empty: {packet}");
         // }
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

@@ -5,10 +5,10 @@ namespace NitroxModel.Networking.Packets;
 [Serializable]
 public class Disconnect : Packet
 {
-    public Disconnect(PeerId playerId)
+    public Disconnect(SessionId playerId)
     {
         PlayerId = playerId;
     }
 
-    public PeerId PlayerId { get; }
+    public SessionId PlayerId { get; }
 }

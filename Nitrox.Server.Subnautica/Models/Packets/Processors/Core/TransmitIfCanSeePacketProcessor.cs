@@ -5,11 +5,10 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 
-internal abstract class TransmitIfCanSeePacketProcessor<T>(PlayerService playerService, GameLogic.EntityRegistry entityRegistry) : IAuthPacketProcessor<T>
+internal abstract class TransmitIfCanSeePacketProcessor<T>(GameLogic.EntityRegistry entityRegistry) : IAuthPacketProcessor<T>
     where T : Packet
 {
     private readonly GameLogic.EntityRegistry entityRegistry = entityRegistry;
-    private readonly PlayerService playerService = playerService;
 
     /// <summary>
     ///     Transmits the provided <paramref name="packet" /> to all other players (excluding <paramref name="senderPlayer" />)

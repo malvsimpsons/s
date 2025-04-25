@@ -19,7 +19,7 @@ public class BulletManager
 
     // This only allows for one stasis sphere per player
     // (which is the normal capacity, but could be adapted for a mod letting multiple stasis spheres)
-    private readonly Dictionary<PeerId, StasisSphere> stasisSpherePerPlayerId = [];
+    private readonly Dictionary<SessionId, StasisSphere> stasisSpherePerPlayerId = [];
 
     /// <summary>
     /// TechTypes of objects which should have a Vehicle MB
@@ -105,7 +105,7 @@ public class BulletManager
         cloneSphere.Deactivate();
     }
 
-    private StasisSphere EnsurePlayerHasSphere(PeerId playerId)
+    private StasisSphere EnsurePlayerHasSphere(SessionId playerId)
     {
         if (stasisSpherePerPlayerId.TryGetValue(playerId, out StasisSphere remoteSphere) && remoteSphere)
         {
@@ -123,7 +123,7 @@ public class BulletManager
         return stasisSphere;
     }
 
-    private void DestroyPlayerSphere(PeerId playerId)
+    private void DestroyPlayerSphere(SessionId playerId)
     {
         if (stasisSpherePerPlayerId.TryGetValue(playerId, out StasisSphere stasisSphere) && stasisSphere)
         {

@@ -5,9 +5,8 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class StoryGoalExecutedProcessor(PlayerService playerService, StoryScheduleService storyScheduleService, ILogger<StoryGoalExecutedProcessor> logger) : IAuthPacketProcessor<StoryGoalExecuted>
+internal sealed class StoryGoalExecutedProcessor(StoryScheduleService storyScheduleService, ILogger<StoryGoalExecutedProcessor> logger) : IAuthPacketProcessor<StoryGoalExecuted>
 {
-    private readonly PlayerService playerService = playerService;
     // TODO: USE DATABASE
     // private readonly StoryGoalData storyGoalData = storyGoalData;
     // private readonly PdaStateData pdaStateData = pdaStateData;
@@ -37,6 +36,6 @@ internal sealed class StoryGoalExecutedProcessor(PlayerService playerService, St
         // }
 
         storyScheduleService.UnScheduleGoal(packet.Key);
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

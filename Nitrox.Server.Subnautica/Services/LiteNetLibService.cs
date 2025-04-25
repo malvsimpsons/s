@@ -1,6 +1,9 @@
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Threading;
 using System.Threading.Channels;
 using LiteNetLib;
@@ -10,36 +13,55 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
+using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
+using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Packets.Processors.Core;
 
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
-///     Opens the LiteNetLib channel and starts sending incoming messages to <see cref="packetService" /> for processing.
+///     Opens the LiteNetLib channel and starts sending incoming messages to <see cref="packetRegistryService" /> for processing.
 /// </summary>
-internal class LiteNetLibService : BackgroundService
+internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISessionCleaner
 {
     private readonly IHostEnvironment hostEnvironment;
     private readonly SessionRepository sessionRepository;
     private readonly EventBasedNetListener listener;
     private readonly ILogger<LiteNetLibService> logger;
     private readonly IOptions<SubnauticaServerOptions> optionsProvider;
-    private readonly PacketService packetService;
-    private readonly PlayerService playerService;
+    private readonly PacketRegistryService packetRegistryService;
     private readonly NetManager server;
     private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
+    private readonly ConcurrentDictionary<SessionId, NetPeer> peersBySessionId = [];
 
-    public LiteNetLibService(PacketService packetService, PlayerService playerService, IOptions<SubnauticaServerOptions> optionsProvider, IHostEnvironment hostEnvironment, SessionRepository sessionRepository, ILogger<LiteNetLibService> logger)
+    public LiteNetLibService(PacketRegistryService packetRegistryService, SessionRepository sessionRepository, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
     {
-        this.packetService = packetService;
-        this.playerService = playerService;
+        this.packetRegistryService = packetRegistryService;
         this.optionsProvider = optionsProvider;
         this.hostEnvironment = hostEnvironment;
         this.sessionRepository = sessionRepository;
         this.logger = logger;
         listener = new EventBasedNetListener();
         server = new NetManager(listener);
+    }
+
+    public async Task<bool> KickAsync(PeerId peerId, string reason)
+    {
+        PlayerSession session = await sessionRepository.GetSessionAsync(peerId);
+        if (session == null)
+        {
+            return false;
+        }
+        if (!peersBySessionId.TryGetValue(session.Id, out NetPeer peer))
+        {
+            return false;
+        }
+        await SendPacket(new PlayerKicked(reason), session.Id);
+        server.DisconnectPeer(peer); // This will trigger client disconnect, which will clear the session data.
+        return true;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -75,7 +97,12 @@ internal class LiteNetLibService : BackgroundService
         }
         catch (OperationCanceledException)
         {
-            playerService.SendPacketToAllPlayers(new ServerStopped());
+            ServerStopped serverStopped = new();
+            foreach (NetPeer peer in peersBySessionId.Values)
+            {
+                SendPacket(serverStopped, peer);
+            }
+            peersBySessionId.Clear();
             await Task.Delay(500, CancellationToken.None); // TODO: Need async function to wait for all packets to be sent away.
             server.Stop();
             logger.LogDebug("stopped");
@@ -100,12 +127,12 @@ internal class LiteNetLibService : BackgroundService
             return;
         }
 
-        if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request)))
+        if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request, peersBySessionId)))
         {
             logger.LogWarning("Failed to queue client connect request task for {Address}:{Port}", request.RemoteEndPoint.Address.ToString(), request.RemoteEndPoint.Port);
         }
 
-        static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request)
+        static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request, ConcurrentDictionary<SessionId, NetPeer> peersBySessionId)
         {
             PlayerSession session = await sessionRepository.GetOrCreateSessionAsync(request.RemoteEndPoint.Address.ToString(), (ushort)request.RemoteEndPoint.Port);
             if (session == null)
@@ -113,7 +140,7 @@ internal class LiteNetLibService : BackgroundService
                 request.Reject();
                 return;
             }
-            request.Accept();
+            peersBySessionId.TryAdd(session.Id, request.Accept());
         }
     }
 
@@ -150,7 +177,130 @@ internal class LiteNetLibService : BackgroundService
     private async Task ProcessPacket(NetPeer peer, Packet packet)
     {
         PlayerSession session = await sessionRepository.GetOrCreateSessionAsync(peer.Address.ToString(), (ushort)peer.Port);
-        logger.LogTrace("Incoming packet {TypeName} by session #{SessionId}", packet.GetType().Name, session.SessionId);
-        await packetService.Process(session, packet);
+        logger.LogTrace("Incoming packet {TypeName} by session #{SessionId}", packet.GetType().Name, session.Id);
+        IPacketProcessor packetProcessor = packetRegistryService.GetProcessor(session, packet);
+
+        // TODO: Use object pooling for context
+        try
+        {
+            switch (packetProcessor)
+            {
+                case IAnonPacketProcessor anonProcessor:
+                    await anonProcessor.Process(new AnonProcessorContext(session.Id, this), packet);
+                    break;
+                case IAuthPacketProcessor authProcessor:
+                    await authProcessor.Process(new AuthProcessorContext((session.Player.Id, session.Id), this), packet);
+                    break;
+                default:
+                    logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packet.GetType());
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error in packet processor {TypeName}", packetProcessor.GetType());
+        }
+    }
+
+    public async ValueTask SendPacket<T>(T packet, PeerId peerId) where T : Packet
+    {
+        PlayerSession session = await sessionRepository.GetSessionAsync(peerId);
+        if (session == null)
+        {
+            logger.LogWarning("Cannot send packet {TypeName} as no session is known for player id {PlayerId}", packet?.GetType(), peerId);
+            return;
+        }
+        await SendPacket(packet, session.Id);
+    }
+
+    public ValueTask SendPacket<T>(T packet, SessionId sessionId) where T : Packet
+    {
+        if (!peersBySessionId.TryGetValue(sessionId, out NetPeer peer) || peer.ConnectionState != ConnectionState.Connected)
+        {
+            logger.LogWarning("Cannot send packet {TypeName} to closed connection {EndPoint} with session id {SessionId}", packet?.GetType().Name, peer as IPEndPoint, sessionId);
+            return ValueTask.CompletedTask;
+        }
+        SendPacket(packet, peer);
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask SendPacketToAll<T>(T packet) where T : Packet
+    {
+        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
+        {
+            SendPacket(packet, pair.Value);
+        }
+        return ValueTask.CompletedTask;
+    }
+
+    public async ValueTask SendPacketToOthers<T>(T packet, PeerId excludedPlayerId) where T : Packet
+    {
+        PlayerSession session = await sessionRepository.GetSessionAsync(excludedPlayerId);
+        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
+        {
+            if (pair.Key == session.Player.Id)
+            {
+                continue;
+            }
+            SendPacket(packet, pair.Value);
+        }
+    }
+
+    public ValueTask SendPacketToOthers<T>(T packet, SessionId excludedSessionId) where T : Packet
+    {
+        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
+        {
+            if (pair.Key == excludedSessionId)
+            {
+                continue;
+            }
+            SendPacket(packet, pair.Value);
+        }
+        return ValueTask.CompletedTask;
+    }
+    
+    private void SendPacket(Packet packet, NetPeer peer)
+    {
+        byte[] packetData = packet.Serialize();
+        NetDataWriter[] writers = ArrayPool<NetDataWriter>.Shared.Rent(1);
+        ref NetDataWriter writer = ref writers[0];
+        writer ??= new NetDataWriter();
+        try
+        {
+            writer.Reset();
+            writer.Put(packetData.Length);
+            writer.Put(packetData);
+            peer.Send(writer, (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
+        }
+        finally
+        {
+            ArrayPool<NetDataWriter>.Shared.Return(writers);
+        }
+    }
+
+    public Task CleanSessionAsync(PlayerSession disconnectedSession)
+    {
+        if (!peersBySessionId.TryRemove(disconnectedSession.Id, out NetPeer peer))
+        {
+            return Task.CompletedTask;
+        }
+        if (disconnectedSession is { Player.Id: var playerId, Player.Name: {} playerName })
+        {
+            logger.LogInformation("Player {PlayerName} #{PlayerId} on {EndPoint} disconnected", playerName, playerId, peer as EndPoint);
+        }
+        else
+        {
+            logger.LogInformation("Session id #{SessionId} on {EndPoint} disconnected", disconnectedSession.Id, peer as EndPoint);
+        }
+        Disconnect disconnectPacket = new(disconnectedSession.Id);
+        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
+        {
+            if (pair.Key == disconnectedSession.Id)
+            {
+                continue;
+            }
+            SendPacket(disconnectPacket, pair.Value);
+        }
+        return Task.CompletedTask;
     }
 }

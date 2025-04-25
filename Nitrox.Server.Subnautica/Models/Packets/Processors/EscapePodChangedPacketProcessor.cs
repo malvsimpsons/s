@@ -13,6 +13,6 @@ internal class EscapePodChangedPacketProcessor(ILogger<EscapePodChangedPacketPro
         logger.LogDebug("Processing packet {Packet}", packet);
         // TODO: USE DATABASE HERE
         // player.SubRootId = packet.EscapePodId;
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

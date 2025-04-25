@@ -1,37 +1,38 @@
 ﻿using System;
 using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
-using Nitrox.Server.Subnautica.Services;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using NitroxModel.DataStructures.GameLogic;
+using NitroxModel.Dto;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
 [RequiresPermission(Perms.MODERATOR)]
-internal class MuteCommand(PlayerService playerService) : ICommandHandler<NitroxServer.Player>
+internal class MuteCommand(PlayerRepository playerRepository) : ICommandHandler<ConnectedPlayerDto>
 {
-    private readonly PlayerService playerService = playerService;
+    private readonly PlayerRepository playerRepository = playerRepository;
 
     [Description("Prevents a user from chatting")]
-    public async Task Execute(ICommandContext context, [Description("Player to mute")] NitroxServer.Player targetPlayer)
+    public async Task Execute(ICommandContext context, [Description("Player to mute")] ConnectedPlayerDto targetPlayer)
     {
         switch (context)
         {
             case not null when context.OriginId == targetPlayer.Id:
-                context.Reply("You can't mute yourself");
+                await context.ReplyAsync("You can't mute yourself");
                 break;
             case { Permissions: var contextPerms } when contextPerms < targetPlayer.Permissions:
-                context.Reply($"You're not allowed to mute {targetPlayer.Name}");
+                await context.ReplyAsync($"You're not allowed to mute {targetPlayer.Name}");
                 break;
-            case not null when targetPlayer is { PlayerContext.IsMuted: true }:
-                context.Reply($"{targetPlayer.Name} is already muted");
-                targetPlayer.SendPacket(new MutePlayer(targetPlayer.Id, targetPlayer.PlayerContext.IsMuted)); // TODO: Is sending this packet necessary?
+            case not null when await playerRepository.GetPlayerNameIfNotMuted(targetPlayer.Id) == null:
+                await context.ReplyAsync($"{targetPlayer.Name} is already muted");
+                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, true), targetPlayer.Id);
                 break;
             case not null:
-                targetPlayer.PlayerContext.IsMuted = true;
-                playerService.SendPacketToAllPlayers(new MutePlayer(targetPlayer.Id, targetPlayer.PlayerContext.IsMuted));
+                await playerRepository.SetPlayerMuted(targetPlayer.Id, true);
+                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, true), targetPlayer.Id);
                 await context.MessageAsync(targetPlayer.Id, "You're now muted");
-                context.Reply($"Muted {targetPlayer.Name}");
+                await context.ReplyAsync($"Muted {targetPlayer.Name}");
                 break;
             default:
                 throw new ArgumentNullException(nameof(context), "Expected command context to not be null");

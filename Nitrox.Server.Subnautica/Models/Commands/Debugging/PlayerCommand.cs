@@ -1,11 +1,8 @@
 #if DEBUG
-using System.Collections.Generic;
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.DataStructures.GameLogic.Entities;
-using NitroxModel.DataStructures.Unity;
 using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Debugging;

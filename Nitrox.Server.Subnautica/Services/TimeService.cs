@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Nitrox.Server.Subnautica.Models.Hibernation;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.Networking.Packets;
 using NitroxServer.Helper;
 
@@ -11,7 +12,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Keeps track of (game) time.
 /// </summary>
-internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSyncer) : IHostedService, IHibernate
+internal sealed class TimeService(IServerPacketSender packetSender, NtpSyncer ntpSyncer) : IHostedService, IHibernate
 {
     public delegate void TimeSkippedEventHandler(double skippedSeconds);
 
@@ -29,7 +30,6 @@ internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSync
     private const int NTP_RETRY_INTERVAL = 60;
 
     private readonly NtpSyncer ntpSyncer = ntpSyncer;
-    private readonly PlayerService playerService = playerService;
 
     private readonly Stopwatch stopWatch = new();
 
@@ -42,6 +42,7 @@ internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSync
     public System.Timers.Timer ResyncTimer;
 
     public TimeSkippedEventHandler TimeSkipped;
+    private readonly IServerPacketSender packetSender = packetSender;
 
     /// <summary>
     ///     Total elapsed time (adding the current stopwatch time with the latest registered time).
@@ -97,7 +98,7 @@ internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSync
         };
         resyncTimer.Elapsed += delegate
         {
-            playerService.SendPacketToAllPlayers(MakeTimePacket());
+            packetSender.SendPacketToAll(MakeTimePacket());
         };
         return resyncTimer;
     }
@@ -130,7 +131,7 @@ internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSync
             Elapsed += TimeSpan.FromSeconds(skipAmount);
             TimeSkipped?.Invoke(skipAmount);
 
-            playerService.SendPacketToAllPlayers(MakeTimePacket());
+            packetSender.SendPacketToAll(MakeTimePacket());
         }
     }
 
@@ -179,6 +180,6 @@ internal sealed class TimeService(PlayerService playerService, NtpSyncer ntpSync
     {
         stopWatch.Start();
         ResyncTimer.Start();
-        playerService.SendPacketToAllPlayers(MakeTimePacket());
+        packetSender.SendPacketToAll(MakeTimePacket());
     }
 }

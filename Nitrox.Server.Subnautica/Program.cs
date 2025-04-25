@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging.Console;
 using Nitrox.Server.Subnautica.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
-using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Helper;
@@ -148,8 +147,6 @@ public class Program
                .AddHostedSingletonService<PortForwardService>()
                .AddHostedSingletonService<LanBroadcastService>()
                .AddHostedSingletonService<TimeService>()
-               .AddHostedSingletonService<PlayerService>()
-               .AddSingleton<ISessionCleaner, PlayerService>(provider => provider.GetRequiredService<PlayerService>())
                .AddHostedSingletonService<StoryTimingService>() // TODO: Merge story services together?
                .AddHostedSingletonService<StoryScheduleService>()
                .AddHostedSingletonService<FmodService>()

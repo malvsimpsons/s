@@ -1,6 +1,5 @@
 #if DEBUG
 using System.ComponentModel;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Models.GameLogic;
 using NitroxModel.DataStructures;
@@ -20,22 +19,22 @@ internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipDa
     {
         if (!entityRegistry.TryGetEntityById(entityId, out Entity entity))
         {
-            context.Reply($"Entity with id {entityId} not found");
+            context.ReplyAsync($"Entity with id {entityId} not found");
             return Task.CompletedTask;
         }
 
-        context.Reply(entity.ToString());
+        context.ReplyAsync(entity.ToString());
         if (entity is WorldEntity worldEntity)
         {
-            context.Reply(worldEntity.AbsoluteEntityCell.ToString());
+            context.ReplyAsync(worldEntity.AbsoluteEntityCell.ToString());
         }
         if (simulationOwnershipData.TryGetLock(entityId, out SimulationOwnershipData.PlayerLock playerLock))
         {
-            context.Reply($"Lock owner player id: {playerLock.PlayerId}");
+            context.ReplyAsync($"Lock owner player id: {playerLock.PlayerId}");
         }
         else
         {
-            context.Reply("Not locked");
+            context.ReplyAsync("Not locked");
         }
 
         return Task.CompletedTask;

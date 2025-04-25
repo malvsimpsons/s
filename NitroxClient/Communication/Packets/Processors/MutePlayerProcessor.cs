@@ -1,5 +1,6 @@
 ﻿using NitroxClient.GameLogic;
 using NitroxModel.DataStructures.Util;
+using NitroxModel.Networking;
 using NitroxModel.Networking.Packets;
 
 namespace NitroxClient.Communication.Packets.Processors;
@@ -8,7 +9,7 @@ public class MutePlayerProcessor : IClientPacketProcessor<MutePlayer>
 {
     private readonly PlayerManager playerManager;
 
-    public delegate void PlayerMuted(ushort playerId, bool muted);
+    public delegate void PlayerMuted(SessionId playerId, bool muted);
     public PlayerMuted OnPlayerMuted;
 
     public MutePlayerProcessor(PlayerManager playerManager)

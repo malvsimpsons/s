@@ -1,7 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using Microsoft.Extensions.Options;

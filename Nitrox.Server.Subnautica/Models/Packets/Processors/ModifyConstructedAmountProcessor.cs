@@ -11,7 +11,7 @@ internal sealed class ModifyConstructedAmountProcessor(GameLogic.Bases.BuildingM
     {
         if (buildingManager.ModifyConstructedAmount(packet))
         {
-            context.ReplyToOthers(packet);
+            await context.ReplyToOthers(packet);
         }
     }
 }

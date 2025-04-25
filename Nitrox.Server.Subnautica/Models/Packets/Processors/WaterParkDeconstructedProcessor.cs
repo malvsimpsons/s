@@ -1,25 +1,26 @@
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
-using Nitrox.Server.Subnautica.Services;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Dto;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class WaterParkDeconstructedProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService) : IAuthPacketProcessor<WaterParkDeconstructed>
+internal sealed class WaterParkDeconstructedProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerRepository playerRepository) : IAuthPacketProcessor<WaterParkDeconstructed>
 {
     private readonly GameLogic.Bases.BuildingManager buildingManager = buildingManager;
+    private readonly PlayerRepository playerRepository = playerRepository;
 
     public async Task Process(AuthProcessorContext context, WaterParkDeconstructed packet)
     {
-        ConnectedPlayerDto player = await playerService.GetConnectedPlayerByIdAsync(context.Sender);
+        ConnectedPlayerDto player = await playerRepository.GetConnectedPlayerBySessionIdAsync(context.Sender.SessionId);
 
-        if (buildingManager.ReplacePieceByGhost(player, packet, out Entity removedEntity, out int operationId) &&
-            buildingManager.CreateWaterParkPiece(packet, removedEntity))
+        (Entity removedEntity, int operationId) = await buildingManager.ReplacePieceByGhost(player, packet);
+        if (removedEntity != null && buildingManager.CreateWaterParkPiece(packet, removedEntity))
         {
             packet.BaseData = null;
             packet.OperationId = operationId;
-            context.ReplyToOthers(packet);
+            await context.ReplyToOthers(packet);
         }
     }
 }

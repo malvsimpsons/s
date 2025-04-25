@@ -6,9 +6,8 @@ using NitroxModel.Networking.Packets;
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
 internal sealed class SeaDragonGrabExosuitProcessor(
-    PlayerService playerService,
     EntityRegistry entityRegistry
-) : TransmitIfCanSeePacketProcessor<SeaDragonGrabExosuit>(playerService, entityRegistry)
+) : TransmitIfCanSeePacketProcessor<SeaDragonGrabExosuit>(entityRegistry)
 {
-    public async override Task Process(AuthProcessorContext context, SeaDragonGrabExosuit packet) => TransmitIfCanSeeEntities(packet, context.Sender, packet.SeaDragonId, packet.TargetId);
+    public override async Task Process(AuthProcessorContext context, SeaDragonGrabExosuit packet) => await TransmitIfCanSeeEntities(packet, context.Sender.PlayerId, packet.SeaDragonId, packet.TargetId);
 }

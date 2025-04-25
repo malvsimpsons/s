@@ -4,13 +4,11 @@ using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 using NitroxModel.Networking.Packets;
-using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EntityMetadataUpdateProcessor(PlayerService playerService, EntityRegistry entityRegistry) : IAuthPacketProcessor<EntityMetadataUpdate>
+internal class EntityMetadataUpdateProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<EntityMetadataUpdate>
 {
-    private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
     public async Task Process(AuthProcessorContext context, EntityMetadataUpdate packet)

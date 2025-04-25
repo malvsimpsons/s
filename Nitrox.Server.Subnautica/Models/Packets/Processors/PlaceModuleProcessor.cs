@@ -14,9 +14,9 @@ internal sealed class PlaceModuleProcessor(GameLogic.Bases.BuildingManager build
         {
             if (packet.ModuleEntity.ParentId == null)
             {
-                entitySimulation.ClaimBuildPiece(packet.ModuleEntity, context.Sender);
+                await entitySimulation.ClaimBuildPiece(packet.ModuleEntity, context.Sender.PlayerId);
             }
-            context.ReplyToOthers(packet);
+            await context.ReplyToOthers(packet);
         }
     }
 }

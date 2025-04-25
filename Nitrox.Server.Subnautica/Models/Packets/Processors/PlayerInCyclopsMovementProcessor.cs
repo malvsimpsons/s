@@ -2,14 +2,12 @@ using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class PlayerInCyclopsMovementProcessor(PlayerService playerService, EntityRegistry entityRegistry, ILogger<PlayerInCyclopsMovementProcessor> logger) : IAuthPacketProcessor<PlayerInCyclopsMovement>
+internal class PlayerInCyclopsMovementProcessor(EntityRegistry entityRegistry, ILogger<PlayerInCyclopsMovementProcessor> logger) : IAuthPacketProcessor<PlayerInCyclopsMovement>
 {
-    private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly ILogger<PlayerInCyclopsMovementProcessor> logger = logger;
 

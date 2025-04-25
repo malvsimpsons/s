@@ -10,12 +10,12 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 /// <remarks>
 ///     On startup, should ensure this table is truncated.
 /// </remarks>
-[Table("PlayerSessions")]
+[Table("PlayerSession")]
 public record PlayerSession
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public SessionId? SessionId { get; set; }
+    public SessionId Id { get; set; }
 
     /// <summary>
     ///     Gets the player reference. Can be <c>NULL</c>.
@@ -43,4 +43,10 @@ public record PlayerSession
     /// </summary>
     [Required]
     public ushort Port { get; set; }
+
+    /// <summary>
+    ///     The real-world time when the session was made.
+    /// </summary>
+    [Required]
+    public DateTimeOffset Created { get; set; } = DateTimeOffset.Now;
 }

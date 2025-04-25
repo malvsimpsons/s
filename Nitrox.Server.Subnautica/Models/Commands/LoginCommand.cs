@@ -20,15 +20,15 @@ internal class LoginCommand(IOptions<Configuration.SubnauticaServerOptions> opti
                 {
                     // TODO: USE DATABASE
                     // player.Permissions = Perms.ADMIN;
-                    context.Reply($"You've been made {nameof(Perms.ADMIN)} on this server!");
+                    context.ReplyAsync($"You've been made {nameof(Perms.ADMIN)} on this server!");
                 }
                 else
                 {
-                    context.Reply("Incorrect Password");
+                    context.ReplyAsync("Incorrect Password");
                 }
                 break;
             default:
-                context.Reply("You already have admin permissions");
+                context.ReplyAsync("You already have admin permissions");
                 break;
         }
 

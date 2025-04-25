@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.Networking.Packets;
@@ -20,7 +19,7 @@ internal sealed class VehicleMovementsPacketProcessor(EntityRegistry entityRegis
         for (int i = packet.Data.Count - 1; i >= 0; i--)
         {
             MovementData movementData = packet.Data[i];
-            if (simulationOwnershipData.GetPlayerForLock(movementData.Id) != context.Sender)
+            if (simulationOwnershipData.GetPlayerForLock(movementData.Id) != context.Sender.PlayerId)
             {
                 // TODO: Warn once
                 logger.LogWarning("Player {PlayerId} tried updating {Id}'s position but they don't have the lock on it", context.Sender, movementData.Id);

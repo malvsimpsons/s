@@ -25,11 +25,11 @@ internal class DiscordRequestIPProcessor(IOptions<SubnauticaServerOptions> optio
             }
 
             packet.IpPort = ipPort = $"{result}:{optionsProvider.Value.ServerPort}";
-            context.ReplyToSender(packet);
+            await context.ReplyToSender(packet);
         }
 
         packet.IpPort = ipPort;
-        context.ReplyToSender(packet);
+        await context.ReplyToSender(packet);
     }
 
     /// <summary>

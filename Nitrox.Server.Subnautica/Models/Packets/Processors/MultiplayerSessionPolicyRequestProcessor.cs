@@ -16,6 +16,6 @@ internal class MultiplayerSessionPolicyRequestProcessor(IOptions<SubnauticaServe
     {
         logger.LogInformation("Providing session policies...");
         SubnauticaServerOptions options = optionsProvider.Value;
-        context.Reply(new MultiplayerSessionPolicy(packet.CorrelationId, options.DisableConsole, options.MaxConnections, options.IsPasswordRequired()));
+        await context.ReplyToSender(new MultiplayerSessionPolicy(packet.CorrelationId, options.DisableConsole, options.MaxConnections, options.IsPasswordRequired()));
     }
 }

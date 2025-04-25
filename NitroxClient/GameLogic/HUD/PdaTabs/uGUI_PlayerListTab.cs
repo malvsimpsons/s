@@ -225,12 +225,12 @@ public class uGUI_PlayerListTab : uGUI_PingTab
         entries.Add(playerId, entry);
     }
 
-    private void OnAdd(PeerId playerId, RemotePlayer remotePlayer)
+    private void OnAdd(SessionId playerId, RemotePlayer remotePlayer)
     {
         _isDirty = true;
     }
 
-    private void OnRemove(PeerId playerId, RemotePlayer remotePlayers)
+    private void OnRemove(SessionId playerId, RemotePlayer remotePlayers)
     {
         string playerIdString = playerId.ToString();
         if (!entries.TryGetValue(playerIdString, out uGUI_PlayerPingEntry entry))

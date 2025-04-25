@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
@@ -13,7 +14,7 @@ namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
 internal class PlayerJoiningMultiplayerSessionProcessor(
     StoryTimingService storyTimingService,
-    PlayerService playerService,
+    PlayerRepository playerRepository,
     EntitySimulation entitySimulation,
     WorldEntityManager worldEntityManager,
     EscapePodService escapePodService,
@@ -24,15 +25,15 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly EntitySimulation entitySimulation = entitySimulation;
     private readonly EscapePodService escapePodService = escapePodService;
-    private readonly PlayerService playerService = playerService;
+    private readonly PlayerRepository playerRepository = playerRepository;
     private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
     private readonly StoryTimingService storyTimingService = storyTimingService;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
 
     public async Task Process(AnonProcessorContext context, PlayerJoiningMultiplayerSession packet)
     {
-        // TODO: Assign escape pod via database.
-        PeerId player = playerService.AddConnectedPlayer(context.Sender, packet.ReservationKey, out bool wasBrandNewPlayer);
+        // TODO: USE DATABASE - Assign escape pod
+        // PeerId player = playerRepository.AddConnectedPlayer(context.Sender, packet.ReservationKey, out bool wasBrandNewPlayer);
         // NitroxId assignedEscapePodId = escapePodService.AssignPlayerToEscapePod(player.Id, out Optional<EscapePodWorldEntity> newlyCreatedEscapePod);
         // if (wasBrandNewPlayer)
         // {

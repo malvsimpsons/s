@@ -30,7 +30,7 @@ internal class BuildingResyncRequestProcessor(EntityRegistry entityRegistry, Wor
             AddEntityToResync(entity);
         }
 
-        context.ReplyToSender(new BuildingResync(buildEntities, moduleEntities));
+        await context.ReplyToSender(new BuildingResync(buildEntities, moduleEntities));
 
         void AddEntityToResync(Entity entity)
         {

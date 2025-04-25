@@ -1,16 +1,14 @@
 using System;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.DataStructures.Unity;
 using NitroxModel.GameLogic.FMOD;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class FootstepPacketProcessor(PlayerService playerService, FmodService fmodService) : IAuthPacketProcessor<FootstepPacket>
+internal class FootstepPacketProcessor(FmodService fmodService) : IAuthPacketProcessor<FootstepPacket>
 {
     private readonly FmodService fmodService = fmodService;
-    private readonly PlayerService playerService = playerService;
     private float footstepAudioRange; // To modify this value, modify the last value of the event:/player/footstep_precursor_base sound in the SoundWhitelist_Subnautica.csv file
 
     public async Task Process(AuthProcessorContext context, FootstepPacket packet)

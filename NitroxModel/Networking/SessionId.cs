@@ -9,6 +9,8 @@ namespace NitroxModel.Networking;
 /// </remarks>
 public readonly record struct SessionId
 {
+    public const ushort SERVER_ID = (ushort)PeerId.SERVER_ID;
+
     private readonly ushort id;
 
     private SessionId(ushort id)

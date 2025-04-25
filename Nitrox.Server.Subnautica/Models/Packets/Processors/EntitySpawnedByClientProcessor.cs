@@ -8,10 +8,9 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EntitySpawnedByClientProcessor(PlayerService playerService, EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, EntitySimulation entitySimulation)
+internal class EntitySpawnedByClientProcessor(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, EntitySimulation entitySimulation)
     : IAuthPacketProcessor<EntitySpawnedByClient>
 {
-    private readonly PlayerService playerManager = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
     private readonly EntitySimulation entitySimulation = entitySimulation;
@@ -31,10 +30,9 @@ internal class EntitySpawnedByClientProcessor(PlayerService playerService, Entit
 
             if (packet.RequireSimulation)
             {
-                simulatedEntity = entitySimulation.AssignNewEntityToPlayer(entity, context.Sender);
+                simulatedEntity = entitySimulation.AssignNewEntityToPlayer(entity, context.Sender.PlayerId);
 
-                SimulationOwnershipChange ownershipChangePacket = new SimulationOwnershipChange(simulatedEntity);
-                playerManager.SendPacketToAllPlayers(ownershipChangePacket);
+                await context.ReplyToAll(new SimulationOwnershipChange(simulatedEntity));
             }
         }
 

@@ -15,7 +15,7 @@ public class PlayerStatsProcessor : IClientPacketProcessor<PlayerStats>
 
     public Task Process(IPacketProcessContext context, PlayerStats playerStats)
     {
-        if (playerManager.TryFind(playerStats.PlayerId, out RemotePlayer remotePlayer))
+        if (playerManager.TryFind(playerStats.SessionId, out RemotePlayer remotePlayer))
         {
             RemotePlayerVitals vitals = remotePlayer.vitals;
             vitals.SetOxygen(playerStats.Oxygen, playerStats.MaxOxygen);

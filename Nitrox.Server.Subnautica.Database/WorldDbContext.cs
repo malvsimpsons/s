@@ -2,6 +2,7 @@
 using Nitrox.Server.Subnautica.Database.Converters;
 using Nitrox.Server.Subnautica.Database.Models;
 using NitroxModel.DataStructures;
+using NitroxModel.DataStructures.Unity;
 using NitroxModel.Networking;
 
 namespace Nitrox.Server.Subnautica.Database;
@@ -9,8 +10,9 @@ namespace Nitrox.Server.Subnautica.Database;
 public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContext(options)
 {
     public DbSet<Player> Players { get; set; }
+    public DbSet<PlayContext> PlayContexts { get; set; }
     public DbSet<PlayerSession> PlayerSessions { get; set; }
-    public DbSet<PlayerSurvivalStats> PlayerSurvivalStats { get; set; }
+    public DbSet<SurvivalContext> PlayerSurvivalStats { get; set; }
     public DbSet<StoryGoal> StoryGoals { get; set; }
 
     /// <summary>
@@ -32,6 +34,9 @@ public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContex
         builder
             .Properties<NitroxInt3>()
             .HaveConversion<NitroxInt3Converter>();
+        builder
+            .Properties<NitroxVector3>()
+            .HaveConversion<NitroxVector3Converter>();
         builder
             .Properties<SessionId>()
             .HaveConversion<SessionIdConverter>();

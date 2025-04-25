@@ -17,7 +17,7 @@ internal class PvpCommand(IOptions<SubnauticaServerConfig> configProvider) : ICo
         switch (context)
         {
             case not null when configProvider.Value.PvPEnabled == state:
-                context.Reply($"PvP is already {state}");
+                context.ReplyAsync($"PvP is already {state}");
                 break;
             case not null:
                 configProvider.Value.PvPEnabled = state; // TODO: Ensure it's persisted

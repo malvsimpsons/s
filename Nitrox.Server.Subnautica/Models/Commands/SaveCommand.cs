@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;

@@ -13,17 +13,15 @@ internal sealed class ConfigCommand(IOptions<ServerStartOptions> optionsProvider
     private readonly IOptions<ServerStartOptions> optionsProvider = optionsProvider;
 
     [Description("Opens the server configuration file")]
-    public Task Execute(ICommandContext context)
+    public async Task Execute(ICommandContext context)
     {
         string filePath = optionsProvider.Value.GetServerConfigFilePath();
         if (!File.Exists(filePath))
         {
-            // TODO: Save server if config file doesn't exist?
-            context.Reply("No configuration file exists yet");
-            return Task.CompletedTask;
+            // TODO: Handle this case to generate config?
+            await context.ReplyAsync("No configuration file exists");
         }
 
         FileSystem.Instance.OpenOrExecuteFile(filePath);
-        return Task.CompletedTask;
     }
 }

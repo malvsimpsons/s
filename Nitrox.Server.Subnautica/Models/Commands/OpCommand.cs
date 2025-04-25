@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
-using Nitrox.Server.Subnautica.Services;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Dto;
 using NitroxModel.Networking.Packets;
@@ -8,9 +8,9 @@ using NitroxModel.Networking.Packets;
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
 [RequiresPermission(Perms.ADMIN)]
-internal class OpCommand(PlayerService playerService) : ICommandHandler<ConnectedPlayerDto>
+internal class OpCommand(PlayerRepository playerRepository) : ICommandHandler<ConnectedPlayerDto>
 {
-    private readonly PlayerService playerService = playerService;
+    private readonly PlayerRepository playerRepository = playerRepository;
 
     [Description("Sets a user as admin")]
     public async Task Execute(ICommandContext context, [Description("The player to make an admin")] ConnectedPlayerDto targetPlayer)
@@ -18,14 +18,16 @@ internal class OpCommand(PlayerService playerService) : ICommandHandler<Connecte
         switch (context)
         {
             case not null when targetPlayer.Permissions >= Perms.ADMIN:
-                context.Reply($"Player {targetPlayer.Name} already has {Perms.ADMIN} permissions");
+                await context.ReplyAsync($"Player {targetPlayer.Name} already has {Perms.ADMIN} permissions");
                 break;
             case not null:
-                // TODO: USE DATABASE
-                // targetPlayer.Permissions = Perms.ADMIN;
-                playerService.SendPacket(new PermsChanged(targetPlayer.Permissions), targetPlayer.Id); // Notify this player that they can show all the admin-related stuff
+                if (!await playerRepository.SetPlayerPermissions(targetPlayer.Id, Perms.ADMIN))
+                {
+
+                }
+                await context.SendAsync(new PermsChanged(targetPlayer.Permissions), targetPlayer.Id); // Notify this player that they can show all the admin-related stuff
                 await context.MessageAsync(targetPlayer.Id, $"You were promoted to {targetPlayer.Permissions}");
-                context.Reply($"Updated {targetPlayer.Name}'s permissions to {targetPlayer.Permissions}");
+                await context.ReplyAsync($"Updated {targetPlayer.Name}'s permissions to {targetPlayer.Permissions}");
                 break;
         }
     }

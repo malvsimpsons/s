@@ -6,6 +6,8 @@ using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using NitroxModel.Core;
 
 namespace Nitrox.Server.Subnautica.Services;
@@ -13,11 +15,12 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Opens an interprocess channel so other processes on the machine can send server commands.
 /// </summary>
-internal sealed class IpcCommandService(CommandService commandService, PlayerService playerService, ILogger<IpcCommandService> logger) : BackgroundService
+internal sealed class IpcCommandService(CommandService commandService, PlayerRepository playerRepository, IServerPacketSender packetSender, ILogger<IpcCommandService> logger) : BackgroundService
 {
     private readonly CommandService commandService = commandService;
     private readonly NamedPipeServerStream server = new($"Nitrox Server {NitroxEnvironment.CurrentProcessId}", PipeDirection.In, 1);
-    private readonly PlayerService playerService = playerService;
+    private readonly PlayerRepository playerRepository = playerRepository;
+    private readonly IServerPacketSender packetSender = packetSender;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -28,7 +31,7 @@ internal sealed class IpcCommandService(CommandService commandService, PlayerSer
             try
             {
                 string command = await ReadStringAsync(stoppingToken);
-                commandService.ExecuteCommand(command, new HostToServerCommandContext(playerService));
+                commandService.ExecuteCommand(command, new HostToServerCommandContext(playerRepository, packetSender));
             }
             catch (OperationCanceledException)
             {

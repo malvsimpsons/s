@@ -1,4 +1,3 @@
-using System;
 using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Extensions.Dto;
@@ -9,7 +8,7 @@ public static class ConnectedPlayerDtoExtensions
         new()
         {
             Id = session.Player.Id,
-            SessionId = session.SessionId ?? throw new Exception("Session id must not be null"),
+            SessionId = session.Id,
             Name = session.Player.Name,
             Permissions = session.Player.Permissions,
         };

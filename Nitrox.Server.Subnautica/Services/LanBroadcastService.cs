@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Extensions.Hosting;

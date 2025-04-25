@@ -1,4 +1,4 @@
-using Nitrox.Server.Subnautica.Services;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.Networking.Packets;
 using NitroxModel.Networking.Packets.Processors.Core;
 
@@ -9,23 +9,16 @@ namespace Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 /// </summary>
 internal record AnonProcessorContext : IPacketProcessContext<SessionId>
 {
-    private readonly PlayerService playerService;
+    private readonly IServerPacketSender packetSender;
     public SessionId Sender { get; set; }
 
-    public AnonProcessorContext(SessionId sender, PlayerService playerService)
+    public AnonProcessorContext(SessionId sender, IServerPacketSender packetSender)
     {
-        this.playerService = playerService;
+        this.packetSender = packetSender;
         Sender = sender;
     }
 
-    // TODO: Allow session id to send packets as well.
-    // public void ReplyToSender<T>(T packet) where T : Packet => playerService.SendPacket(packet, Sender);
-    //
-    // public void ReplyToAll<T>(T packet) where T : Packet => playerService.SendPacketToAllPlayers(packet);
-    //
-    // public void ReplyToOthers<T>(T packet) where T : Packet => playerService.SendPacketToOtherPlayers(packet, Sender);
-    public void Reply<T>(T packet) where T : Packet
-    {
-        playerService.SendPacket(packet, Sender);
-    }
+    public async Task ReplyToSender<T>(T packet) where T : Packet => await packetSender.SendPacket(packet, Sender);
+
+    public async Task ReplyToAll<T>(T packet) where T : Packet => await packetSender.SendPacketToAll(packet);
 }

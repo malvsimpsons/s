@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Nitrox.Server.Subnautica.Database.Models;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Respositories.Core;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
@@ -17,16 +17,16 @@ internal sealed class EntitySimulation : ISessionCleaner
 
     private readonly EntityRegistry entityRegistry;
     private readonly WorldEntityManager worldEntityManager;
-    private readonly PlayerService playerService;
+    private readonly IServerPacketSender packetSender;
     private readonly ISimulationWhitelist simulationWhitelist;
     private readonly SimulationOwnershipData simulationOwnershipData;
 
-    public EntitySimulation(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, SimulationOwnershipData simulationOwnershipData, PlayerService playerService, ISimulationWhitelist simulationWhitelist)
+    public EntitySimulation(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, SimulationOwnershipData simulationOwnershipData, IServerPacketSender packetSender, ISimulationWhitelist simulationWhitelist)
     {
         this.entityRegistry = entityRegistry;
         this.worldEntityManager = worldEntityManager;
         this.simulationOwnershipData = simulationOwnershipData;
-        this.playerService = playerService;
+        this.packetSender = packetSender;
         this.simulationWhitelist = simulationWhitelist;
     }
 
@@ -54,12 +54,12 @@ internal sealed class EntitySimulation : ISessionCleaner
         // AssignEntitiesToOtherPlayers(player, revokedEntities, ownershipChanges);
     }
 
-    public void BroadcastSimulationChanges(List<SimulatedEntity> ownershipChanges)
+    public async Task BroadcastSimulationChanges(List<SimulatedEntity> ownershipChanges)
     {
         if (ownershipChanges.Count > 0)
         {
             SimulationOwnershipChange ownershipChange = new(ownershipChanges);
-            playerService.SendPacketToAllPlayers(ownershipChange);
+            await packetSender.SendPacketToAll(ownershipChange);
         }
     }
 
@@ -169,22 +169,25 @@ internal sealed class EntitySimulation : ISessionCleaner
         simulationOwnershipData.RevokeOwnerOfId(id);
     }
 
-    public void ClaimBuildPiece(Entity entity, PeerId player)
+    public async Task ClaimBuildPiece(Entity entity, PeerId player)
     {
         SimulatedEntity simulatedEntity = AssignNewEntityToPlayer(entity, player, false);
         SimulationOwnershipChange ownershipChangePacket = new(simulatedEntity);
-        playerService.SendPacketToAllPlayers(ownershipChangePacket);
+        await packetSender.SendPacketToAll(ownershipChangePacket);
     }
 
-    public Task CleanSessionAsync(PlayerSession disconnectedSession)
+    public async Task CleanSessionAsync(PlayerSession disconnectedSession)
     {
-        List<SimulatedEntity> ownershipChanges = CalculateSimulationChangesFromPlayerDisconnect(disconnectedSession.Player.Id);
+        if (disconnectedSession is not { Player.Id: var playerId })
+        {
+            return;
+        }
 
+        List<SimulatedEntity> ownershipChanges = CalculateSimulationChangesFromPlayerDisconnect(playerId);
         if (ownershipChanges.Count > 0)
         {
             SimulationOwnershipChange ownershipChange = new(ownershipChanges);
-            playerService.SendPacketToAllPlayers(ownershipChange);
+            await packetSender.SendPacketToAll(ownershipChange);
         }
-        return Task.CompletedTask;
     }
 }

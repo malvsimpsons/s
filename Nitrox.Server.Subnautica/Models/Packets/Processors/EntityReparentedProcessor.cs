@@ -6,10 +6,9 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EntityReparentedProcessor(EntityRegistry entityRegistry, PlayerService playerService) : IAuthPacketProcessor<EntityReparented>
+internal class EntityReparentedProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<EntityReparented>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
-    private readonly PlayerService playerManager = playerService;
 
     public async Task Process(AuthProcessorContext context, EntityReparented packet)
     {
@@ -25,6 +24,6 @@ internal class EntityReparentedProcessor(EntityRegistry entityRegistry, PlayerSe
         }
 
         entityRegistry.ReparentEntity(packet.Id, packet.NewParentId);
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

@@ -4,9 +4,8 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class PDALogEntryAddProcessor(PlayerService playerManager, StoryScheduleService storyScheduleService) : IAuthPacketProcessor<PDALogEntryAdd>
+internal sealed class PDALogEntryAddProcessor(StoryScheduleService storyScheduleService) : IAuthPacketProcessor<PDALogEntryAdd>
 {
-    private readonly PlayerService playerManager = playerManager;
     // TODO: USE DATABASE
     // private readonly IStateManager<PdaStateData> pda = pda;
     private readonly StoryScheduleService storyScheduleService = storyScheduleService;
@@ -19,6 +18,6 @@ internal sealed class PDALogEntryAddProcessor(PlayerService playerManager, Story
         {
             storyScheduleService.UnScheduleGoal(packet.Key);
         }
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

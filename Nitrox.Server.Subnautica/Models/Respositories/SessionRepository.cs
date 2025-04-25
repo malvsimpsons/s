@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,11 +9,11 @@ using Nitrox.Server.Subnautica.Services;
 
 namespace Nitrox.Server.Subnautica.Models.Respositories;
 
-internal class SessionRepository(DatabaseService databaseService, IEnumerable<ISessionCleaner> sessionCleaners, ILogger<SessionRepository> logger)
+internal class SessionRepository(DatabaseService databaseService, Func<ISessionCleaner[]> sessionCleanersProvider, ILogger<SessionRepository> logger)
 {
     private readonly DatabaseService databaseService = databaseService;
     private readonly ILogger<SessionRepository> logger = logger;
-    private readonly ISessionCleaner[] sessionCleaners = [..sessionCleaners];
+    private ISessionCleaner[] sessionCleaners;
 
     public async Task<PlayerSession> GetOrCreateSessionAsync(string address, ushort port)
     {
@@ -42,6 +41,15 @@ internal class SessionRepository(DatabaseService databaseService, IEnumerable<IS
         return playerSession;
     }
 
+    public async Task<PlayerSession> GetSessionAsync(PeerId peerId)
+    {
+        await using WorldDbContext db = await databaseService.GetDbContextAsync();
+        return await db.PlayerSessions
+                                              .Include(s => s.Player)
+                                              .Where(s => s.Player.Id == peerId)
+                                              .FirstOrDefaultAsync();
+    }
+
     public async Task DeleteSessionAsync(string address, ushort port)
     {
         await using (WorldDbContext db = await databaseService.GetDbContextAsync())
@@ -54,19 +62,17 @@ internal class SessionRepository(DatabaseService databaseService, IEnumerable<IS
             {
                 return;
             }
-            if (session.Player != null && session.Player.Id > 0)
-            {
-                await RunSessionCleanersAsync(session);
-            }
 
-            // Now delete the session and its data (happens through FOREIGN KEY CASCADE DELETE on session id)
+            await RunSessionCleanersAsync(session);
+
+            // Now delete the session and its data (the latter happens through FOREIGN KEY CASCADE DELETE on session id)
             db.Remove(session);
             if (await db.SaveChangesAsync() <= 0)
             {
-                logger.LogWarning("Failed to delete session data for {Address}:{Port}", address, port);
+                logger.LogWarning("Failed to delete session data of {Address}:{Port}", address, port);
                 return;
             }
-            logger.LogDebug("Session data for disconnected client {Address}:{Port} has been removed", address, port);
+            logger.LogTrace("Session data of disconnected client {Address}:{Port} has been removed", address, port);
         }
     }
 
@@ -76,6 +82,7 @@ internal class SessionRepository(DatabaseService databaseService, IEnumerable<IS
     /// </summary>
     private async Task RunSessionCleanersAsync(PlayerSession session)
     {
+        sessionCleaners ??= sessionCleanersProvider();
         foreach (ISessionCleaner cleaner in sessionCleaners)
         {
             try

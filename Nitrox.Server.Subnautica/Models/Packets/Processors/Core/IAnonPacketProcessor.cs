@@ -3,7 +3,7 @@ using NitroxModel.Networking.Packets.Processors.Core;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 
-internal interface IAnonPacketProcessor
+internal interface IAnonPacketProcessor : IPacketProcessor
 {
     Task Process(AnonProcessorContext context, Packet packet);
 }

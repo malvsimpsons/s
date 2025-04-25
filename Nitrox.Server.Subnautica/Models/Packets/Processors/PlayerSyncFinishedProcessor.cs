@@ -4,9 +4,8 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class PlayerSyncFinishedProcessor(PlayerService playerManager, HibernationService hibernationService) : IAuthPacketProcessor<PlayerSyncFinished>
+internal sealed class PlayerSyncFinishedProcessor(HibernationService hibernationService) : IAuthPacketProcessor<PlayerSyncFinished>
 {
-    private readonly PlayerService playerManager = playerManager;
     private readonly HibernationService hibernationService = hibernationService;
 
     public async Task Process(AuthProcessorContext context, PlayerSyncFinished packet)

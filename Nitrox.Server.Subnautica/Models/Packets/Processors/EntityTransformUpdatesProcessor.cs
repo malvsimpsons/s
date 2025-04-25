@@ -1,23 +1,23 @@
 using System.Collections.Generic;
 using Nitrox.Server.Subnautica.Models.GameLogic;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EntityTransformUpdatesProcessor(PlayerService playerService, WorldEntityManager worldEntityManager, SimulationOwnershipData simulationOwnershipData) : IAuthPacketProcessor<EntityTransformUpdates>
+internal class EntityTransformUpdatesProcessor(WorldEntityManager worldEntityManager, SimulationOwnershipData simulationOwnershipData, IServerPacketSender packetSender) : IAuthPacketProcessor<EntityTransformUpdates>
 {
-    private readonly PlayerService playerService = playerService;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
     private readonly SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
+    private readonly IServerPacketSender packetSender = packetSender;
 
-    public Task Process(AuthProcessorContext context, EntityTransformUpdates packet)
+    public async Task Process(AuthProcessorContext context, EntityTransformUpdates packet)
     {
-        Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer = InitializeVisibleUpdateMapWithOtherPlayers(context.Sender);
-        AssignVisibleUpdatesToPlayers(context.Sender, packet.Updates, visibleUpdatesByPlayer);
-        SendUpdatesToPlayers(visibleUpdatesByPlayer);
-        return Task.CompletedTask;
+        Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer = InitializeVisibleUpdateMapWithOtherPlayers(context.Sender.PlayerId);
+        AssignVisibleUpdatesToPlayers(context.Sender.PlayerId, packet.Updates, visibleUpdatesByPlayer);
+        await SendUpdatesToPlayers(visibleUpdatesByPlayer);
     }
 
     private Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> InitializeVisibleUpdateMapWithOtherPlayers(PeerId simulatingPlayer)
@@ -64,7 +64,7 @@ internal class EntityTransformUpdatesProcessor(PlayerService playerService, Worl
         // }
     }
 
-    private void SendUpdatesToPlayers(Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer)
+    private async Task SendUpdatesToPlayers(Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer)
     {
         foreach (KeyValuePair<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> playerUpdates in visibleUpdatesByPlayer)
         {
@@ -74,7 +74,7 @@ internal class EntityTransformUpdatesProcessor(PlayerService playerService, Worl
             if (updates.Count > 0)
             {
                 EntityTransformUpdates updatesPacket = new(updates);
-                playerService.SendPacket(updatesPacket, player);
+                await packetSender.SendPacket(updatesPacket, player);
             }
         }
     }

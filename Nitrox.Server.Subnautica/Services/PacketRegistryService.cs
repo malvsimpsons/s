@@ -4,10 +4,8 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Packets;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
@@ -17,15 +15,13 @@ using NitroxModel.Networking.Packets.Processors.Core;
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
-///     Processes packets based on their type.
+///     Collects packet processors into a fast lookup, based on the packet type they can handle.
 /// </summary>
-internal sealed class PacketService(IEnumerable<IPacketProcessor> packetProcessors, PlayerService playerService, DefaultPacketProcessor defaultProcessor, IDbContextFactory<WorldDbContext> dbContextFactory, ILogger<PacketService> logger) : IHostedService
+internal sealed class PacketRegistryService(Func<IPacketProcessor[]> packetProcessorsProvider, DefaultPacketProcessor defaultProcessor, ILogger<PacketRegistryService> logger) : IHostedService
 {
     private readonly DefaultPacketProcessor defaultProcessor = defaultProcessor;
-    private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
-    private readonly ILogger<PacketService> logger = logger;
-    private readonly IEnumerable<IPacketProcessor> packetProcessors = packetProcessors;
-    private readonly PlayerService playerService = playerService;
+    private readonly ILogger<PacketRegistryService> logger = logger;
+    private IEnumerable<IPacketProcessor> packetProcessors = [];
     private FrozenDictionary<Type, IPacketProcessor> packetTypeToAnonProcessorLookup;
     private FrozenDictionary<Type, IPacketProcessor> packetTypeToAuthProcessorLookup;
 
@@ -33,6 +29,7 @@ internal sealed class PacketService(IEnumerable<IPacketProcessor> packetProcesso
     {
         Dictionary<Type, IPacketProcessor> authLookupBuilder = [];
         Dictionary<Type, IPacketProcessor> anonLookupBuilder = [];
+        packetProcessors = packetProcessorsProvider();
         foreach (IPacketProcessor packetProcessor in packetProcessors)
         {
             Type processorType = packetProcessor.GetType();
@@ -70,51 +67,28 @@ internal sealed class PacketService(IEnumerable<IPacketProcessor> packetProcesso
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public async Task Process(PlayerSession session, Packet packet)
+    public IPacketProcessor GetProcessor(PlayerSession session, Packet packet)
     {
+        Type packetType = packet.GetType();
         if (session is { Player.Id: var playerId } && playerId > 0)
         {
-            await ProcessAuth(packet, playerId);
-        }
-        else
-        {
-            await ProcessAnon(packet, session.SessionId ?? throw new Exception("Session id must not be null"));
-        }
-    }
-
-    private async Task ProcessAnon(Packet packet, SessionId sessionId)
-    {
-        Type packetType = packet.GetType();
-        if (packetTypeToAnonProcessorLookup.TryGetValue(packetType, out IPacketProcessor processor) && processor is IAnonPacketProcessor anonProcessor)
-        {
-            // TODO: Use object pooling for context
-            await anonProcessor.Process(new AnonProcessorContext(sessionId, playerService), packet);
-        }
-        else
-        {
-            logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packetType);
-        }
-    }
-
-    private async Task ProcessAuth(Packet packet, PeerId peerId)
-    {
-        IPacketProcessor processor = defaultProcessor;
-        Type packetType = packet.GetType();
-
-        try
-        {
-            processor = packetTypeToAuthProcessorLookup.GetValueOrDefault(packetType, defaultProcessor);
+            IPacketProcessor processor = packetTypeToAuthProcessorLookup.GetValueOrDefault(packetType, defaultProcessor);
             if (processor is not IAuthPacketProcessor authProcessor)
             {
                 logger.LogWarning("No authenticated processor is defined for packet {TypeName}", packetType);
-                return;
+                return null;
             }
-            // TODO: Use object pooling for context
-            await authProcessor.Process(new AuthProcessorContext(peerId, playerService), packet);
+
+            return authProcessor;
         }
-        catch (Exception ex)
+        else
         {
-            logger.LogError(ex, "Error in packet processor {TypeName}", processor!.GetType());
+            if (packetTypeToAnonProcessorLookup.TryGetValue(packetType, out IPacketProcessor processor) && processor is IAnonPacketProcessor anonProcessor)
+            {
+                return anonProcessor;
+            }
         }
+
+        return null;
     }
 }

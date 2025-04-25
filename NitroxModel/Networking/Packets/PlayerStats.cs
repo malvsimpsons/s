@@ -5,7 +5,7 @@ namespace NitroxModel.Networking.Packets;
 [Serializable]
 public class PlayerStats : Packet
 {
-    public PeerId PlayerId { get; set; }
+    public SessionId SessionId { get; set; }
     public float Oxygen { get; }
     public float MaxOxygen { get; }
     public float Health { get; }
@@ -13,9 +13,9 @@ public class PlayerStats : Packet
     public float Water { get; }
     public float InfectionAmount { get; }
 
-    public PlayerStats(PeerId playerId, float oxygen, float maxOxygen, float health, float food, float water, float infectionAmount)
+    public PlayerStats(SessionId sessionId, float oxygen, float maxOxygen, float health, float food, float water, float infectionAmount)
     {
-        PlayerId = playerId;
+        SessionId = sessionId;
         Oxygen = oxygen;
         MaxOxygen = maxOxygen;
         Health = health;

@@ -2,11 +2,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Nitrox.Server.Subnautica.Database.Models;
 
-[Table("PlayerSurvivalStats")]
-public record PlayerSurvivalStats
+/// <summary>
+///     Data used when player is in survival mode.
+/// </summary>
+[Table("PlayerSurvivalContext")]
+public record SurvivalContext
 {
     [ForeignKey(nameof(Models.Player.Id))]
     public Player Player { get; set; }
+
     public float Oxygen { get; set; }
     public float MaxOxygen { get; set; }
     public float Health { get; set; }

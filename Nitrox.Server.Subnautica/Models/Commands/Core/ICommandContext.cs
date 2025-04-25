@@ -1,7 +1,5 @@
 using Microsoft.Extensions.Logging;
-using NitroxModel.Core;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Networking;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Core;
 
@@ -16,10 +14,7 @@ public interface ICommandContext
 
     public string OriginName { get; }
 
-    /// <summary>
-    ///     The id of the user that issued this command. 0 if server. Otherwise, it's the player ID as known in the database.
-    /// </summary>
-    PeerId OriginId { get; init; }
+    SessionId OriginId { get; init; }
 
     /// <summary>
     ///     The permissions of the issuer as they were when the command was issued.
@@ -30,7 +25,7 @@ public interface ICommandContext
     ///     Sends a message back to the command issuer.
     /// </summary>
     /// <param name="message">The message to send.</param>
-    void Reply(string message);
+    Task ReplyAsync(string message);
 
     /// <summary>
     ///     Sends a message to the user id. Does nothing if user id is not found.
@@ -44,4 +39,9 @@ public interface ICommandContext
     /// </summary>
     /// <param name="message">The message to send to all users.</param>
     Task MessageAllAsync(string message);
+
+    ValueTask SendAsync<T>(T data, PeerId peerId);
+
+    ValueTask SendAsync<T>(T data, SessionId sessionId);
+    ValueTask SendToAll<T>(T data);
 }

@@ -1,15 +1,11 @@
-using System.Linq;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class SetIntroCinematicModeProcessor(PlayerService playerService) : IAuthPacketProcessor<SetIntroCinematicMode>
+internal class SetIntroCinematicModeProcessor : IAuthPacketProcessor<SetIntroCinematicMode>
 {
-    private readonly PlayerService playerService = playerService;
-
     public async Task Process(AuthProcessorContext context, SetIntroCinematicMode packet)
     {
         // TODO: USE DATABASE

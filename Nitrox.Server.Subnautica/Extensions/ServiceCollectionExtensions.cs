@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -17,6 +18,7 @@ using Nitrox.Server.Subnautica.Models.GameLogic.Entities;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 using Nitrox.Server.Subnautica.Models.Hibernation;
 using Nitrox.Server.Subnautica.Models.Packets;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Resources;
 using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using Nitrox.Server.Subnautica.Models.Respositories;
@@ -34,15 +36,17 @@ public static partial class ServiceCollectionExtensions
 {
     public static IServiceCollection AddHostedSingletonService<T>(this IServiceCollection services) where T : class, IHostedService => services.AddSingleton<T>().AddHostedService(provider => provider.GetRequiredService<T>());
 
-    public static IServiceCollection AddHostedSingletonService<T>(this IServiceCollection services, Func<ServiceProvider, T> factory) where T : class, IHostedService =>
-        services.AddSingleton(factory).AddHostedService(provider => provider.GetRequiredService<T>());
+    public static IServiceCollection AddSingletonLazyArrayProvider<T>(this IServiceCollection services) => services.AddSingleton<Func<T[]>>(provider => () => provider.GetRequiredService<IEnumerable<T>>().ToArray());
 
     public static IServiceCollection AddPackets(this IServiceCollection services) =>
         services
             .AddHostedSingletonService<LiteNetLibService>()
-            .AddHostedSingletonService<PacketService>()
+            .AddSingleton<IServerPacketSender>(provider => provider.GetRequiredService<LiteNetLibService>())
+            .AddSingleton<ISessionCleaner>(provider => provider.GetRequiredService<LiteNetLibService>())
+            .AddHostedSingletonService<PacketRegistryService>()
             .AddSingleton<DefaultPacketProcessor>()
-            .AddPacketProcessors();
+            .AddPacketProcessors()
+            .AddSingletonLazyArrayProvider<IPacketProcessor>();
 
     /// <summary>
     ///     Registers command handlers which will process incoming text-based commands via console or IPC.
@@ -85,7 +89,9 @@ public static partial class ServiceCollectionExtensions
                            options.UseSqlite(sqlConnectionBuilder.ToString());
                        })
                        .AddHostedSingletonService<DatabaseService>()
-                       .AddSingleton<SessionRepository>();
+                       .AddSingletonLazyArrayProvider<ISessionCleaner>()
+                       .AddSingleton<SessionRepository>()
+                       .AddSingleton<PlayerRepository>();
     }
 
     public static IServiceCollection AddSubnauticaEntityManagement(this IServiceCollection services) =>
@@ -97,7 +103,7 @@ public static partial class ServiceCollectionExtensions
             .AddSingleton<IEntityBootstrapperManager, SubnauticaEntityBootstrapperManager>()
             .AddSingleton<SimulationOwnershipData>()
             .AddSingleton<EntitySimulation>()
-            .AddSingleton<ISessionCleaner, EntitySimulation>(provider => provider.GetRequiredService<EntitySimulation>())
+            .AddSingleton<ISessionCleaner>(provider => provider.GetRequiredService<EntitySimulation>())
             .AddSingleton<Models.GameLogic.EntityRegistry>()
             .AddSingleton<BatchEntitySpawnerService>()
             .AddSingleton<EntitySpawnPointFactory, SubnauticaEntitySpawnPointFactory>()

@@ -5,9 +5,8 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class PdaScanFinishedPacketProcessor(PlayerService playerService, WorldEntityManager worldEntityManager) : IAuthPacketProcessor<PdaScanFinished>
+internal sealed class PdaScanFinishedPacketProcessor(WorldEntityManager worldEntityManager) : IAuthPacketProcessor<PdaScanFinished>
 {
-    private readonly PlayerService playerService = playerService;
     // TODO: USE DATABASE
     // private readonly PdaStateData pdaStateData = pdaStateData;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
@@ -19,7 +18,7 @@ internal sealed class PdaScanFinishedPacketProcessor(PlayerService playerService
             // TODO: USE DATABASE
             // pdaStateData.UpdateEntryUnlockedProgress(packet.TechType, packet.UnlockedAmount, packet.FullyResearched);
         }
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
 
         if (packet.Id != null)
         {

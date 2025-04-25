@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Nitrox.Server.Subnautica.Services;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.DataStructures.GameLogic.Bases;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 using NitroxModel.Dto;
@@ -15,13 +14,13 @@ using NitroxModel.Serialization;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 
-internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, PlayerService playerService, IOptions<SubnauticaServerConfig> configProvider, ILogger<BuildingManager> logger)
+internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, IServerPacketSender packetSender, IOptions<SubnauticaServerConfig> configProvider, ILogger<BuildingManager> logger)
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
     private readonly IOptions<SubnauticaServerConfig> configProvider = configProvider;
     private readonly ILogger<BuildingManager> logger = logger;
-    private readonly PlayerService playerService = playerService;
+    private readonly IServerPacketSender packetSender = packetSender;
 
     public bool AddGhost(PlaceGhost placeGhost)
     {
@@ -250,41 +249,33 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
         return true;
     }
 
-    public bool ReplacePieceByGhost(ConnectedPlayerDto player, PieceDeconstructed pieceDeconstructed, out Entity removedEntity, out int operationId)
+    public async Task<(Entity RemovedEntity, int OperationId)> ReplacePieceByGhost(ConnectedPlayerDto player, PieceDeconstructed pieceDeconstructed)
     {
         if (!entityRegistry.TryGetEntityById(pieceDeconstructed.BaseId, out BuildEntity buildEntity))
         {
             Log.Error($"Trying to replace a non-registered build (BaseId: {pieceDeconstructed.BaseId})");
-            removedEntity = null;
-            operationId = -1;
-            return false;
+            return (null, -1);
         }
         if (entityRegistry.TryGetEntityById(pieceDeconstructed.PieceId, out GhostEntity _))
         {
             Log.Error($"Trying to add a ghost to a building but another ghost child with the same id already exists (GhostId: {pieceDeconstructed.PieceId})");
-            removedEntity = null;
-            operationId = -1;
-            return false;
+            return (null, -1);
         }
 
         int deltaOperations = buildEntity.OperationId + 1 - pieceDeconstructed.OperationId;
         if (deltaOperations != 0 && configProvider.Value.SafeBuilding)
         {
             logger.LogWarning("Ignoring a {TypeName} packet from [{PlayerName}] which is {Operations}", nameof(PieceDeconstructed), player.Name, Math.Abs(deltaOperations) + (deltaOperations > 0 ? " operations ahead" : " operations late"));
-            NotifyPlayerDesync(player.Id);
-            removedEntity = null;
-            operationId = -1;
-            return false;
+            await NotifyPlayerDesync(player.Id);
+            return (null, -1);
         }
 
-        removedEntity = worldEntityManager.RemoveGlobalRootEntity(pieceDeconstructed.PieceId).Value;
+        Entity removedEntity = worldEntityManager.RemoveGlobalRootEntity(pieceDeconstructed.PieceId).Value;
         GhostEntity ghostEntity = pieceDeconstructed.ReplacerGhost;
-
         worldEntityManager.AddOrUpdateGlobalRootEntity(ghostEntity);
         buildEntity.BaseData = pieceDeconstructed.BaseData;
         buildEntity.OperationId++;
-        operationId = buildEntity.OperationId;
-        return true;
+        return (removedEntity, buildEntity.OperationId);
     }
 
     public bool CreateWaterParkPiece(WaterParkDeconstructed waterParkDeconstructed, Entity removedEntity)
@@ -314,10 +305,10 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
         return true;
     }
 
-    private void NotifyPlayerDesync(PeerId player)
+    private async Task NotifyPlayerDesync(PeerId player)
     {
         Dictionary<NitroxId, int> operations = GetEntitiesOperations(worldEntityManager.GetGlobalRootEntities(true));
-        playerService.SendPacket(new BuildingDesyncWarning(operations), player);
+        await packetSender.SendPacket(new BuildingDesyncWarning(operations), player);
     }
 
     public static Dictionary<NitroxId, int> GetEntitiesOperations(List<GlobalRootEntity> entities)

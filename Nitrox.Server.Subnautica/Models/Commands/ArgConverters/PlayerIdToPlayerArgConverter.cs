@@ -1,6 +1,6 @@
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Core;
 using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.ArgConverters;
@@ -8,13 +8,13 @@ namespace Nitrox.Server.Subnautica.Models.Commands.ArgConverters;
 /// <summary>
 ///     Converts a player ID to a player object, if known.
 /// </summary>
-internal class PlayerIdToPlayerArgConverter(PlayerService playerService) : IArgConverter<ushort, ConnectedPlayerDto>
+internal class PlayerIdToPlayerArgConverter(PlayerRepository playerRepository) : IArgConverter<ushort, ConnectedPlayerDto>
 {
-    private readonly PlayerService playerService = playerService;
+    private readonly PlayerRepository playerRepository = playerRepository;
 
     public async Task<ConvertResult> ConvertAsync(ushort playerId)
     {
-        ConnectedPlayerDto player = await playerService.GetConnectedPlayerByIdAsync(playerId);
+        ConnectedPlayerDto player = await playerRepository.GetConnectedPlayerBySessionIdAsync(playerId);
         if (player == null)
         {
             return ConvertResult.Fail($"No player found with ID {playerId}");

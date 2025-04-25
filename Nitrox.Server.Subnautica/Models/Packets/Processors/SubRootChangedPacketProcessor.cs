@@ -5,9 +5,8 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class SubRootChangedPacketProcessor(PlayerService playerService, EntityRegistry entityRegistry) : IAuthPacketProcessor<SubRootChanged>
+internal class SubRootChangedPacketProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<SubRootChanged>
 {
-    private readonly PlayerService playerService = playerService;
     private readonly EntityRegistry entityRegistry = entityRegistry;
 
     public async Task Process(AuthProcessorContext context, SubRootChanged packet)

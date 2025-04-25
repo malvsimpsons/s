@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Dto;
 using NitroxModel.GameLogic.FMOD;
@@ -7,9 +8,9 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class FmodAssetProcessor(PlayerService playerService, FmodService fmodService, ILogger<FmodAssetProcessor> logger) : IAuthPacketProcessor<FMODAssetPacket>
+internal class FmodAssetProcessor(PlayerRepository playerRepository, FmodService fmodService, ILogger<FmodAssetProcessor> logger) : IAuthPacketProcessor<FMODAssetPacket>
 {
-    private readonly PlayerService playerService = playerService;
+    private readonly PlayerRepository playerRepository = playerRepository;
     private readonly FmodService fmodService = fmodService;
     private readonly ILogger<FmodAssetProcessor> logger = logger;
 
@@ -21,7 +22,7 @@ internal class FmodAssetProcessor(PlayerService playerService, FmodService fmodS
             return;
         }
 
-        foreach (ConnectedPlayerDto player in await playerService.GetConnectedPlayersAsync())
+        foreach (ConnectedPlayerDto player in await playerRepository.GetConnectedPlayersAsync())
         {
             // TODO: USE DATABASE
             // float distance = NitroxVector3.Distance(player.Position, packet.Position);

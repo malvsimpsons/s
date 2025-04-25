@@ -5,10 +5,10 @@ namespace NitroxModel.Networking.Packets;
 [Serializable]
 public class MutePlayer : Packet
 {
-    public ushort PlayerId;
+    public SessionId PlayerId;
     public bool Muted;
 
-    public MutePlayer(ushort playerId, bool muted)
+    public MutePlayer(SessionId playerId, bool muted)
     {
         PlayerId = playerId;
         Muted = muted;

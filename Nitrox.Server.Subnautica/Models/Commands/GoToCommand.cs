@@ -2,41 +2,41 @@ using System;
 using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using NitroxModel.DataStructures.GameLogic;
+using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
-// TODO: Fix this command
 [Alias("warp")]
 [RequiresOrigin(CommandOrigin.PLAYER)]
 [RequiresPermission(Perms.MODERATOR)]
-public sealed class GoToCommand : ICommandHandler<float, float, float>, ICommandHandler<string>, ICommandHandler<NitroxServer.Player>, ICommandHandler<NitroxServer.Player, NitroxServer.Player>
+public sealed class GoToCommand : ICommandHandler<float, float, float>, ICommandHandler<string>, ICommandHandler<ConnectedPlayerDto>, ICommandHandler<ConnectedPlayerDto, ConnectedPlayerDto>
 {
     [Description("Teleports to a player")]
-    public Task Execute(ICommandContext context, NitroxServer.Player player)
+    public async Task Execute(ICommandContext context, ConnectedPlayerDto player)
     {
-        context.Reply($"Received arg {player} of type {player.GetType().Name}");
-        return Task.CompletedTask;
+        // TODO: USE DATABASE
+        await context.ReplyAsync($"Received arg {player} of type {player.GetType().Name}");
     }
 
     [Description("Teleports to a position")]
-    public Task Execute(ICommandContext context, float x, float y, float z)
+    public async Task Execute(ICommandContext context, float x, float y, float z)
     {
-        context.Reply($"Teleporting to position {x} {y} {z}...");
-        return Task.CompletedTask;
+        // TODO: USE DATABASE
+        await context.ReplyAsync($"Teleporting to position {x} {y} {z}...");
     }
 
     [Description("Teleports to a location given its name")]
-    public Task Execute(ICommandContext context, string subnauticaLocationName)
+    public async Task Execute(ICommandContext context, string subnauticaLocationName)
     {
-        context.Reply($"Teleporting to location {subnauticaLocationName}...");
-        return Task.CompletedTask;
+        // TODO: USE DATABASE
+        await context.ReplyAsync($"Teleporting to location {subnauticaLocationName}...");
     }
 
     [Description("Teleports player A to Player B")]
     [RequiresOrigin(CommandOrigin.ANY)]
-    public Task Execute(ICommandContext context, NitroxServer.Player playerA, NitroxServer.Player playerB)
+    public Task Execute(ICommandContext context, ConnectedPlayerDto playerA, ConnectedPlayerDto playerB)
     {
-        // TODO: Fix
+        // TODO: USE DATABASE
         throw new NotImplementedException();
     }
 }

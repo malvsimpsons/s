@@ -1,6 +1,7 @@
 using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Networking.Packets;
 
@@ -9,7 +10,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Keeps track of story timing and Aurora-related events.
 /// </summary>
-internal sealed class StoryTimingService(PlayerService playerService, TimeService timeService, ILogger<StoryTimingService> logger)
+internal sealed class StoryTimingService(IServerPacketSender packetSender, TimeService timeService, ILogger<StoryTimingService> logger)
     : IHostedService
 {
     public enum TimeModification
@@ -18,7 +19,7 @@ internal sealed class StoryTimingService(PlayerService playerService, TimeServic
     }
 
     private readonly ILogger<StoryTimingService> logger = logger;
-    private readonly PlayerService playerService = playerService;
+    private readonly IServerPacketSender packetSender = packetSender;
     private readonly TimeService timeService = timeService;
 
     public void ReadjustAuroraRealExplosionTime(double skipSeconds)
@@ -70,7 +71,7 @@ internal sealed class StoryTimingService(PlayerService playerService, TimeServic
         //     logger.LogInformation("Aurora's explosion countdown will start in 3 seconds");
         // }
 
-        playerService.SendPacketToAllPlayers(new AuroraAndTimeUpdate(GetTimeData(), false));
+        packetSender.SendPacketToAll(new AuroraAndTimeUpdate(GetTimeData(), false));
     }
 
     public void BroadcastRestoreAurora()
@@ -85,7 +86,7 @@ internal sealed class StoryTimingService(PlayerService playerService, TimeServic
         //     storyGoals.State.CompletedGoals.Remove(eventKey);
         // }
 
-        playerService.SendPacketToAllPlayers(new AuroraAndTimeUpdate(GetTimeData(), true));
+        packetSender.SendPacketToAll(new AuroraAndTimeUpdate(GetTimeData(), true));
         logger.LogInformation("Restored Aurora, will explode again in {AuroraExplodeEta} minutes", GetMinutesBeforeAuroraExplosion());
     }
 

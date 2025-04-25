@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Networking.Packets;
@@ -11,12 +12,12 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Keeps track of PDA story goals and scheduled story events.
 /// </summary>
-internal class StoryScheduleService(TimeService timeService, PlayerService playerService)
+internal class StoryScheduleService(TimeService timeService, IServerPacketSender packetSender)
     : IHostedService
 {
-    private readonly PlayerService playerService = playerService;
     private readonly ThreadSafeDictionary<string, NitroxScheduledGoal> scheduledGoals = new();
     private readonly TimeService timeService = timeService;
+    private readonly IServerPacketSender packetSender = packetSender;
 
     public List<NitroxScheduledGoal> GetScheduledGoals() => scheduledGoals.Values.ToList();
 
@@ -54,7 +55,7 @@ internal class StoryScheduleService(TimeService timeService, PlayerService playe
         if (becauseOfTime && !IsAlreadyRegistered(goalKey))
         {
             scheduledGoal.TimeExecute = (float)timeService.Elapsed.TotalSeconds + 15;
-            playerService.SendPacketToAllPlayers(new Schedule(scheduledGoal.TimeExecute, goalKey, scheduledGoal.GoalCategory));
+            packetSender.SendPacketToAll(new Schedule(scheduledGoal.TimeExecute, goalKey, scheduledGoal.GoalCategory));
             return;
         }
         scheduledGoals.Remove(goalKey);

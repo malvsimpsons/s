@@ -18,7 +18,7 @@ public class PlayerManager
     private readonly PlayerModelManager playerModelManager;
     private readonly PlayerVitalsManager playerVitalsManager;
     private readonly FmodWhitelist fmodWhitelist;
-    private readonly Dictionary<PeerId, RemotePlayer> playersById = new();
+    private readonly Dictionary<SessionId, RemotePlayer> playersById = new();
 
     public OnCreateDelegate OnCreate;
     public OnRemoveDelegate OnRemove;
@@ -30,13 +30,13 @@ public class PlayerManager
         this.fmodWhitelist = fmodWhitelist;
     }
 
-    public Optional<RemotePlayer> Find(PeerId playerId)
+    public Optional<RemotePlayer> Find(SessionId playerId)
     {
         playersById.TryGetValue(playerId, out RemotePlayer player);
         return Optional.OfNullable(player);
     }
 
-    public bool TryFind(PeerId playerId, out RemotePlayer remotePlayer) => playersById.TryGetValue(playerId, out remotePlayer);
+    public bool TryFind(SessionId playerId, out RemotePlayer remotePlayer) => playersById.TryGetValue(playerId, out remotePlayer);
 
     public Optional<RemotePlayer> Find(NitroxId playerNitroxId)
     {
@@ -73,7 +73,7 @@ public class PlayerManager
         return remotePlayer;
     }
 
-    public void RemovePlayer(PeerId playerId)
+    public void RemovePlayer(SessionId playerId)
     {
         if (playersById.TryGetValue(playerId, out RemotePlayer player))
         {
@@ -87,6 +87,6 @@ public class PlayerManager
     /// <returns>Remote players + You => X + 1</returns>
     public int GetTotalPlayerCount() => playersById.Count + 1;
 
-    public delegate void OnCreateDelegate(PeerId playerId, RemotePlayer remotePlayer);
-    public delegate void OnRemoveDelegate(PeerId playerId, RemotePlayer remotePlayer);
+    public delegate void OnCreateDelegate(SessionId playerId, RemotePlayer remotePlayer);
+    public delegate void OnRemoveDelegate(SessionId playerId, RemotePlayer remotePlayer);
 }

@@ -1,12 +1,10 @@
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.Networking.Packets;
-using NitroxServer.GameLogic.Bases;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class UpdateBaseProcessor(GameLogic.Bases.BuildingManager buildingManager, PlayerService playerService, GameLogic.EntitySimulation entitySimulation) : IAuthPacketProcessor<UpdateBase>
+internal sealed class UpdateBaseProcessor(GameLogic.Bases.BuildingManager buildingManager, GameLogic.EntitySimulation entitySimulation) : IAuthPacketProcessor<UpdateBase>
 {
     public async Task Process(AuthProcessorContext context, UpdateBase packet)
     {

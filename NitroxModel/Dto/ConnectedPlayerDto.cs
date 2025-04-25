@@ -28,8 +28,4 @@ public record ConnectedPlayerDto
     public string Name { get; init; }
 
     public Perms Permissions { get; init; }
-
-    // TODO: Store this as session data for player.
-    // public required NitroxVector3? LastStoredPosition { get; set; }
-    // public required NitroxId LastStoredSubRootID { get; set; }
 }

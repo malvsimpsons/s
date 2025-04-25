@@ -2,18 +2,16 @@
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Networking.Packets;
-using NitroxServer.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class ScheduleProcessor(PlayerService playerService, StoryScheduleService storyScheduleService) : IAuthPacketProcessor<Schedule>
+internal class ScheduleProcessor(StoryScheduleService storyScheduleService) : IAuthPacketProcessor<Schedule>
 {
-    private readonly PlayerService playerService = playerService;
     private readonly StoryScheduleService storyScheduleService = storyScheduleService;
 
     public async Task Process(AuthProcessorContext context, Schedule packet)
     {
         storyScheduleService.ScheduleGoal(NitroxScheduledGoal.From(packet.TimeExecute, packet.Key, packet.Category));
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

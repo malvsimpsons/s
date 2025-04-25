@@ -1,21 +1,22 @@
 using System;
 using Microsoft.Extensions.Logging;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
+using Nitrox.Server.Subnautica.Models.Respositories;
 using Nitrox.Server.Subnautica.Services;
-using NitroxModel.Core;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Dto;
-using NitroxModel.Networking;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Core;
 
 internal sealed record PlayerToServerCommandContext : ICommandContext
 {
-    private readonly PlayerService playerService;
+    private readonly PlayerRepository playerRepository;
+    private readonly IServerPacketSender packetSender;
     public ILogger Logger { get; set; }
     public CommandOrigin Origin { get; init; } = CommandOrigin.PLAYER;
     public string OriginName => Player.Name;
-    public PeerId OriginId { get; init; }
+    public SessionId OriginId { get; init; }
     public Perms Permissions { get; init; }
 
     /// <summary>
@@ -23,13 +24,14 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
     /// </summary>
     public ConnectedPlayerDto Player { get; init; }
 
-    public PlayerToServerCommandContext(PlayerService playerService, ConnectedPlayerDto player)
+    public PlayerToServerCommandContext(PlayerRepository playerRepository, IServerPacketSender packetSender, ConnectedPlayerDto player)
     {
-        ArgumentNullException.ThrowIfNull(playerService);
+        ArgumentNullException.ThrowIfNull(playerRepository);
         ArgumentNullException.ThrowIfNull(player);
-        this.playerService = playerService;
+        this.playerRepository = playerRepository;
+        this.packetSender = packetSender;
         Player = player;
-        OriginId = player.Id;
+        OriginId = player.SessionId;
         Permissions = player.Permissions;
     }
 
@@ -41,25 +43,25 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
         }
         if (OriginId == id)
         {
-            Reply(message);
+            await ReplyAsync(message);
             return;
         }
-        ConnectedPlayerDto player = await playerService.GetConnectedPlayerByIdAsync(id);
+        ConnectedPlayerDto player = await playerRepository.GetConnectedPlayerByPlayerIdAsync(id);
         if (player == null)
         {
             Logger.LogWarning("No player found with id {PlayerId}", id);
             return;
         }
-        playerService.SendPacket(new ChatMessage(OriginId, message), id);
+        await packetSender.SendPacket(new ChatMessage(OriginId, message), id);
     }
 
-    public void Reply(string message)
+    public async Task ReplyAsync(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
             return;
         }
-        playerService.SendPacket(new ChatMessage(PeerId.SERVER_ID, message), OriginId);
+        await packetSender.SendPacket(new ChatMessage(SessionId.SERVER_ID, message), OriginId);
     }
 
     public async Task MessageAllAsync(string message)
@@ -68,7 +70,43 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
         {
             return;
         }
-        playerService.SendPacketToOtherPlayers(new ChatMessage(PeerId.SERVER_ID, message), OriginId);
+        await packetSender.SendPacketToOthers(new ChatMessage(SessionId.SERVER_ID, message), OriginId);
         Logger.LogInformation("Player {PlayerName} #{PlayerId} sent a message to everyone:{Message}", Player.Name, Player.Id, message);
+    }
+
+    public async ValueTask SendAsync<T>(T data, PeerId peerId)
+    {
+        switch (data)
+        {
+            case Packet packet:
+                await packetSender.SendPacket(packet, peerId);
+                break;
+            default:
+                throw new NotSupportedException($"Unsupported data type {data?.GetType()}");
+        }
+    }
+
+    public async ValueTask SendAsync<T>(T data, SessionId sessionId)
+    {
+        switch (data)
+        {
+            case Packet packet:
+                await packetSender.SendPacket(packet, sessionId);
+                break;
+            default:
+                throw new NotSupportedException($"Unsupported data type {data?.GetType()}");
+        }
+    }
+
+    public async ValueTask SendToAll<T>(T data)
+    {
+        switch (data)
+        {
+            case Packet packet:
+                await packetSender.SendPacketToAll(packet);
+                break;
+            default:
+                throw new NotSupportedException($"Unsupported data type {data?.GetType()}");
+        }
     }
 }

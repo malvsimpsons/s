@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NitroxModel.Networking.Packets;
 
@@ -21,10 +22,17 @@ public record StoryGoal
     public string GoalKey { get; set; }
 
     /// <summary>
-    ///     Time in seconds of game world that this goal should trigger.
+    ///     Gets or sets the offset in seconds from initial Subnautica world time that this goal should trigger.
     /// </summary>
     public float ExecuteTime { get; set; }
 
     public Schedule.GoalCategory Category { get; set; }
     public GoalPhase Phase { get; set; }
+
+    /// <summary>
+    ///     The real-world time when the event last changed.
+    /// </summary>
+    [Required]
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+    public DateTimeOffset Changed { get; set; } = DateTimeOffset.Now;
 }

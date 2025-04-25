@@ -19,7 +19,7 @@ internal sealed class LoadBatchCommand(BatchEntitySpawnerService batchEntitySpaw
         NitroxInt3 batchId = new(xCoordinate, yCoordinate, zCoordinate);
         List<Entity> entities = batchEntitySpawnerService.LoadUnspawnedEntities(batchId);
 
-        context.Reply($"Loaded {entities.Count} entities from batch {batchId}");
+        context.ReplyAsync($"Loaded {entities.Count} entities from batch {batchId}");
 
         return Task.CompletedTask;
     }

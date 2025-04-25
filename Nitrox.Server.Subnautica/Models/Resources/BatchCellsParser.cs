@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
-using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
