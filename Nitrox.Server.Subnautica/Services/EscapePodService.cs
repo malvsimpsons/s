@@ -11,7 +11,6 @@ using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 using NitroxModel.DataStructures.Unity;
-using NitroxModel.DataStructures.Util;
 
 namespace Nitrox.Server.Subnautica.Services;
 
@@ -22,46 +21,46 @@ internal sealed class EscapePodService(EntityRegistry entityRegistry, RandomStar
     private readonly EntityRegistry entityRegistry = entityRegistry;
     private readonly ThreadSafeDictionary<ushort, EscapePodWorldEntity> escapePodsByPlayerId = new();
     private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
-    private EscapePodWorldEntity podForNextPlayer;
     private readonly RandomStartResource randomStart = randomStart;
+    private EscapePodWorldEntity podForNextPlayer;
 
-    public NitroxId AssignPlayerToEscapePod(ushort playerId, out Optional<EscapePodWorldEntity> newlyCreatedPod)
-    {
-        newlyCreatedPod = Optional.Empty;
+    // TODO: USE DATABASE
+    // public NitroxId AssignPlayerToEscapePod(ushort playerId, out Optional<EscapePodWorldEntity> newlyCreatedPod)
+    // {
+    //     newlyCreatedPod = Optional.Empty;
+    //
+    //     if (escapePodsByPlayerId.TryGetValue(playerId, out EscapePodWorldEntity podEntity))
+    //     {
+    //         return podEntity.Id;
+    //     }
+    //
+    //     if (IsPodFull(podForNextPlayer))
+    //     {
+    //         newlyCreatedPod = Optional.Of(CreateNewEscapePod());
+    //         podForNextPlayer = newlyCreatedPod.Value;
+    //     }
+    //
+    //     podForNextPlayer.Players.Add(playerId);
+    //     escapePodsByPlayerId[playerId] = podForNextPlayer;
+    //
+    //     return podForNextPlayer.Id;
+    // }
 
-        if (escapePodsByPlayerId.TryGetValue(playerId, out EscapePodWorldEntity podEntity))
-        {
-            return podEntity.Id;
-        }
-
-        if (IsPodFull(podForNextPlayer))
-        {
-            newlyCreatedPod = Optional.Of(CreateNewEscapePod());
-            podForNextPlayer = newlyCreatedPod.Value;
-        }
-
-        podForNextPlayer.Players.Add(playerId);
-        escapePodsByPlayerId[playerId] = podForNextPlayer;
-
-        return podForNextPlayer.Id;
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         List<EscapePodWorldEntity> escapePods = entityRegistry.GetEntities<EscapePodWorldEntity>();
 
-        InitializePodForNextPlayer(escapePods);
+        await InitializePodForNextPlayer(escapePods);
         InitializeEscapePodsByPlayerId(escapePods);
-        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     private static bool IsPodFull(EscapePodWorldEntity pod) => pod.Players.Count >= PLAYERS_PER_ESCAPEPOD;
 
-    private EscapePodWorldEntity CreateNewEscapePod()
+    private async ValueTask<EscapePodWorldEntity> CreateNewEscapePod()
     {
-        EscapePodWorldEntity escapePod = new(GetStartPosition(), new NitroxId(), new EscapePodMetadata(false, false));
+        EscapePodWorldEntity escapePod = new(await GetStartPosition(), new NitroxId(), new EscapePodMetadata(false, false));
 
         escapePod.ChildEntities.Add(new PrefabChildEntity(new NitroxId(), "5c06baec-0539-4f26-817d-78443548cc52", new NitroxTechType("Radio"), 0, null, escapePod.Id));
         escapePod.ChildEntities.Add(new PrefabChildEntity(new NitroxId(), "c0175cf7-0b6a-4a1d-938f-dad0dbb6fa06", new NitroxTechType("MedicalCabinet"), 0, null, escapePod.Id));
@@ -73,12 +72,13 @@ internal sealed class EscapePodService(EntityRegistry entityRegistry, RandomStar
         return escapePod;
     }
 
-    private NitroxVector3 GetStartPosition()
+    private async ValueTask<NitroxVector3> GetStartPosition()
     {
         List<EscapePodWorldEntity> escapePods = entityRegistry.GetEntities<EscapePodWorldEntity>();
 
         Random rnd = new(optionsProvider.Value.Seed.GetHashCode());
-        NitroxVector3 position = randomStart.RandomStartGenerator.GenerateRandomStartPosition(rnd);
+        RandomStartGenerator rng = await randomStart.LoadAndGetRandomStartGeneratorAsync();
+        NitroxVector3 position = rng.GenerateRandomStartPosition(rnd);
 
         if (escapePods.Count == 0)
         {
@@ -127,7 +127,7 @@ internal sealed class EscapePodService(EntityRegistry entityRegistry, RandomStar
         return new NitroxVector3(lastEscapePodPosition.X + x, 0, lastEscapePodPosition.Z + z);
     }
 
-    private void InitializePodForNextPlayer(List<EscapePodWorldEntity> escapePods)
+    private async ValueTask InitializePodForNextPlayer(List<EscapePodWorldEntity> escapePods)
     {
         foreach (EscapePodWorldEntity pod in escapePods)
         {
@@ -138,7 +138,7 @@ internal sealed class EscapePodService(EntityRegistry entityRegistry, RandomStar
             }
         }
 
-        podForNextPlayer = CreateNewEscapePod();
+        podForNextPlayer = await CreateNewEscapePod();
     }
 
     private void InitializeEscapePodsByPlayerId(List<EscapePodWorldEntity> escapePods)

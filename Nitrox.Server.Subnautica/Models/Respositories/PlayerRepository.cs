@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Database.Models;
+using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Dto;
@@ -10,7 +11,7 @@ using NitroxModel.Server;
 
 namespace Nitrox.Server.Subnautica.Models.Respositories;
 
-internal class PlayerRepository(DatabaseService databaseService)
+internal sealed class PlayerRepository(DatabaseService databaseService) : IPlayerRepository
 {
     private readonly DatabaseService databaseService = databaseService;
 

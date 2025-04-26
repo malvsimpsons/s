@@ -16,21 +16,18 @@ internal sealed class RandomStartResource(SubnauticaAssetsManager assetsManager,
 {
     private readonly SubnauticaAssetsManager assetsManager = assetsManager;
     private readonly IOptions<Configuration.ServerStartOptions> optionsProvider = optionsProvider;
-    private Task<RandomStartGenerator> randomStartGenerator;
-    public RandomStartGenerator RandomStartGenerator => GetRandomStartGeneratorAsync().GetAwaiter().GetResult();
+    private RandomStartGenerator randomStartGenerator;
 
-    public Task LoadAsync(CancellationToken cancellationToken)
+    public async Task LoadAsync(CancellationToken cancellationToken)
     {
-        randomStartGenerator = GetRandomStartGeneratorAsync(cancellationToken);
-        return Task.CompletedTask;
+        await LoadAndGetRandomStartGeneratorAsync(cancellationToken);
     }
 
-    private async Task<RandomStartGenerator> GetRandomStartGeneratorAsync(CancellationToken cancellationToken = default)
+    public async Task<RandomStartGenerator> LoadAndGetRandomStartGeneratorAsync(CancellationToken cancellationToken = default)
     {
-        // TODO: Fix multiple callers reloading this resource...
-        if (randomStartGenerator is { IsCompletedSuccessfully : true, Result: not null })
+        if (randomStartGenerator != null)
         {
-            return await randomStartGenerator;
+            return randomStartGenerator;
         }
 
         string bundlePath = Path.Combine(optionsProvider.Value.GetSubnauticaStandaloneResourcePath(), "essentials.unity_0ee8dd89ed55f05bc38a09cc77137d4e.bundle");
@@ -41,7 +38,6 @@ internal sealed class RandomStartResource(SubnauticaAssetsManager assetsManager,
         AssetTypeValueField textureValueField = assetsManager.GetBaseField(assetFileInst, assetFileInst.file.GetAssetInfo(assetsManager, "RandomStart", AssetClassID.Texture2D));
         TextureFile textureFile = TextureFile.ReadTextureFile(textureValueField);
         byte[] texDat = textureFile.GetTextureData(assetFileInst);
-        assetsManager.UnloadAll();
         cancellationToken.ThrowIfCancellationRequested();
 
         if (texDat is not { Length: > 0 })
@@ -52,7 +48,7 @@ internal sealed class RandomStartResource(SubnauticaAssetsManager assetsManager,
         Image<Bgra32> texture = Image.LoadPixelData<Bgra32>(texDat, textureFile.m_Width, textureFile.m_Height);
         texture.Mutate(x => x.Flip(FlipMode.Vertical));
         cancellationToken.ThrowIfCancellationRequested();
-        return new RandomStartGenerator(new PixelProvider(texture));
+        return randomStartGenerator = new RandomStartGenerator(new PixelProvider(texture));
     }
 
     private class PixelProvider : RandomStartGenerator.IPixelProvider

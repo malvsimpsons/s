@@ -1,7 +1,6 @@
 using NitroxModel_Subnautica.Logger;
-using NitroxModel.Packets;
 using NitroxServer;
-using Nitrox.Server.Subnautica;
+using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Test.Helper.Faker;
 

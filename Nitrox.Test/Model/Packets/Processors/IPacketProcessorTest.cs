@@ -1,4 +1,3 @@
-using Nitrox.Server.Subnautica;
 using Nitrox.Server.Subnautica.Models.Packets;
 using Nitrox.Test;
 using NitroxClient;

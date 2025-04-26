@@ -1,4 +1,3 @@
-using Nitrox.Test;
 using Nitrox.Test.Helper.Faker;
 using NitroxModel.Core;
 using NitroxModel.DataStructures.GameLogic;
@@ -9,7 +8,6 @@ using NitroxModel.DataStructures.GameLogic.Entities.Metadata.Bases;
 using NitroxServer.GameLogic;
 using NitroxServer.GameLogic.Unlockables;
 using NitroxServer.Serialization.World;
-using Nitrox.Server.Subnautica;
 
 namespace NitroxServer.Serialization;
 
@@ -24,9 +22,7 @@ public class WorldPersistenceTest
     [ClassInitialize]
     public static void ClassInitialize(TestContext context)
     {
-        NitroxServiceLocator.InitializeDependencyContainer(new SubnauticaServerAutoFacRegistrar(), new TestAutoFacRegistrar());
-        NitroxServiceLocator.BeginNewLifetimeScope();
-
+        // TODO: USE WorldDbContext instead of WorldPersistence
         WorldPersistence worldPersistence = NitroxServiceLocator.LocateService<WorldPersistence>();
         ServerSerializers = NitroxServiceLocator.LocateService<IServerSerializer[]>();
         WorldsDataAfter = new PersistedWorldData[ServerSerializers.Length];

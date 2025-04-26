@@ -17,14 +17,13 @@ internal class DebugStartMapCommand(IOptions<Configuration.SubnauticaServerOptio
     private readonly IOptions<Configuration.SubnauticaServerOptions> optionsProvider = optionsProvider;
 
     [Description("Spawns blocks at spawn positions")]
-    public Task Execute(ICommandContext context)
+    public async Task Execute(ICommandContext context)
     {
-        List<NitroxVector3> randomStartPositions = randomStart.RandomStartGenerator.GenerateRandomStartPositions(optionsProvider.Value.Seed);
+        RandomStartGenerator rng = await randomStart.LoadAndGetRandomStartGeneratorAsync();
+        List<NitroxVector3> randomStartPositions = rng.GenerateRandomStartPositions(optionsProvider.Value.Seed);
 
-        context.SendToAll(new DebugStartMapPacket(randomStartPositions));
-        context.ReplyAsync($"Rendered {randomStartPositions.Count} spawn positions");
-
-        return Task.CompletedTask;
+        await context.SendToAll(new DebugStartMapPacket(randomStartPositions));
+        await context.ReplyAsync($"Rendered {randomStartPositions.Count} spawn positions");
     }
 }
 #endif

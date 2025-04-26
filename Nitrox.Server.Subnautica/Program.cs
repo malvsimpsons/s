@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging.Console;
 using Nitrox.Server.Subnautica.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
+using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Helper;
@@ -130,16 +131,14 @@ public class Program
                        _ => options.Seed
                    };
                });
-        // Add initialization services - diagnoses the server environment on startup.
         builder.Services
+               // Add initialization services - diagnoses the server environment on startup.
                .AddHostedSingletonService<PreventMultiServerInitService>()
-               .AddHostedSingletonService<NetworkPortAvailabilityService>();
-        // Add communication services
-        builder.Services
+               .AddHostedSingletonService<NetworkPortAvailabilityService>()
+               // Add communication services
                .AddPackets()
-               .AddCommands(!startOptions.IsEmbedded);
-        // Add APIs - everything else the server will need.
-        builder.Services
+               .AddCommands(!startOptions.IsEmbedded)
+               // Add APIs - everything else the server will need.
                .AddDatabasePersistence(startOptions, builder.Environment.IsDevelopment())
                .AddSubnauticaEntityManagement()
                .AddSubnauticaResources()
@@ -156,6 +155,16 @@ public class Program
                .AddSingleton<SubnauticaServerProtoBufSerializer>()
                .AddSingleton<NtpSyncer>()
                .AddTransient<SubnauticaServerRandom>();
+
+        // Add fallbacks for testing services in isolation during development.
+        if (builder.Environment.IsDevelopment())
+        {
+            ServiceProvider provider = builder.Services.BuildServiceProvider();
+            if (provider.GetService<IServerPacketSender>() is null)
+            {
+                builder.Services.AddSingleton<IServerPacketSender, NopServerPacketSender>();
+            }
+        }
 
         await builder.Build().RunAsync();
     }

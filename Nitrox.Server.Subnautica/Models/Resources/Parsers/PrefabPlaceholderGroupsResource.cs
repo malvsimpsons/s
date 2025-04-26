@@ -88,7 +88,7 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
         // Loading all prefabs by their classId and file paths (first the path to the prefab then the dependencies)
         LoadAddressableCatalog(options.GetSubnauticaAaResourcePath(), prefabDatabase);
         cancellationToken.ThrowIfCancellationRequested();
-        Dictionary<string, PrefabPlaceholdersGroupAsset> result = CreateOrLoadPrefabCache(Path.Combine(options.NitroxAppDataPath, "Cache"));
+        Dictionary<string, PrefabPlaceholdersGroupAsset> result = CreateOrLoadPrefabCache(options.GetServerCachePath());
         cancellationToken.ThrowIfCancellationRequested();
 
         // Select only prefabs with a PrefabPlaceholdersGroups component in the root and link them with their dependencyPaths
@@ -107,55 +107,34 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
 
     private Dictionary<string, PrefabPlaceholdersGroupAsset> CreateOrLoadPrefabCache(string nitroxCachePath)
     {
-        Directory.CreateDirectory(nitroxCachePath);
-
         Dictionary<string, PrefabPlaceholdersGroupAsset> prefabPlaceholdersGroupPaths = null;
-        string prefabPlaceholdersGroupAssetCachePath = Path.Combine(nitroxCachePath, "PrefabPlaceholdersGroupAssetsCache.json");
-        if (File.Exists(prefabPlaceholdersGroupAssetCachePath))
+        string cacheFilePath = Path.Combine(nitroxCachePath, "PrefabPlaceholdersGroupAssetsCache.json");
+        Cache? cache = null;
+        try
         {
-            Cache? cache = DeserializeCache(prefabPlaceholdersGroupAssetCachePath);
-            if (cache.HasValue)
-            {
-                prefabPlaceholdersGroupPaths = cache.Value.PrefabPlaceholdersGroupPaths;
-                RandomPossibilitiesByClassId = cache.Value.RandomPossibilitiesByClassId;
-                logger.LogDebug("Successfully loaded cache with {PrefabPlaceholdersCount} prefab placeholder groups and {RandomPossibilitiesCount} random spawn behaviours.", prefabPlaceholdersGroupPaths.Count, RandomPossibilitiesByClassId.Count);
-            }
+            cache = Cache.Deserialize(serializer, cacheFilePath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while deserializing the game Cache. Re-creating it.");
+        }
+        if (cache.HasValue)
+        {
+            prefabPlaceholdersGroupPaths = cache.Value.PrefabPlaceholdersGroupPaths;
+            RandomPossibilitiesByClassId = cache.Value.RandomPossibilitiesByClassId;
+            logger.LogDebug("Successfully loaded cache with {PrefabPlaceholdersCount} prefab placeholder groups and {RandomPossibilitiesCount} random spawn behaviours.", prefabPlaceholdersGroupPaths.Count, RandomPossibilitiesByClassId.Count);
         }
         // Fallback solution
         if (prefabPlaceholdersGroupPaths == null)
         {
-            prefabPlaceholdersGroupPaths = MakeAndSerializeCache(assetsManager, prefabPlaceholdersGroupAssetCachePath);
+            prefabPlaceholdersGroupPaths = new(GetPrefabPlaceholderGroupAssetsByGroupClassId(assetsManager, GetAllPrefabPlaceholdersGroupsFast(assetsManager)));
+            Cache.Serialize(serializer, new Cache(prefabPlaceholdersGroupPaths, RandomPossibilitiesByClassId), cacheFilePath);
             logger.LogDebug("Successfully built cache with {PrefabPlaceholdersCount} prefab placeholder groups and {RandomPossibilitiesCount} random spawn behaviours. Future server starts will take less time.", prefabPlaceholdersGroupPaths.Count,
                             RandomPossibilitiesByClassId.Count);
         }
         Validate.IsTrue(prefabPlaceholdersGroupPaths.Count > 0);
         Validate.IsTrue(RandomPossibilitiesByClassId.Count > 0);
         return prefabPlaceholdersGroupPaths;
-    }
-
-    private Dictionary<string, PrefabPlaceholdersGroupAsset> MakeAndSerializeCache(SubnauticaAssetsManager am, string filePath)
-    {
-        ConcurrentDictionary<string, string[]> prefabPlaceholdersGroupPaths = GetAllPrefabPlaceholdersGroupsFast(am);
-        Dictionary<string, PrefabPlaceholdersGroupAsset> prefabPlaceholdersGroupAssets = new(GetPrefabPlaceholderGroupAssetsByGroupClassId(am, prefabPlaceholdersGroupPaths));
-        using StreamWriter stream = File.CreateText(filePath);
-        serializer.Serialize(stream, new Cache(prefabPlaceholdersGroupAssets, RandomPossibilitiesByClassId));
-
-        return prefabPlaceholdersGroupAssets;
-    }
-
-    private Cache? DeserializeCache(string filePath)
-    {
-        try
-        {
-            using StreamReader reader = File.OpenText(filePath);
-
-            return (Cache)serializer.Deserialize(reader, typeof(Cache));
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(exception, "An error occurred while deserializing the game Cache. Re-creating it.");
-        }
-        return null;
     }
 
     private void LoadAddressableCatalog(string aaRootPath, Dictionary<string, string> prefabDatabase)
@@ -197,34 +176,31 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
     /// </summary>
     private ConcurrentDictionary<string, string[]> GetAllPrefabPlaceholdersGroupsFast(SubnauticaAssetsManager am)
     {
-        ConcurrentDictionary<string, string[]> prefabPlaceholdersGroupPaths = new();
-
         // First step is to find out about the hash of the types PrefabPlaceholdersGroup and SpawnRandom
         // to be able to recognize them easily later on
-        byte[] prefabPlaceholdersGroupHash = [];
-        byte[] spawnRandomHash = [];
-
+        byte[] prefabPlaceholdersGroupHash = null;
+        byte[] spawnRandomHash = null;
         for (int aaIndex = 0; aaIndex < addressableCatalog.Count; aaIndex++)
         {
             KeyValuePair<string, string[]> keyValuePair = addressableCatalog.ElementAt(aaIndex);
-            BundleFileInstance bundleFile = am.LoadBundleFile(am.CleanBundlePath(keyValuePair.Value[0]));
+            string cleanBundleFilePath = am.CleanBundlePath(keyValuePair.Value[0]);
+            BundleFileInstance bundleFile = am.LoadBundleFile(cleanBundleFilePath);
             AssetsFileInstance assetFileInstance = am.LoadAssetsFileFromBundle(bundleFile, 0);
 
             foreach (AssetFileInfo monoScriptInfo in assetFileInstance.file.GetAssetsOfType(AssetClassID.MonoScript))
             {
                 AssetTypeValueField monoScript = am.GetBaseField(assetFileInstance, monoScriptInfo);
-
-                switch (monoScript["m_Name"].AsString)
+                switch (monoScript["m_Name"].AsString.AsSpan())
                 {
                     case "SpawnRandom":
-                        spawnRandomHash = new byte[16];
+                        spawnRandomHash ??= new byte[16];
                         for (int i = 0; i < 16; i++)
                         {
                             spawnRandomHash[i] = monoScript["m_PropertiesHash"][i].AsByte;
                         }
                         break;
                     case "PrefabPlaceholdersGroup":
-                        prefabPlaceholdersGroupHash = new byte[16];
+                        prefabPlaceholdersGroupHash ??= new byte[16];
                         for (int i = 0; i < 16; i++)
                         {
                             prefabPlaceholdersGroupHash[i] = monoScript["m_PropertiesHash"][i].AsByte;
@@ -233,14 +209,17 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
                 }
             }
 
-            if (prefabPlaceholdersGroupHash.Length > 0 && spawnRandomHash.Length > 0)
+            if (prefabPlaceholdersGroupHash is not null && spawnRandomHash is not null)
             {
                 break;
             }
         }
+        spawnRandomHash ??= [];
+        prefabPlaceholdersGroupHash ??= [];
 
         // Now use the bundle paths and the hashes to find out which items from the catalog are important
         // We fill prefabPlaceholdersGroupPaths and RandomPossibilitiesByClassId when we find objects with a SpawnRandom
+        ConcurrentDictionary<string, string[]> prefabPlaceholdersGroupPaths = new();
         Parallel.ForEach(addressableCatalog, keyValuePair =>
         {
             string[] assetPaths = keyValuePair.Value;
@@ -353,7 +332,7 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
         return prefabPlaceholdersGroup;
     }
 
-    private IPrefabAsset GetAndCacheAsset(SubnauticaAssetsManager amInst, string classId)
+    private IPrefabAsset GetAndCacheAsset(SubnauticaAssetsManager am, string classId)
     {
         if (string.IsNullOrEmpty(classId))
         {
@@ -373,23 +352,23 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
             return default;
         }
 
-        AssetsFileInstance assetFileInst = amInst.LoadBundleWithDependencies(assetPaths);
+        AssetsFileInstance assetFileInst = am.LoadBundleWithDependencies(assetPaths);
 
-        GetPrefabGameObjectInfoFromBundle(amInst, assetFileInst, out AssetFileInfo prefabGameObjectInfo);
+        GetPrefabGameObjectInfoFromBundle(am, assetFileInst, out AssetFileInfo prefabGameObjectInfo);
 
-        AssetFileInfo placeholdersGroupInfo = amInst.GetMonoBehaviourFromGameObject(assetFileInst, prefabGameObjectInfo, "PrefabPlaceholdersGroup");
+        AssetFileInfo placeholdersGroupInfo = am.GetMonoBehaviourFromGameObject(assetFileInst, prefabGameObjectInfo, "PrefabPlaceholdersGroup");
         if (placeholdersGroupInfo != null)
         {
-            PrefabPlaceholdersGroupAsset groupAsset = GetAndCachePrefabPlaceholdersGroupOfBundle(amInst, assetFileInst, classId);
+            PrefabPlaceholdersGroupAsset groupAsset = GetAndCachePrefabPlaceholdersGroupOfBundle(am, assetFileInst, classId);
             groupsByClassId[classId] = groupAsset;
             return groupAsset;
         }
 
-        AssetFileInfo spawnRandomInfo = amInst.GetMonoBehaviourFromGameObject(assetFileInst, prefabGameObjectInfo, "SpawnRandom");
+        AssetFileInfo spawnRandomInfo = am.GetMonoBehaviourFromGameObject(assetFileInst, prefabGameObjectInfo, "SpawnRandom");
         if (spawnRandomInfo != null)
         {
             // See SpawnRandom.Start
-            AssetTypeValueField spawnRandom = amInst.GetBaseField(assetFileInst, spawnRandomInfo);
+            AssetTypeValueField spawnRandom = am.GetBaseField(assetFileInst, spawnRandomInfo);
             List<string> classIds = new();
             foreach (AssetTypeValueField assetReference in spawnRandom["assetReferences"])
             {
@@ -399,13 +378,13 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
             return new PrefabPlaceholderRandomAsset(classIds);
         }
 
-        AssetFileInfo databoxSpawnerInfo = amInst.GetMonoBehaviourFromGameObject(assetFileInst, prefabGameObjectInfo, "DataboxSpawner");
+        AssetFileInfo databoxSpawnerInfo = am.GetMonoBehaviourFromGameObject(assetFileInst, prefabGameObjectInfo, "DataboxSpawner");
         if (databoxSpawnerInfo != null)
         {
             // NB: This spawning should be cancelled if the techType is from a known tech
             // But it doesn't matter if we still spawn it so we do so.
             // See DataboxSpawner.Start
-            AssetTypeValueField databoxSpawner = amInst.GetBaseField(assetFileInst, databoxSpawnerInfo);
+            AssetTypeValueField databoxSpawner = am.GetBaseField(assetFileInst, databoxSpawnerInfo);
             string runtimeKey = databoxSpawner["databoxPrefabReference"]["m_AssetGUID"].AsString;
 
             PrefabPlaceholderAsset databoxAsset = new(classIdByRuntimeKey[runtimeKey]);
@@ -413,11 +392,11 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
             return databoxAsset;
         }
 
-        AssetFileInfo entitySlotInfo = amInst.GetMonoBehaviourFromGameObject(assetFileInst, prefabGameObjectInfo, "EntitySlot");
+        AssetFileInfo entitySlotInfo = am.GetMonoBehaviourFromGameObject(assetFileInst, prefabGameObjectInfo, "EntitySlot");
         NitroxEntitySlot? nitroxEntitySlot = null;
         if (entitySlotInfo != null)
         {
-            AssetTypeValueField entitySlot = amInst.GetBaseField(assetFileInst, entitySlotInfo);
+            AssetTypeValueField entitySlot = am.GetBaseField(assetFileInst, entitySlotInfo);
             string biomeType = ((BiomeType)entitySlot["biomeType"].AsInt).ToString();
 
             List<string> allowedTypes = [];
@@ -434,5 +413,24 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
         return prefabPlaceholderAsset;
     }
 
-    private record struct Cache(Dictionary<string, PrefabPlaceholdersGroupAsset> PrefabPlaceholdersGroupPaths, ConcurrentDictionary<string, string[]> RandomPossibilitiesByClassId);
+    private record struct Cache(Dictionary<string, PrefabPlaceholdersGroupAsset> PrefabPlaceholdersGroupPaths, ConcurrentDictionary<string, string[]> RandomPossibilitiesByClassId)
+    {
+        public static void Serialize(JsonSerializer serializer, Cache cache, string filePath)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? throw new Exception("Failed to get directory path from cache file path"));
+            using StreamWriter stream = File.CreateText(filePath);
+            serializer.Serialize(stream, cache);
+        }
+
+        public static Cache? Deserialize(JsonSerializer serializer, string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                return null;
+            }
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? throw new Exception("Failed to get directory path from cache file path"));
+            using StreamReader reader = File.OpenText(filePath);
+            return (Cache)serializer.Deserialize(reader, typeof(Cache));
+        }
+    }
 }

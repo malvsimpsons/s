@@ -1,5 +1,4 @@
 using Nitrox.Test.Client.Communication;
-using NitroxModel.Packets;
 
 namespace NitroxClient.Communication;
 

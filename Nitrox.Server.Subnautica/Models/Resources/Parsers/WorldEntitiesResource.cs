@@ -54,7 +54,6 @@ internal class WorldEntitiesResource(SubnauticaAssetsManager assetsManager, IOpt
         }
 
         Validate.IsTrue(result.Count > 0);
-        assetsManager.UnloadAll();
         return result;
     }
 }

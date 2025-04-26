@@ -6,3 +6,4 @@ global using NitroxModel.Subnautica.Extensions;
 global using NitroxServer.Extensions;
 global using Nitrox.Server.Subnautica.Extensions;
 global using Nitrox.Server.Subnautica.Extensions.Dto;
+global using Stopwatch = System.Diagnostics.Stopwatch;
