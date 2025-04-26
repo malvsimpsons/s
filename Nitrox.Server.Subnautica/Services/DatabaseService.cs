@@ -28,9 +28,16 @@ internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbConte
         await using WorldDbContext db = await GetDbContextAsync();
         if (hostEnvironment.IsDevelopment())
         {
-            // In development, ensure database is up-to-date with latest EF model. Not preserving data is (usually) fine.
-            await db.Database.EnsureDeletedAsync(cancellationToken);
-            await db.Database.EnsureCreatedAsync(cancellationToken);
+            try
+            {
+                await db.Database.EnsureDeletedAsync(cancellationToken);
+                await db.Database.EnsureCreatedAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Something is blocking the SQLite database. Check that you do not have it open in your IDE or other database viewer.");
+                throw;
+            }
         }
         else
         {
@@ -38,11 +45,19 @@ internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbConte
         }
 
         // See https://sqlite.org/pragma.html
-        await ExecutePragma(db, "synchronous=OFF");
-        if (!hostEnvironment.IsDevelopment())
+        if (hostEnvironment.IsDevelopment())
         {
-            // In development mode, don't take exclusive lock. We might want to inspect the database while it's running - not just through this server but also via IDE.
+            // In development mode we might want to inspect the database while it's running - not just through this server but also via IDE.
+            // For this, we need extra stability against corruption from SQLite. These settings accomplish that.
+            await ExecutePragma(db, "synchronous=NORMAL");
+            await ExecutePragma(db, "journal_mode=wal");
+        }
+        else
+        {
+            // These improve performance but causes file corruption if multiple clients are connecting to the database (i.e. not going through this server).
             await ExecutePragma(db, "locking_mode=EXCLUSIVE");
+            await ExecutePragma(db, "synchronous=OFF");
+
         }
         await ExecutePragma(db, "temp_store=MEMORY");
         await ExecutePragma(db, "cache_size=-32000"); // Keep 32MB cache before writing to file.

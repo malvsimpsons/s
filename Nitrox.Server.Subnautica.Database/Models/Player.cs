@@ -52,14 +52,14 @@ public record Player
     public bool IsMuted { get; set; }
 
     /// <summary>
-    ///     Saved position to get back to. Used as spawn position on join or to go back to when player dies.
+    ///     Saved position to get back to. Used as spawn position or as fallback position when player dies.
     /// </summary>
-    public required NitroxVector3? SavedPosition { get; set; }
+    public NitroxVector3? SavedPosition { get; set; }
 
     /// <summary>
     ///     Saved SubRootId to go back to when stuck or when spawning.
     /// </summary>
-    public required NitroxId SavedSubRootID { get; set; }
+    public NitroxId SavedSubRootID { get; set; }
 
     /// <summary>
     ///     The real-world time when the player first started playing on the server.

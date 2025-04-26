@@ -30,9 +30,6 @@
     <ItemGroup>
         <Content Include="..\Nitrox.Assets.Subnautica\Resources\**" LinkBase="Resources" CopyToOutputDirectory="PreserveNewest" Visible="false" />
         <Content Include="..\Nitrox.Assets.Subnautica\**\*.tpk" CopyToOutputDirectory="PreserveNewest" Visible="False" />
-        <Content Update="..\Nitrox.Assets.Subnautica\Resources\classdata.tpk">
-            <Link>Resources\classdata.tpk</Link>
-        </Content>
     </ItemGroup>
 
     <Import Project="..\Nitrox.Shared.targets" />
