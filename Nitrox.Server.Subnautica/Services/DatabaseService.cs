@@ -53,10 +53,7 @@ internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbConte
 
     public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public async Task StoppedAsync(CancellationToken cancellationToken)
-    {
-        // SqliteConnection.ClearAllPools(); // See https://github.com/dotnet/efcore/issues/26580#issuecomment-2668483600
-    }
+    public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public async Task<WorldDbContext> GetDbContextAsync() => await dbContextFactory.CreateDbContextAsync();
 

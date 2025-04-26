@@ -74,6 +74,8 @@ public class Program
 
         // TODO: pass logs to serilog with rolling log files strategy.
 
+        // TODO: Investigate Entity Framework query pre-compiling.
+
         HostApplicationBuilder builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
         {
             DisableDefaults = true,

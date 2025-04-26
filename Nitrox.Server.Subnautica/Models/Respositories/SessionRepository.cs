@@ -22,7 +22,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     private readonly ILogger<SessionRepository> logger = logger;
     private readonly Lock sessionIdLock = new();
     private readonly SortedList<DateTimeOffset, SessionId> usedSessionIds = [];
-    private ushort nextSessionId = 1;
+    private SessionId nextSessionId = 1;
     private ISessionCleaner[] sessionCleaners;
 
     public async Task<PlayerSession> GetOrCreateSessionAsync(string address, ushort port)
