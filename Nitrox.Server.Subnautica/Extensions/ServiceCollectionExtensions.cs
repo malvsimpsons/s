@@ -25,6 +25,7 @@ using Nitrox.Server.Subnautica.Models.Respositories;
 using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
+using NitroxModel.Helper;
 using NitroxModel.Networking.Packets.Processors.Core;
 using NitroxServer.GameLogic.Entities;
 using NitroxServer.GameLogic.Entities.Spawning;
@@ -32,11 +33,58 @@ using ServiceScan.SourceGenerator;
 
 namespace Nitrox.Server.Subnautica.Extensions;
 
-public static partial class ServiceCollectionExtensions
+internal static partial class ServiceCollectionExtensions
 {
+    private static readonly Lazy<string> newWorldSeed = new(() => StringHelper.GenerateRandomString(10));
+
     public static IServiceCollection AddHostedSingletonService<T>(this IServiceCollection services) where T : class, IHostedService => services.AddSingleton<T>().AddHostedService(provider => provider.GetRequiredService<T>());
 
     public static IServiceCollection AddSingletonLazyArrayProvider<T>(this IServiceCollection services) => services.AddSingleton<Func<T[]>>(provider => () => provider.GetRequiredService<IEnumerable<T>>().ToArray());
+
+    public static IServiceCollection AddAppOptions(this IServiceCollection services)
+    {
+        services.AddOptionsWithValidateOnStart<ServerStartOptions, ServerStartOptions.Validator>()
+                .BindConfiguration("")
+                .Configure(options =>
+                {
+                    if (string.IsNullOrWhiteSpace(options.GameInstallPath))
+                    {
+                        options.GameInstallPath = NitroxUser.GamePath;
+                    }
+                    if (string.IsNullOrWhiteSpace(options.NitroxAssetsPath))
+                    {
+                        options.NitroxAssetsPath = NitroxUser.AssetsPath;
+                    }
+                    if (string.IsNullOrWhiteSpace(options.NitroxAppDataPath))
+                    {
+                        options.NitroxAppDataPath = NitroxUser.AppDataPath;
+                    }
+                });
+        services.AddOptionsWithValidateOnStart<SubnauticaServerOptions, SubnauticaServerOptions.Validator>()
+                .BindConfiguration(SubnauticaServerOptions.CONFIG_SECTION_PATH)
+                .Configure((SubnauticaServerOptions options, IHostEnvironment environment) =>
+                {
+                    options.Seed = options.Seed switch
+                    {
+                        null or "" when environment.IsDevelopment() => "TCCBIBZXAB",
+                        null or "" => newWorldSeed.Value,
+                        _ => options.Seed
+                    };
+                });
+        services.AddOptionsWithValidateOnStart<SqliteOptions, SqliteOptions.Validator>()
+                .BindConfiguration("Sqlite")
+                .Configure((SqliteOptions options, IHostEnvironment environment) =>
+                {
+                    // In development mode we might want to inspect the database while it's running - not just through this server but also via IDE.
+                    // For this, we need extra stability against corruption from SQLite. These settings accomplish that.
+                    if (environment.IsDevelopment())
+                    {
+                        options.Synchronous = SqliteOptions.Sync.NORMAL;
+                        options.JournalMode = SqliteOptions.JournalingMode.WAL;
+                    }
+                });
+        return services;
+    }
 
     public static IServiceCollection AddPackets(this IServiceCollection services) =>
         services
@@ -74,7 +122,7 @@ public static partial class ServiceCollectionExtensions
         // Pool db context as this server demands low-latency queries.
         return services.AddPooledDbContextFactory<WorldDbContext>(options =>
                        {
-                           // We use an in-memory database so EF tracking cache is redundant. However, change tracking should be enabled on a per-query level when writing to the database.
+                           // We use an in-memory cache database so EF tracking cache is redundant. However, change tracking should be enabled on a per-query level when writing to the database.
                            options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
                            options.EnableThreadSafetyChecks(Debugger.IsAttached);
                            if (enableSensitiveLogging)

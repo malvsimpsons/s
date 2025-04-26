@@ -21,7 +21,6 @@ public class Program
 {
     private static ServerStartOptions startOptions;
     private static readonly Stopwatch serverStartStopWatch = new();
-    private static readonly Lazy<string> newWorldSeed = new(() => StringHelper.GenerateRandomString(10));
 
     private static async Task Main(string[] args)
     {
@@ -96,42 +95,13 @@ public class Program
                {
                    options.ColorBehavior = startOptions.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled;
                });
-        builder.Services.Configure<HostOptions>(options =>
-        {
-            options.ServicesStartConcurrently = true;
-            options.ServicesStopConcurrently = true;
-        });
-        // Map key-value configuration to types.
         builder.Services
-               .AddOptionsWithValidateOnStart<ServerStartOptions, ServerStartOptions.Validator>()
-               .BindConfiguration("")
-               .Configure(options =>
+               .Configure<HostOptions>(options =>
                {
-                   if (string.IsNullOrWhiteSpace(options.GameInstallPath))
-                   {
-                       options.GameInstallPath = NitroxUser.GamePath;
-                   }
-                   if (string.IsNullOrWhiteSpace(options.NitroxAssetsPath))
-                   {
-                       options.NitroxAssetsPath = NitroxUser.AssetsPath;
-                   }
-                   if (string.IsNullOrWhiteSpace(options.NitroxAppDataPath))
-                   {
-                       options.NitroxAppDataPath = NitroxUser.AppDataPath;
-                   }
-               });
-        builder.Services.AddOptionsWithValidateOnStart<SubnauticaServerOptions, SubnauticaServerOptions.Validator>()
-               .BindConfiguration(SubnauticaServerOptions.CONFIG_SECTION_PATH)
-               .Configure(options =>
-               {
-                   options.Seed = options.Seed switch
-                   {
-                       null or "" when builder.Environment.IsDevelopment() => "TCCBIBZXAB",
-                       null or "" => newWorldSeed.Value,
-                       _ => options.Seed
-                   };
-               });
-        builder.Services
+                   options.ServicesStartConcurrently = true;
+                   options.ServicesStopConcurrently = true;
+               })
+               .AddAppOptions()
                // Add initialization services - diagnoses the server environment on startup.
                .AddHostedSingletonService<PreventMultiServerInitService>()
                .AddHostedSingletonService<NetworkPortAvailabilityService>()

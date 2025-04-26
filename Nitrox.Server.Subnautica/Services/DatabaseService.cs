@@ -1,22 +1,30 @@
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database;
+using Nitrox.Server.Subnautica.Models.Configuration;
 
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
 ///     Initializes the database and provides access to it by other services.
 /// </summary>
-internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbContextFactory<WorldDbContext> dbContextFactory, ILogger<DatabaseService> logger) : IHostedLifecycleService
+internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<SqliteOptions> optionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger) : IHostedLifecycleService
 {
     private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
     private readonly IHostEnvironment hostEnvironment = hostEnvironment;
     private readonly ILogger<DatabaseService> logger = logger;
+    private readonly IOptions<SqliteOptions> optionsProvider = optionsProvider;
 
     public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
@@ -44,24 +52,7 @@ internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbConte
             await db.Database.MigrateAsync(cancellationToken);
         }
 
-        // See https://sqlite.org/pragma.html
-        if (hostEnvironment.IsDevelopment())
-        {
-            // In development mode we might want to inspect the database while it's running - not just through this server but also via IDE.
-            // For this, we need extra stability against corruption from SQLite. These settings accomplish that.
-            await ExecutePragma(db, "synchronous=NORMAL");
-            await ExecutePragma(db, "journal_mode=wal");
-        }
-        else
-        {
-            // These improve performance but causes file corruption if multiple clients are connecting to the database (i.e. not going through this server).
-            await ExecutePragma(db, "locking_mode=EXCLUSIVE");
-            await ExecutePragma(db, "synchronous=OFF");
-
-        }
-        await ExecutePragma(db, "temp_store=MEMORY");
-        await ExecutePragma(db, "cache_size=-32000"); // Keep 32MB cache before writing to file.
-        await ExecutePragma(db, "page_size=-32768");
+        await ExecuteOptionsAsPragma(db, optionsProvider.Value);
     }
 
     public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -72,12 +63,11 @@ internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbConte
 
     public async Task<WorldDbContext> GetDbContextAsync() => await dbContextFactory.CreateDbContextAsync();
 
-    private async Task ExecutePragma(WorldDbContext db, string pragmaCommand) => await ExecuteCommand(db, $"PRAGMA {pragmaCommand};");
-
     private async Task ExecuteCommand(WorldDbContext db, string command)
     {
         try
         {
+            logger.LogDebug("Executing database command \"{Command}\"", command);
             await using DbConnection connection = db.Database.GetDbConnection();
             await connection.OpenAsync();
             await using DbCommand commandObj = connection.CreateCommand();
@@ -88,6 +78,30 @@ internal sealed class DatabaseService(IHostEnvironment hostEnvironment, IDbConte
         catch (Exception ex)
         {
             logger.LogWarning("Unable to execute command {Command}: {Error}", command, ex.Message);
+        }
+    }
+
+    private async Task ExecuteOptionsAsPragma(WorldDbContext db, SqliteOptions options)
+    {
+        StringBuilder pragmaBuilder = new();
+        foreach (PropertyInfo property in options.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+        {
+            ConfigurationKeyNameAttribute configKeyAttr = property.GetCustomAttribute<ConfigurationKeyNameAttribute>();
+            if (configKeyAttr == null)
+            {
+                continue;
+            }
+
+            pragmaBuilder
+                .Append("PRAGMA ")
+                .Append(configKeyAttr.Name)
+                .Append('=')
+                .Append(property.GetValue(options)?.ToString() ?? "")
+                .Append(';');
+        }
+        if (pragmaBuilder.Length > 0)
+        {
+            await ExecuteCommand(db, pragmaBuilder.ToString());
         }
     }
 }

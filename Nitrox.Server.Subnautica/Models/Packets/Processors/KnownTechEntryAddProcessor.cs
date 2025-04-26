@@ -21,6 +21,6 @@ internal class KnownTechEntryAddProcessor : IAuthPacketProcessor<KnownTechEntryA
         //         break;
         // }
 
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }
