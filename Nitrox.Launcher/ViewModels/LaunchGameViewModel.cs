@@ -191,7 +191,9 @@ public partial class LaunchGameViewModel : RoutableViewModelBase
     [RelayCommand]
     private void OpenContributionsOfYear()
     {
-        Process.Start(new ProcessStartInfo($"https://github.com/SubnauticaNitrox/Nitrox/graphs/contributors?from={HttpUtility.UrlEncode($"{DateTime.UtcNow.AddYears(-1):yyyy/M/d}")}") { UseShellExecute = true, Verb = "open" })?.Dispose();
+        string fromValue = HttpUtility.UrlEncode($"{DateTime.UtcNow.AddYears(-1):M/d/yyyy}");
+        string toValue = HttpUtility.UrlEncode($"{DateTime.UtcNow:M/d/yyyy}");
+        ProcessUtils.OpenUrl($"https://github.com/SubnauticaNitrox/Nitrox/graphs/contributors?from={fromValue}&to={toValue}");
     }
 
     /// <summary>
