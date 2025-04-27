@@ -28,7 +28,7 @@ using NitroxModel.Networking;
 
 namespace NitroxClient
 {
-    public class ClientAutoFacRegistrar : IAutoFacRegistrar
+    public partial class ClientAutoFacRegistrar : IAutoFacRegistrar
     {
         private static readonly Assembly currentAssembly = Assembly.GetExecutingAssembly();
         private readonly IModule[] modules;
@@ -137,8 +137,10 @@ namespace NitroxClient
         {
             containerBuilder
                 .RegisterAssemblyTypes(currentAssembly)
-                .AsClosedTypesOf(typeof(IClientPacketProcessor<>))
-                .InstancePerLifetimeScope();
+                .AssignableTo<IPacketProcessor>()
+                .As<IPacketProcessor>()
+                .AsSelf()
+                .SingleInstance();
         }
 
         private void RegisterColorSwapManagers(ContainerBuilder containerBuilder)

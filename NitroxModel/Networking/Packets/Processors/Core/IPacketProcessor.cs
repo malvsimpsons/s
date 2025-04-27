@@ -18,6 +18,3 @@ public interface IPacketProcessor<in TContext, in TPacket> : IPacketProcessor
     /// <param name="packet">The incoming packet data that should be processed</param>
     Task Process(TContext context, TPacket packet);
 }
-
-/// <inheritdoc cref="IPacketProcessor{TContext,TPacket}" />
-public interface IPacketProcessor<in TPacket> : IPacketProcessor<IPacketProcessContext, TPacket> where TPacket : Packet;

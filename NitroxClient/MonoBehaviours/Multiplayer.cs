@@ -14,8 +14,7 @@ using NitroxClient.MonoBehaviours.Discord;
 using NitroxClient.MonoBehaviours.Gui.MainMenu;
 using NitroxClient.MonoBehaviours.Gui.MainMenu.ServerJoin;
 using NitroxModel.Core;
-using NitroxModel.Networking.Packets;
-using NitroxModel.Networking.Packets.Processors.Core;
+using NitroxModel.Networking.Packets.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UWE;
@@ -25,7 +24,7 @@ namespace NitroxClient.MonoBehaviours
     public class Multiplayer : MonoBehaviour
     {
         public static Multiplayer Main;
-        private readonly Dictionary<Type, IClientPacketProcessor<Packet>> packetProcessorCache = new();
+        private PacketProcessorsInvoker processorInvoker;
         private IClient client;
         private IMultiplayerSession multiplayerSession;
         private PacketReceiver packetReceiver;
@@ -46,7 +45,7 @@ namespace NitroxClient.MonoBehaviours
 
         public void Awake()
         {
-            NitroxServiceLocator.LifetimeScopeEnded += (_, _) => packetProcessorCache.Clear();
+            NitroxServiceLocator.LifetimeScopeEnded += (_, _) => processorInvoker = null;
             client = NitroxServiceLocator.LocateService<IClient>();
             multiplayerSession = NitroxServiceLocator.LocateService<IMultiplayerSession>();
             packetReceiver = NitroxServiceLocator.LocateService<PacketReceiver>();
@@ -62,6 +61,7 @@ namespace NitroxClient.MonoBehaviours
 
         public void Update()
         {
+            processorInvoker ??= new PacketProcessorsInvoker(NitroxServiceLocator.LocateService<IEnumerable<IPacketProcessor>>());
             client.PollEvents();
 
             if (multiplayerSession.CurrentState.CurrentStage != MultiplayerSessionConnectionStage.DISCONNECTED)
@@ -124,38 +124,22 @@ namespace NitroxClient.MonoBehaviours
 
         public void ProcessPackets()
         {
-            static IClientPacketProcessor<Packet> ResolveProcessor(Packet packet, Dictionary<Type, IClientPacketProcessor<Packet>> processorCache)
-            {
-                Type packetType = packet.GetType();
-                if (processorCache.TryGetValue(packetType, out IClientPacketProcessor<Packet> processor))
-                {
-                    return processor;
-                }
-
-                try
-                {
-                    Type packetProcessorType = typeof(IClientPacketProcessor<>).MakeGenericType(packetType);
-                    return processorCache[packetType] = (IClientPacketProcessor<Packet>)NitroxServiceLocator.LocateService(packetProcessorType);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, $"Failed to find packet processor for packet {packet}");
-                }
-
-                return null;
-            }
-
-            packetReceiver.ConsumePackets(static (packet, processorCache) =>
+            packetReceiver.ConsumePackets(static (packet, registry) =>
             {
                 try
                 {
-                    ResolveProcessor(packet, processorCache)?.Process(null, packet);
+                    PacketProcessorsInvoker.Entry processor = registry.GetProcessor(packet);
+                    if (processor == null)
+                    {
+                        throw new Exception($"Failed to find packet processor for packet {packet}");
+                    }
+                    processor.Execute(null, packet);
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, $"Error while processing packet {packet}");
+                    Log.Error(ex, $"Error trying to process packet {packet}");
                 }
-            }, packetProcessorCache);
+            }, processorInvoker);
         }
 
         public IEnumerator StartSession()

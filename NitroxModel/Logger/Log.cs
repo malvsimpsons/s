@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using LiteNetLib;
+using NitroxModel.Core;
 using NitroxModel.Helper;
 using Serilog;
 using Serilog.Configuration;
@@ -167,7 +168,24 @@ namespace NitroxModel.Logger
                            });
                        });
                    });
-               }, e => LogEventHasPropertiesAny(e, nameof(SaveName), nameof(PlayerName)) || GetLogFileName() is "launcher");
+               }, e =>
+               {
+                   if (LogEventHasPropertiesAny(e, nameof(SaveName), nameof(PlayerName)))
+                   {
+                       return true;
+                   }
+                   string fileName = GetLogFileName();
+                   if (fileName is "launcher")
+                   {
+                       return true;
+                   }
+                   // For debugging client in development, allow logs to pass through immediately.
+                   if (!NitroxEnvironment.IsReleaseMode && fileName is "game")
+                   {
+                       return true;
+                   }
+                   return false;
+               });
         });
 
         private static LoggerConfiguration AppendConsoleSink(this LoggerSinkConfiguration sinkConfig, bool makeAsync, bool useShorterTemplate) => sinkConfig.Logger(cnf =>

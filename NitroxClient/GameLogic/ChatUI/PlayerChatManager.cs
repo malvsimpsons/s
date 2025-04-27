@@ -44,7 +44,15 @@ namespace NitroxClient.GameLogic.ChatUI
             playerChat.Show();
         }
 
-        public void HideChat() => Player.main.StartCoroutine(HideChatAsync());
+        public void HideChat()
+        {
+            if (!Player.main)
+            {
+                return;
+            }
+            Player.main.StartCoroutine(HideChatAsync());
+        }
+
         private IEnumerator HideChatAsync()
         {
             yield return new WaitUntil(() => PlayerChat.IsReady);
