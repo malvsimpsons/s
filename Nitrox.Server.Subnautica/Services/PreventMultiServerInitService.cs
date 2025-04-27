@@ -14,11 +14,7 @@ internal sealed class PreventMultiServerInitService(ILogger<PreventMultiServerIn
     private readonly ILogger<PreventMultiServerInitService> logger = logger;
     private readonly SemaphoreSlim mutexReleaseGate = new(1);
 
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        logger.LogDebug("Taking mutex lock on server initializations");
-        await HoldMutexAsync(cancellationToken);
-    }
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
@@ -26,7 +22,11 @@ internal sealed class PreventMultiServerInitService(ILogger<PreventMultiServerIn
         return Task.CompletedTask;
     }
 
-    public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public async Task StartingAsync(CancellationToken cancellationToken)
+    {
+        logger.LogDebug("Taking mutex lock on server initializations");
+        await HoldMutexAsync(cancellationToken);
+    }
 
     public Task StartedAsync(CancellationToken cancellationToken)
     {

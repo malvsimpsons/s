@@ -5,6 +5,7 @@ using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Models.Configuration;
 using NitroxModel.Helper;
 
 namespace Nitrox.Server.Subnautica.Services;
@@ -12,20 +13,22 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Service which waits for the configured port to be available.
 /// </summary>
-internal sealed class NetworkPortAvailabilityService(IOptions<Models.Configuration.SubnauticaServerOptions> options, ILogger<NetworkPortAvailabilityService> logger) : IHostedService
+internal sealed class NetworkPortAvailabilityService(IOptions<SubnauticaServerOptions> options, ILogger<NetworkPortAvailabilityService> logger) : IHostedLifecycleService
 {
-    private readonly Models.Configuration.SubnauticaServerOptions options = options.Value;
     private readonly ILogger<NetworkPortAvailabilityService> logger = logger;
+    private readonly SubnauticaServerOptions options = options.Value;
 
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        await WaitForAvailablePortAsync(options.ServerPort, ct: cancellationToken);
-    }
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public async Task StartingAsync(CancellationToken cancellationToken) => await WaitForAvailablePortAsync(options.ServerPort, ct: cancellationToken);
+
+    public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     private async Task WaitForAvailablePortAsync(int port, TimeSpan timeout = default, CancellationToken ct = default)
     {
@@ -78,9 +81,7 @@ internal sealed class NetworkPortAvailabilityService(IOptions<Models.Configurati
             // ignored
         }
 
-        static void PrintPortWarn(ILogger logger, int port, TimeSpan timeRemaining)
-        {
+        static void PrintPortWarn(ILogger logger, int port, TimeSpan timeRemaining) =>
             logger.LogWarning("Port {port} UDP is already in use. Please change the server port or close out any program that may be using it. Retrying for {Seconds} seconds until it is available...", port, Math.Floor(timeRemaining.TotalSeconds));
-        }
     }
 }
