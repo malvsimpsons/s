@@ -21,7 +21,7 @@ internal class FootstepPacketProcessor(FmodService fmodService) : IAuthPacketPro
         }
         footstepAudioRange = soundData.Radius;
 
-        // TODO: FIX WITH DATABASE
+        // TODO: USE DATABASE
         // foreach (NitroxServer.Player player in playerService.GetConnectedPlayersAsync())
         // {
         //     if (NitroxVector3.Distance(player.Position, sendingPlayer.Position) >= footstepAudioRange ||

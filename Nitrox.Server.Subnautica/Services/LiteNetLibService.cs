@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
@@ -186,16 +187,39 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         logger.LogTrace("Incoming packet {TypeName} by session #{SessionId}", packet.GetType().Name, session.Id);
         IPacketProcessor packetProcessor = packetRegistryService.GetProcessor(session, packet);
 
-        // TODO: Use object pooling for context
         try
         {
             switch (packetProcessor)
             {
                 case IAnonPacketProcessor anonProcessor:
-                    await anonProcessor.Process(new AnonProcessorContext(session.Id, this), packet);
+                    using (EasyPool<AnonProcessorContext>.Lease lease = EasyPool<AnonProcessorContext>.Rent())
+                    {
+                        ref AnonProcessorContext context = ref lease.GetRef();
+                        if (context == null)
+                        {
+                            context = new AnonProcessorContext(session.Id, this);
+                        }
+                        else
+                        {
+                            context.Sender = session.Id;
+                        }
+                        await anonProcessor.Process(context, packet);
+                    }
                     break;
                 case IAuthPacketProcessor authProcessor:
-                    await authProcessor.Process(new AuthProcessorContext((session.Player.Id, session.Id), this), packet);
+                    using (EasyPool<AuthProcessorContext>.Lease lease = EasyPool<AuthProcessorContext>.Rent())
+                    {
+                        ref AuthProcessorContext context = ref lease.GetRef();
+                        if (context == null)
+                        {
+                            context = new AuthProcessorContext((session.Player.Id, session.Id), this);
+                        }
+                        else
+                        {
+                            context.Sender = (session.Player.Id, session.Id);
+                        }
+                        await authProcessor.Process(context, packet);
+                    }
                     break;
                 default:
                     logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packet.GetType().Name);
@@ -268,20 +292,13 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     private void SendPacket(Packet packet, NetPeer peer)
     {
         byte[] packetData = packet.Serialize();
-        NetDataWriter[] writers = ArrayPool<NetDataWriter>.Shared.Rent(1);
-        ref NetDataWriter writer = ref writers[0];
+        using EasyPool<NetDataWriter>.Lease lease = EasyPool<NetDataWriter>.Rent();
+        ref NetDataWriter writer = ref lease.GetRef();
         writer ??= new NetDataWriter();
-        try
-        {
-            writer.Reset();
-            writer.Put(packetData.Length);
-            writer.Put(packetData);
-            peer.Send(writer, (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
-        }
-        finally
-        {
-            ArrayPool<NetDataWriter>.Shared.Return(writers);
-        }
+        writer.Reset();
+        writer.Put(packetData.Length);
+        writer.Put(packetData);
+        peer.Send(writer, (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
     }
 
     public Task CleanSessionAsync(PlayerSession disconnectedSession)

@@ -59,7 +59,7 @@ internal static class ConfigurationBuilderExtensions
     ///     Adds the first JSON file matching the file name in any parent directory of <see cref="AppContext.BaseDirectory" />.
     /// </summary>
     /// <remarks>
-    ///     This function symbolic links the first parent JSON file found. Required because change detection does not work with
+    ///     This function creates a symbolic link for the first parent JSON file. A symbolic link is required because change detection does not work with
     ///     parent files.
     /// </remarks>
     public static IConfigurationBuilder AddUpstreamJsonFile(this IConfigurationBuilder builder, string fileName, bool optional = false, bool reloadOnChange = false, bool skip = false)
@@ -102,7 +102,7 @@ internal static class ConfigurationBuilderExtensions
         // On Linux, polling is needed to detect file changes.
         builder.AddJsonFile(new PhysicalFileProvider(AppContext.BaseDirectory)
         {
-            UseActivePolling = OperatingSystem.IsLinux(),
+            UseActivePolling = OperatingSystem.IsLinux(), // TODO: VERIFY THIS WORKS ON WINDOWS
             UsePollingFileWatcher = OperatingSystem.IsLinux()
         }, fileName, optional, reloadOnChange);
 

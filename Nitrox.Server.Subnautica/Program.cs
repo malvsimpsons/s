@@ -35,7 +35,7 @@ public class Program
     ///     that require the custom <see cref="AssemblyResolver.Handler" />.
     /// </summary>
     /// <remarks>
-    ///     https://stackoverflow.com/a/6089153/1277156
+    ///     See <a href="https://stackoverflow.com/a/6089153/1277156">https://stackoverflow.com/a/6089153/1277156</a>
     /// </remarks>
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static async Task StartupHostAsync(string[] args)

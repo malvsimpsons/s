@@ -80,8 +80,7 @@ internal sealed class NetworkPortAvailabilityService(IOptions<Models.Configurati
 
         static void PrintPortWarn(ILogger logger, int port, TimeSpan timeRemaining)
         {
-            string message = $"Port {port} UDP is already in use. Please change the server port or close out any program that may be using it. Retrying for {Math.Floor(timeRemaining.TotalSeconds)} seconds until it is available...";
-            logger.LogWarning(message);
+            logger.LogWarning("Port {port} UDP is already in use. Please change the server port or close out any program that may be using it. Retrying for {Seconds} seconds until it is available...", port, Math.Floor(timeRemaining.TotalSeconds));
         }
     }
 }

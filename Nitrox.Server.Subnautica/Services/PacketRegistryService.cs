@@ -21,16 +21,14 @@ internal sealed class PacketRegistryService(Func<IPacketProcessor[]> packetProce
 {
     private readonly DefaultPacketProcessor defaultProcessor = defaultProcessor;
     private readonly ILogger<PacketRegistryService> logger = logger;
-    private IEnumerable<IPacketProcessor> packetProcessors = [];
     private FrozenDictionary<Type, IPacketProcessor> packetTypeToAnonProcessorLookup;
     private FrozenDictionary<Type, IPacketProcessor> packetTypeToAuthProcessorLookup;
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         Dictionary<Type, IPacketProcessor> authLookupBuilder = [];
         Dictionary<Type, IPacketProcessor> anonLookupBuilder = [];
-        packetProcessors = packetProcessorsProvider();
-        foreach (IPacketProcessor packetProcessor in packetProcessors)
+        foreach (IPacketProcessor packetProcessor in packetProcessorsProvider())
         {
             Type processorType = packetProcessor.GetType();
             Type packetType = processorType.GetInterfaces()
@@ -62,7 +60,6 @@ internal sealed class PacketRegistryService(Func<IPacketProcessor[]> packetProce
         logger.LogDebug("{Count} anonymous packet processors found and registered", packetTypeToAnonProcessorLookup.Count);
         packetTypeToAuthProcessorLookup = authLookupBuilder.ToFrozenDictionary();
         logger.LogDebug("{Count} authenticated packet processors found and registered", packetTypeToAuthProcessorLookup.Count);
-        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

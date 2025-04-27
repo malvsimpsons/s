@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,7 +14,7 @@ using Nitrox.Server.Subnautica.Models.Configuration;
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
-///     Initializes the database and provides access to it by other services.
+///     Initializes the database and provides access to it.
 /// </summary>
 internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<SqliteOptions> optionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger) : IHostedLifecycleService
 {
