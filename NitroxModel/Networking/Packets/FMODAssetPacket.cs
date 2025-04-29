@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class FMODAssetPacket : Packet
+public record FMODAssetPacket : Packet
 {
     public string AssetPath { get; }
     public NitroxVector3 Position { get; }

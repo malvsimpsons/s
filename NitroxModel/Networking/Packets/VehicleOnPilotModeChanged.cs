@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class VehicleOnPilotModeChanged : Packet
+public record VehicleOnPilotModeChanged : Packet
 {
     public NitroxId VehicleId { get; }
     public ushort PlayerId { get; }

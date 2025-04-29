@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class MedicalCabinetClicked : Packet
+    public record MedicalCabinetClicked : Packet
     {
         public NitroxId Id { get; }
         public bool DoorOpen { get; }

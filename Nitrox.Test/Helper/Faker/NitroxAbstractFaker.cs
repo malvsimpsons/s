@@ -1,6 +1,8 @@
+using Nitrox.Server.Subnautica;
 using NitroxModel_Subnautica.Logger;
 using NitroxServer;
 using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Packets.Processors.Core;
 
 namespace Nitrox.Test.Helper.Faker;
 
@@ -10,8 +12,8 @@ public class NitroxAbstractFaker : NitroxFaker, INitroxFaker
 
     static NitroxAbstractFaker()
     {
-        Assembly[] assemblies = { typeof(Packet).Assembly, typeof(SubnauticaInGameLogger).Assembly, typeof(ServerAutoFacRegistrar).Assembly, typeof(SubnauticaServerAutoFacRegistrar).Assembly };
-        HashSet<Type> blacklistedTypes = new() { typeof(Packet), typeof(CorrelatedPacket), typeof(PacketProcessor) };
+        Assembly[] assemblies = [typeof(Packet).Assembly, typeof(SubnauticaInGameLogger).Assembly, typeof(ServerAutoFacRegistrar).Assembly, typeof(Program).Assembly];
+        HashSet<Type> blacklistedTypes = [typeof(Packet), typeof(CorrelatedPacket), typeof(IPacketProcessor)];
 
         List<Type> types = new();
         foreach (Assembly assembly in assemblies)

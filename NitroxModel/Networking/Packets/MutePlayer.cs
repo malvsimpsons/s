@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class MutePlayer : Packet
+public record MutePlayer : Packet
 {
     public SessionId PlayerId;
     public bool Muted;

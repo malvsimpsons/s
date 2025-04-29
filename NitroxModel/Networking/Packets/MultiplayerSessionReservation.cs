@@ -4,8 +4,7 @@ using NitroxModel.Networking.Session;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class MultiplayerSessionReservation : CorrelatedPacket
-    {
+    public record MultiplayerSessionReservation : CorrelatedPacket    {
         public ushort PlayerId { get; }
         public string ReservationKey { get; }
         public MultiplayerSessionReservationState ReservationState { get; }

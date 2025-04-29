@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class FootstepPacket : Packet
+public record FootstepPacket : Packet
 {
     public ushort PlayerID { get; }
     public StepSounds AssetIndex { get; }

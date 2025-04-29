@@ -5,7 +5,7 @@ using NitroxModel.Networking.Packets;
 namespace NitroxModel_Subnautica.Packets;
 
 [Serializable]
-public class RocketLaunch : Packet
+public record RocketLaunch : Packet
 {
     public NitroxId RocketId { get; }
 

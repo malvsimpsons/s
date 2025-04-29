@@ -6,7 +6,7 @@ using NitroxModel.Networking.Packets;
 namespace NitroxModel_Subnautica.Packets;
 
 [Serializable]
-public class RocketResync : Packet
+public record RocketResync : Packet
 {
     public NitroxId RocketId { get; }
     public List<PreflightCheck> PreflightChecks { get; }

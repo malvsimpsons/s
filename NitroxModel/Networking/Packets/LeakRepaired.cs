@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class LeakRepaired : Packet
+public record LeakRepaired : Packet
 {
     public NitroxId BaseId { get; set; }
     public NitroxId LeakId { get; set; }

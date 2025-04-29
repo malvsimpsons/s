@@ -45,7 +45,7 @@ public sealed class PdaInitialSyncProcessor : InitialSyncProcessor
         List<PdaLogEntry> logEntries = packet.PDAData.PDALogEntries;
         Log.Info($"Received initial sync packet with {logEntries.Count} pda log entries");
 
-        using (PacketSuppressor<PDALogEntryAdd>.Suppress())
+        using (PacketSuppressor<PdaLogEntryAdd>.Suppress())
         {
             // We just need the timestamp and the key because everything else is provided by PDALog.InitDataForEntries
             PDALog.Deserialize(logEntries.ToDictionary(m => m.Key, m => new PDALog.Entry() { timestamp = m.Timestamp }));

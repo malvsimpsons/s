@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class Disconnect : Packet
+public record Disconnect : Packet
 {
     public Disconnect(SessionId sessionId)
     {

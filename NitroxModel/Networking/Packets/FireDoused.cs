@@ -7,7 +7,7 @@ namespace NitroxModel.Networking.Packets
     /// Triggered when a fire has been doused. Fire growth is a static thing, so we only need to track dousing
     /// </summary>
     [Serializable]
-    public class FireDoused : Packet
+    public record FireDoused : Packet
     {
         public NitroxId Id { get; }
         public float DouseAmount { get; }

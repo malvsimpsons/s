@@ -5,8 +5,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class FMODEventInstancePacket : FMODAssetPacket
-{
+public record FMODEventInstancePacket : FMODAssetPacket{
     public NitroxId Id { get; }
     public bool Play { get; }
 

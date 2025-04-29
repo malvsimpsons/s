@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PdaEncyclopediaEntryAdd : Packet
+public record PdaEncyclopediaEntryAdd : Packet
 {
     public string Key { get; }
     /// <summary>

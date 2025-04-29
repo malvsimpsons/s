@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class SignalPingPreferenceChanged : Packet
+public record SignalPingPreferenceChanged : Packet
 {
     public string PingKey { get; }
     public bool Visible { get; }

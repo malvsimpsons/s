@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class TorpedoHit : Packet
+public record TorpedoHit : Packet
 {
     public NitroxId BulletId { get; }
     public NitroxVector3 Position { get; }

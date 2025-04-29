@@ -11,7 +11,7 @@ using NitroxModel.Server;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class InitialPlayerSync : Packet
+    public record InitialPlayerSync : Packet
     {
         public NitroxId AssignedEscapePodId { get; }
         public Dictionary<string, NitroxId> EquippedItems { get; }

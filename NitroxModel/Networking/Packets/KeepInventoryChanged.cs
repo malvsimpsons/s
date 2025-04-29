@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class KeepInventoryChanged : Packet
+public record KeepInventoryChanged : Packet
 {
     public bool KeepInventoryOnDeath { get; }
 

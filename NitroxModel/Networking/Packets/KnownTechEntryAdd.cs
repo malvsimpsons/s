@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class KnownTechEntryAdd : Packet
+    public record KnownTechEntryAdd : Packet
     {
         public enum EntryCategory
         {

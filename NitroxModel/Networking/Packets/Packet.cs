@@ -10,11 +10,11 @@ using BinaryPack.Attributes;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public abstract class Packet
+public abstract record Packet
 {
     private static readonly Dictionary<Type, PropertyInfo[]> cachedPropertiesByType = new();
     private static readonly StringBuilder toStringBuilder = new();
-    private static readonly object lockObject = new();
+    private static readonly LockObject lockObject = new();
 
     public static void InitSerializer()
     {

@@ -12,7 +12,7 @@ namespace NitroxModel.Serialization;
 public static class NitroxConfig
 {
     private static readonly char[] newlineChars = Environment.NewLine.ToCharArray();
-    private static readonly object locker = new();
+    private static readonly LockObject locker = new();
 
     public static IDictionary<string, string> Parse(Stream stream)
     {

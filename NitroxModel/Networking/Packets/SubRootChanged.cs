@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.Util;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class SubRootChanged : Packet
+    public record SubRootChanged : Packet
     {
         public ushort PlayerId { get; }
         public Optional<NitroxId> SubRootId { get; }

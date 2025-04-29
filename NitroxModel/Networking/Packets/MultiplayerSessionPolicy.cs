@@ -6,8 +6,7 @@ using NitroxModel.Networking.Session;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class MultiplayerSessionPolicy : CorrelatedPacket
-    {
+    public record MultiplayerSessionPolicy : CorrelatedPacket    {
         public bool RequiresServerPassword { get; }
         public MultiplayerSessionAuthenticationAuthority AuthenticationAuthority { get; }
         public bool DisableConsole { get; }

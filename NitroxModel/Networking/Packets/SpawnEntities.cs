@@ -6,7 +6,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class SpawnEntities : Packet
+    public record SpawnEntities : Packet
     {
         public List<Entity> Entities { get; }
         public List<SimulatedEntity> Simulations { get; }

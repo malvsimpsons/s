@@ -6,12 +6,12 @@ using NitroxModel.DataStructures.Util;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class PlayerTeleported(PeerId playerId, NitroxVector3 destinationFrom, NitroxVector3 destinationTo, Optional<NitroxId> subRootID)
+    public record PlayerTeleported(PeerId PlayerId, NitroxVector3 DestinationFrom, NitroxVector3 DestinationTo, Optional<NitroxId> SubRootID)
         : Packet
     {
-        public PeerId PlayerId { get; } = playerId;
-        public NitroxVector3 DestinationFrom { get; } = destinationFrom;
-        public NitroxVector3 DestinationTo { get; } = destinationTo;
-        public Optional<NitroxId> SubRootID { get; } = subRootID;
+        public PeerId PlayerId { get; } = PlayerId;
+        public NitroxVector3 DestinationFrom { get; } = DestinationFrom;
+        public NitroxVector3 DestinationTo { get; } = DestinationTo;
+        public Optional<NitroxId> SubRootID { get; } = SubRootID;
     }
 }

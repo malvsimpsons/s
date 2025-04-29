@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class DebugStartMapPacket : Packet
+    public record DebugStartMapPacket : Packet
     {
         public List<NitroxVector3> StartPositions { get; }
 

@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class ToggleLights : Packet
+    public record ToggleLights : Packet
     {
         public NitroxId Id { get; }
         public bool IsOn { get; }

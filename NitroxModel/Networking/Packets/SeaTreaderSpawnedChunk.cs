@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class SeaTreaderSpawnedChunk : Packet
+public record SeaTreaderSpawnedChunk : Packet
 {
     public NitroxId CreatureId { get; }
     public NitroxId ChunkId { get; }

@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class SetIntroCinematicMode : Packet
+public record SetIntroCinematicMode : Packet
 {
     public ushort PlayerId { get; }
     public IntroCinematicMode Mode { get; }

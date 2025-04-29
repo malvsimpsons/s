@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class PlayerHeldItemChanged : Packet
+    public record PlayerHeldItemChanged : Packet
     {
         public ushort PlayerId { get; }
         public NitroxId ItemId { get; }

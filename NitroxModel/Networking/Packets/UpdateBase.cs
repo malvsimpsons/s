@@ -7,8 +7,7 @@ using NitroxModel.DataStructures.GameLogic.Bases;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class UpdateBase : OrderedBuildPacket
-{
+public sealed record UpdateBase : OrderedBuildPacket{
     public NitroxId BaseId { get; }
     public NitroxId FormerGhostId { get; }
     public BaseData BaseData { get; set;  }

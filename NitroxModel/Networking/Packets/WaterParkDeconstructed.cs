@@ -7,7 +7,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class WaterParkDeconstructed : PieceDeconstructed
+public sealed record WaterParkDeconstructed : PieceDeconstructed
 {
     public InteriorPieceEntity NewWaterPark { get; }
     public List<NitroxId> MovedChildrenIds { get; }

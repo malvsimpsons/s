@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class CellVisibilityChanged : Packet
+    public record CellVisibilityChanged : Packet
     {
         public ushort PlayerId { get; }
         public AbsoluteEntityCell[] Added { get; }

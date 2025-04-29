@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.Util;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PlayerQuickSlotsBindingChanged : Packet
+public record PlayerQuickSlotsBindingChanged : Packet
 {
     public Optional<NitroxId>[] SlotItemIds { get; }
 

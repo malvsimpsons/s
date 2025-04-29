@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class CreaturePoopPerformed : Packet
+public record CreaturePoopPerformed : Packet
 {
     public NitroxId CreatureId { get; }
 

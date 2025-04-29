@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PlayerStats : Packet
+public record PlayerStats : Packet
 {
     public SessionId SessionId { get; set; }
     public float Oxygen { get; }

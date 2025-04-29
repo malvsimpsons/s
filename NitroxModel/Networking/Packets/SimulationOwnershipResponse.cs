@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class SimulationOwnershipResponse : Packet
+    public record SimulationOwnershipResponse : Packet
     {
         public NitroxId Id { get; }
         public bool LockAcquired { get; }

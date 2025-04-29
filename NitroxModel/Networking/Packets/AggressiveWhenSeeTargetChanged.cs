@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class AggressiveWhenSeeTargetChanged : Packet
+public record AggressiveWhenSeeTargetChanged : Packet
 {
     public NitroxId CreatureId { get; }
     public NitroxId TargetId { get; }

@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class ItemPosition : Packet
+    public record ItemPosition : Packet
     {
         public NitroxId Id { get; }
         public NitroxVector3 Position { get; }

@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class FMODCustomLoopingEmitterPacket : Packet
+public record FMODCustomLoopingEmitterPacket : Packet
 {
     public NitroxId Id { get; }
     public string AssetPath { get; }

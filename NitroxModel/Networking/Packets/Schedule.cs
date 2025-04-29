@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class Schedule(float timeExecute, string key, Schedule.GoalCategory category) : Packet
+public record Schedule(float TimeExecute, string Key, Schedule.GoalCategory Category) : Packet
 {
     /// <summary>
     ///     Same as GoalType in Subnautica.
@@ -16,7 +16,7 @@ public class Schedule(float timeExecute, string key, Schedule.GoalCategory categ
         Story
     }
 
-    public float TimeExecute { get; } = timeExecute;
-    public string Key { get; } = key;
-    public GoalCategory Category { get; } = category;
+    public float TimeExecute { get; } = TimeExecute;
+    public string Key { get; } = Key;
+    public GoalCategory Category { get; } = Category;
 }

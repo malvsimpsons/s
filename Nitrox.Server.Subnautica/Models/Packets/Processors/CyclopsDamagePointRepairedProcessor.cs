@@ -5,9 +5,8 @@ namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
 internal class CyclopsDamagePointRepairedProcessor : IAuthPacketProcessor<CyclopsDamagePointRepaired>
 {
-    public Task Process(AuthProcessorContext context, CyclopsDamagePointRepaired packet)
+    public async Task Process(AuthProcessorContext context, CyclopsDamagePointRepaired packet)
     {
-        context.ReplyToOthers(packet);
-        return Task.CompletedTask;
+        await context.ReplyToOthers(packet);
     }
 }

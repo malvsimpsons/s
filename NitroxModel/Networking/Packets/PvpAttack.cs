@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PvpAttack : Packet
+public record PvpAttack : Packet
 {
     public SessionId TargetSessionId { get; }
     public float Damage { get; set; }

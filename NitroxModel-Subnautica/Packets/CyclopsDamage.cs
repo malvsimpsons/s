@@ -11,7 +11,7 @@ namespace NitroxModel_Subnautica.Packets
     /// or a general Cyclops health change. A health change to 0 means the Cyclops has been destroyed.
     /// </summary>
     [Serializable]
-    public class CyclopsDamage : Packet
+    public record CyclopsDamage : Packet
     {
         public NitroxId Id { get; }
         public float SubHealth { get; }

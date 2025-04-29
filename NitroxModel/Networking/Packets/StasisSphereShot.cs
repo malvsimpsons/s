@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class StasisSphereShot : Packet
+public record StasisSphereShot : Packet
 {
     public ushort PlayerId { get; }
     public NitroxVector3 Position { get; }

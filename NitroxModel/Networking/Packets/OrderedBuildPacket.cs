@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public abstract class OrderedBuildPacket : Packet
+public abstract record OrderedBuildPacket : Packet
 {
     public int OperationId { get; set; }
 

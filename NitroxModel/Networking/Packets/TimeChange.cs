@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class TimeChange : Packet
+public record TimeChange : Packet
 {
     /// <summary>
     /// Time in seconds

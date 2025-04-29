@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.Util;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class EscapePodChanged : Packet
+    public record EscapePodChanged : Packet
     {
         public ushort PlayerId { get; }
         public Optional<NitroxId> EscapePodId { get; }
@@ -17,4 +17,3 @@ namespace NitroxModel.Networking.Packets
         }
     }
 }
-

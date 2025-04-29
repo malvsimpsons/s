@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class ModifyConstructedAmount : Packet
+public sealed record ModifyConstructedAmount : Packet
 {
     public NitroxId GhostId { get; }
     public float ConstructedAmount { get; }

@@ -7,7 +7,7 @@ using NitroxModel.Networking.Session;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PlayerJoinedMultiplayerSession : Packet
+public record PlayerJoinedMultiplayerSession : Packet
 {
     public PlayerContext PlayerContext { get; }
     public Optional<NitroxId> SubRootId { get; }

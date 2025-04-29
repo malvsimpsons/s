@@ -9,7 +9,7 @@ namespace NitroxModel_Subnautica.Packets
     /// Triggered when a fire has been created in <see cref="SubFire.CreateFire(SubFire.RoomFire)"/>
     /// </summary>
     [Serializable]
-    public class CyclopsFireCreated : Packet
+    public record CyclopsFireCreated : Packet
     {
         public CyclopsFireData FireCreatedData { get; }
 

@@ -5,7 +5,7 @@ using NitroxModel.Networking.Packets;
 namespace NitroxModel_Subnautica.Packets
 {
     [Serializable]
-    public class CyclopsFireSuppression : Packet
+    public record CyclopsFireSuppression : Packet
     {
         public NitroxId Id { get; }
 
@@ -20,4 +20,3 @@ namespace NitroxModel_Subnautica.Packets
         }
     }
 }
-

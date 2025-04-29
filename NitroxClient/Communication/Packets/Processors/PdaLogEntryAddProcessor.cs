@@ -3,18 +3,18 @@ using NitroxModel.Networking.Packets;
 
 namespace NitroxClient.Communication.Packets.Processors
 {
-    public class PDALogEntryAddProcessor : IClientPacketProcessor<PDALogEntryAdd>
+    public class PdaLogEntryAddProcessor : IClientPacketProcessor<PdaLogEntryAdd>
     {
         private readonly IPacketSender packetSender;
 
-        public PDALogEntryAddProcessor(IPacketSender packetSender)
+        public PdaLogEntryAddProcessor(IPacketSender packetSender)
         {
             this.packetSender = packetSender;
         }
 
-        public Task Process(IPacketProcessContext context, PDALogEntryAdd packet)
+        public Task Process(IPacketProcessContext context, PdaLogEntryAdd packet)
         {
-            using (PacketSuppressor<PDALogEntryAdd>.Suppress())
+            using (PacketSuppressor<PdaLogEntryAdd>.Suppress())
             {
                 PDALog.Add(packet.Key);
             }

@@ -7,8 +7,7 @@ namespace NitroxModel.Networking.Packets
     ///     on the current requirements to submit a reservation to the ongoing game session.
     /// </summary>
     [Serializable]
-    public class MultiplayerSessionPolicyRequest : CorrelatedPacket
-    {
+    public record MultiplayerSessionPolicyRequest : CorrelatedPacket    {
         public MultiplayerSessionPolicyRequest(string correlationId) : base(correlationId)
         {
         }

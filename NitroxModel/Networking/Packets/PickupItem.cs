@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic.Entities;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PickupItem : Packet
+public record PickupItem : Packet
 {
     public NitroxId Id { get; }
 

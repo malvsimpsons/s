@@ -5,7 +5,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class BuildingDesyncWarning : Packet
+public sealed record BuildingDesyncWarning : Packet
 {
     public Dictionary<NitroxId, int> Operations { get; }
 

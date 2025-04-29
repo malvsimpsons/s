@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class GoalCompleted : Packet
+public record GoalCompleted : Packet
 {
     public string CompletedGoal { get; }
     public float CompletionTime { get; }

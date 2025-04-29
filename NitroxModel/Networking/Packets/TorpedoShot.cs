@@ -6,7 +6,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class TorpedoShot : Packet
+public record TorpedoShot : Packet
 {
     public NitroxId BulletId { get; }
     public NitroxTechType TechType { get; }

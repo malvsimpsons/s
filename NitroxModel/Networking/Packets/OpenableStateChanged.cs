@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class OpenableStateChanged : Packet
+    public record OpenableStateChanged : Packet
     {
         public NitroxId Id { get; }
         public bool IsOpen { get; }

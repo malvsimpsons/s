@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public abstract class CorrelatedPacket : Packet
+    public abstract record CorrelatedPacket : Packet
     {
         public string CorrelationId { get; protected set; }
 

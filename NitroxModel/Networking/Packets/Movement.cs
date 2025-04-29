@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public abstract class Movement : Packet
+public abstract record Movement : Packet
 {
     public abstract ushort PlayerId { get; }
     public abstract NitroxVector3 Position { get; }

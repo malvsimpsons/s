@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class VehicleDocking : Packet
+public record VehicleDocking : Packet
 {
     public NitroxId VehicleId { get; }
     public NitroxId DockId { get; }

@@ -4,7 +4,7 @@ using NitroxModel.Subnautica.Extensions;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PlaySunbeamEvent : Packet
+public record PlaySunbeamEvent : Packet
 {
     /// <summary>
     ///     Associates an understandable event name and the associated goal from <see cref="SunbeamGoals" />.

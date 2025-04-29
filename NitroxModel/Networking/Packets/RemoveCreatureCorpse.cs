@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class RemoveCreatureCorpse : Packet
+public record RemoveCreatureCorpse : Packet
 {
     public NitroxId CreatureId { get; }
     public NitroxVector3 DeathPosition { get; }

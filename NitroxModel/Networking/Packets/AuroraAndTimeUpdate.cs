@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class AuroraAndTimeUpdate : Packet
+public record AuroraAndTimeUpdate : Packet
 {
     public TimeData TimeData { get; }
     public bool Restore { get; }

@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class PlaceBase : Packet
+public sealed record PlaceBase : Packet
 {
     public PlaceBase(NitroxId formerGhostId, BuildEntity buildEntity)
     {

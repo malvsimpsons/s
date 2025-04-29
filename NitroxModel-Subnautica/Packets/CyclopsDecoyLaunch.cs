@@ -5,7 +5,7 @@ using NitroxModel.Networking.Packets;
 namespace NitroxModel_Subnautica.Packets
 {
     [Serializable]
-    public class CyclopsDecoyLaunch : Packet
+    public record CyclopsDecoyLaunch : Packet
     {
         public NitroxId Id { get; }
 

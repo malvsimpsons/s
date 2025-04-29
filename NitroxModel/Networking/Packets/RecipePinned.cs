@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class RecipePinned : Packet
+public record RecipePinned : Packet
 {
     public int TechType { get; }
     public bool Pinned { get; }

@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PlayerInCyclopsMovement : Packet
+public record PlayerInCyclopsMovement : Packet
 {
     public ushort PlayerId { get; }
     public NitroxVector3 LocalPosition { get; }

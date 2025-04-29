@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class ModuleRemoved : Packet
+public record ModuleRemoved : Packet
 {
     public NitroxId Id { get; }
 

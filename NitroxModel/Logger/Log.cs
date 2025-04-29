@@ -26,7 +26,7 @@ namespace NitroxModel.Logger
         private static bool isSetup;
         private static string logFileName;
 
-        private static readonly object playerNameLock = new();
+        private static readonly LockObject playerNameLock = new();
         private static string playerName = "";
         public static string PlayerName
         {
@@ -59,7 +59,7 @@ namespace NitroxModel.Logger
             }
         }
 
-        private static readonly object saveNameLock = new();
+        private static readonly LockObject saveNameLock = new();
         private static string saveName = "";
         public static string SaveName
         {

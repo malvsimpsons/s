@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class SeaTreaderChunkPickedUp : Packet
+public record SeaTreaderChunkPickedUp : Packet
 {
     public NitroxId ChunkId { get; }
 

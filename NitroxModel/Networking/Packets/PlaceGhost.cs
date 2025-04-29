@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class PlaceGhost : Packet
+public sealed record PlaceGhost : Packet
 {
     public GhostEntity GhostEntity { get; }
 

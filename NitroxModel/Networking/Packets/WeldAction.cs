@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class WeldAction : Packet
+    public record WeldAction : Packet
     {
         public NitroxId Id { get; }
         public float HealthAdded { get; }

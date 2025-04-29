@@ -5,7 +5,7 @@ using NitroxModel.Networking.Packets;
 namespace NitroxModel_Subnautica.Packets
 {
     [Serializable]
-    public class CyclopsDamagePointRepaired : Packet
+    public record CyclopsDamagePointRepaired : Packet
     {
         public NitroxId Id { get; }
         public int DamagePointIndex { get; }

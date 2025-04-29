@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class ServerCommand : Packet
+    public record ServerCommand : Packet
     {
         public string Cmd { get; }
 

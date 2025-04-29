@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class BuildingResyncRequest : Packet
+public sealed record BuildingResyncRequest : Packet
 {
     public NitroxId EntityId { get; }
     public bool ResyncEverything { get; }

@@ -6,8 +6,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PieceDeconstructed : OrderedBuildPacket
-{
+public record PieceDeconstructed : OrderedBuildPacket{
     public NitroxId BaseId { get; }
     public NitroxId PieceId { get; }
     public BuildPieceIdentifier BuildPieceIdentifier { get; }

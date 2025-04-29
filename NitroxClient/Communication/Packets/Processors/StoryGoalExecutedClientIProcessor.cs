@@ -20,7 +20,7 @@ public class StoryGoalExecutedClientIProcessor : IClientPacketProcessor<StoryGoa
         StoryGoalScheduler.main.schedule.RemoveAllFast(packet.Key, static (goal, packetGoalKey) => goal.goalKey == packetGoalKey);
 
         using (PacketSuppressor<StoryGoalExecuted>.Suppress())
-        using (PacketSuppressor<PDALogEntryAdd>.Suppress())
+        using (PacketSuppressor<PdaLogEntryAdd>.Suppress())
         using (PacketSuppressor<KnownTechEntryAdd>.Suppress()) // StoryGoalManager => OnGoalUnlockTracker => UnlockBlueprintData => KnownTech.Add
         using (PacketSuppressor<PdaEncyclopediaEntryAdd>.Suppress())
         {

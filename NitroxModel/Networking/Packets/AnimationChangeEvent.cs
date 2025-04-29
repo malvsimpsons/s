@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class AnimationChangeEvent : Packet
+    public record AnimationChangeEvent : Packet
     {
         public ushort PlayerId { get; }
         public int Type { get; }

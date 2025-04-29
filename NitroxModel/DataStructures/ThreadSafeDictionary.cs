@@ -16,7 +16,7 @@ namespace NitroxModel.DataStructures
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         [IgnoreDataMember]
-        private readonly object locker = new();
+        private readonly LockObject locker = new();
 
         [IgnoreDataMember]
         public ICollection<TKey> Keys

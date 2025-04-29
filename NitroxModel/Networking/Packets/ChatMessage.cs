@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class ChatMessage : Packet
+public record ChatMessage : Packet
 {
     public SessionId SenderId { get; }
     public string Text { get; }

@@ -3,7 +3,7 @@
 namespace Nitrox.Test.Client.Communication
 {
     [Serializable]
-    public class TestNonActionPacket : Packet
+    public record TestNonActionPacket : Packet
     {
         public ushort PlayerId { get; }
 

@@ -7,7 +7,7 @@ using UnityEngine;
 namespace NitroxModel_Subnautica.Packets
 {
     [Serializable]
-    public class ExosuitArmActionPacket : Packet
+    public record ExosuitArmActionPacket : Packet
     {
         public TechType TechType { get; }
         public NitroxId ArmId { get; }

@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class AttackCyclopsTargetChanged : Packet
+public record AttackCyclopsTargetChanged : Packet
 {
     public NitroxId CreatureId { get; }
     public NitroxId TargetId { get; }

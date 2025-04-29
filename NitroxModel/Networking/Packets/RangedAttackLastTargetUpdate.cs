@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class RangedAttackLastTargetUpdate : Packet
+public record RangedAttackLastTargetUpdate : Packet
 {
     public NitroxId CreatureId { get; }
     public NitroxId TargetId { get; }

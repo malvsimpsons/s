@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class EntityMetadataUpdate : Packet
+    public record EntityMetadataUpdate : Packet
     {
         public NitroxId Id { get; }
 

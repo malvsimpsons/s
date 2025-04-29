@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class SimulationOwnershipRequest : Packet
+    public record SimulationOwnershipRequest : Packet
     {
         public ushort PlayerId { get; }
         public NitroxId Id { get; }

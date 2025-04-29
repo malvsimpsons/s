@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PinnedRecipeMoved : Packet
+public record PinnedRecipeMoved : Packet
 {
     public List<int> RecipePins { get; }
     

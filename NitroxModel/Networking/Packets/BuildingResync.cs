@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class BuildingResync : Packet
+public sealed record BuildingResync : Packet
 {
     public Dictionary<BuildEntity, int> BuildEntities { get; }
     public Dictionary<ModuleEntity, int> ModuleEntities { get; }

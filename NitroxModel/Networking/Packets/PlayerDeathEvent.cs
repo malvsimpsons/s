@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class PlayerDeathEvent : Packet
+    public record PlayerDeathEvent : Packet
     {
         public ushort PlayerId { get; }
         public NitroxVector3 DeathPosition { get; }

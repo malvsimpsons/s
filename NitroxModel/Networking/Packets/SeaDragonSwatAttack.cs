@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class SeaDragonSwatAttack : Packet
+public record SeaDragonSwatAttack : Packet
 {
     public NitroxId SeaDragonId { get; }
     public NitroxId TargetId { get; }

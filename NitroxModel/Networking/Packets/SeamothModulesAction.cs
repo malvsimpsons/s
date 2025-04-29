@@ -6,7 +6,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class SeamothModulesAction : Packet
+    public record SeamothModulesAction : Packet
     {
         public NitroxTechType TechType { get; }
         public int SlotID { get; }

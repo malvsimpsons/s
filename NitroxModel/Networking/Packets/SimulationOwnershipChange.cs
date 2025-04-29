@@ -5,7 +5,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class SimulationOwnershipChange : Packet
+    public record SimulationOwnershipChange : Packet
     {
         public List<SimulatedEntity> Entities { get; }
 

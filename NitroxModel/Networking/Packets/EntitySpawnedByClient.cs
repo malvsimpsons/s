@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class EntitySpawnedByClient : Packet
+public record EntitySpawnedByClient : Packet
 {
     public Entity Entity { get; }
     public bool RequireRespawn { get; }

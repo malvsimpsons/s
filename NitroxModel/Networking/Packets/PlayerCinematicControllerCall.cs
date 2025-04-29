@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PlayerCinematicControllerCall : Packet
+public record PlayerCinematicControllerCall : Packet
 {
     public ushort PlayerId { get; }
     public NitroxId ControllerID { get; }

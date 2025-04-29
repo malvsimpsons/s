@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class PlayerKicked : Packet
+    public record PlayerKicked : Packet
     {
         public string Reason { get; }
 

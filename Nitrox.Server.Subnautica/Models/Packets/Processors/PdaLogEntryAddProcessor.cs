@@ -4,13 +4,13 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class PDALogEntryAddProcessor(StoryScheduleService storyScheduleService) : IAuthPacketProcessor<PDALogEntryAdd>
+internal sealed class PdaLogEntryAddProcessor(StoryScheduleService storyScheduleService) : IAuthPacketProcessor<PdaLogEntryAdd>
 {
     // TODO: USE DATABASE
     // private readonly IStateManager<PdaStateData> pda = pda;
     private readonly StoryScheduleService storyScheduleService = storyScheduleService;
 
-    public async Task Process(AuthProcessorContext context, PDALogEntryAdd packet)
+    public async Task Process(AuthProcessorContext context, PdaLogEntryAdd packet)
     {
         // TODO: USE DATABASE
         // pda.GetStateAsync().GetAwaiter().GetResult().AddPdaLogEntry(new PdaLogEntry(packet.Key, packet.Timestamp));

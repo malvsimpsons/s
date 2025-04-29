@@ -3,7 +3,7 @@ using System;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class StoryGoalExecuted : Packet
+public record StoryGoalExecuted : Packet
 {
     public string Key { get; }
     public EventType Type { get; }

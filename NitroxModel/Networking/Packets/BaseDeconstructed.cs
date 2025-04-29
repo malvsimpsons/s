@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public sealed class BaseDeconstructed : Packet
+public sealed record BaseDeconstructed : Packet
 {
     public NitroxId FormerBaseId { get; }
     public GhostEntity ReplacerGhost { get; }

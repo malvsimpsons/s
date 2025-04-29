@@ -6,7 +6,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class EntityTransformUpdates : Packet
+public record EntityTransformUpdates : Packet
 {
     public List<EntityTransformUpdate> Updates { get; }
 

@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class EntityReparented : Packet
+public record EntityReparented : Packet
 {
     public NitroxId Id { get; }
 

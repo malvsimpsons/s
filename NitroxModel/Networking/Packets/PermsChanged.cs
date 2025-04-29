@@ -4,7 +4,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PermsChanged : Packet
+public record PermsChanged : Packet
 {
     public Perms NewPerms;
 

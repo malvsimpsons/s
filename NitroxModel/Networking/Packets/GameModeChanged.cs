@@ -4,7 +4,7 @@ using NitroxModel.Server;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class GameModeChanged : Packet
+public record GameModeChanged : Packet
 {
     public SessionId PlayerId { get; }
     public bool AllPlayers { get; }

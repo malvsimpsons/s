@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets
 {
     [Serializable]
-    public class BedEnter : Packet
+    public record BedEnter : Packet
     {
     }
 }

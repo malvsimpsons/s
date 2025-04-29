@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PdaScanFinished : Packet
+public record PdaScanFinished : Packet
 {
     public NitroxId Id { get; }
     public NitroxTechType TechType { get; }

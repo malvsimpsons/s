@@ -4,7 +4,7 @@ using NitroxModel.DataStructures;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class PlayerSeeOutOfCellEntity : Packet
+public record PlayerSeeOutOfCellEntity : Packet
 {
     public NitroxId EntityId { get; set; }
 

@@ -3,7 +3,7 @@
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class ServerStopped : Packet
+public record ServerStopped : Packet
 {
 
 }

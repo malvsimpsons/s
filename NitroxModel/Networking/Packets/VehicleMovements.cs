@@ -6,7 +6,7 @@ using NitroxModel.DataStructures.Unity;
 namespace NitroxModel.Networking.Packets;
 
 [Serializable]
-public class VehicleMovements : Packet
+public record VehicleMovements : Packet
 {
     public List<MovementData> Data { get; }
     public double RealTime { get; set; }
