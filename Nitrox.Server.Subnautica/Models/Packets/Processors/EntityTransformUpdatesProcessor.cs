@@ -15,14 +15,14 @@ internal class EntityTransformUpdatesProcessor(WorldEntityManager worldEntityMan
 
     public async Task Process(AuthProcessorContext context, EntityTransformUpdates packet)
     {
-        Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer = InitializeVisibleUpdateMapWithOtherPlayers(context.Sender.PlayerId);
-        AssignVisibleUpdatesToPlayers(context.Sender.PlayerId, packet.Updates, visibleUpdatesByPlayer);
+        Dictionary<SessionId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer = InitializeVisibleUpdateMapWithOtherPlayers(context.Sender.SessionId);
+        AssignVisibleUpdatesToPlayers(context.Sender.SessionId, packet.Updates, visibleUpdatesByPlayer);
         await SendUpdatesToPlayers(visibleUpdatesByPlayer);
     }
 
-    private Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> InitializeVisibleUpdateMapWithOtherPlayers(PeerId simulatingPlayer)
+    private Dictionary<SessionId, List<EntityTransformUpdates.EntityTransformUpdate>> InitializeVisibleUpdateMapWithOtherPlayers(SessionId simulatingPlayer)
     {
-        Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer = new();
+        Dictionary<SessionId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer = new();
 
         // TODO: Fix using database
         // foreach (PeerId player in playerManager.GetConnectedPlayersAsync())
@@ -36,9 +36,9 @@ internal class EntityTransformUpdatesProcessor(WorldEntityManager worldEntityMan
         return visibleUpdatesByPlayer;
     }
 
-    private void AssignVisibleUpdatesToPlayers(PeerId sendingPlayer, List<EntityTransformUpdates.EntityTransformUpdate> updates, Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer)
+    private void AssignVisibleUpdatesToPlayers(SessionId sendingPlayer, List<EntityTransformUpdates.EntityTransformUpdate> updates, Dictionary<SessionId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer)
     {
-        // TODO: Fix with database and peerId
+        // TODO: USE DATABASE
         // foreach (EntityTransformUpdates.EntityTransformUpdate update in updates)
         // {
         //     if (!simulationOwnershipData.TryGetLock(update.Id, out SimulationOwnershipData.PlayerLock playerLock) || playerLock.Player != sendingPlayer)
@@ -64,11 +64,11 @@ internal class EntityTransformUpdatesProcessor(WorldEntityManager worldEntityMan
         // }
     }
 
-    private async Task SendUpdatesToPlayers(Dictionary<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer)
+    private async Task SendUpdatesToPlayers(Dictionary<SessionId, List<EntityTransformUpdates.EntityTransformUpdate>> visibleUpdatesByPlayer)
     {
-        foreach (KeyValuePair<PeerId, List<EntityTransformUpdates.EntityTransformUpdate>> playerUpdates in visibleUpdatesByPlayer)
+        foreach (KeyValuePair<SessionId, List<EntityTransformUpdates.EntityTransformUpdate>> playerUpdates in visibleUpdatesByPlayer)
         {
-            PeerId player = playerUpdates.Key;
+            SessionId player = playerUpdates.Key;
             List<EntityTransformUpdates.EntityTransformUpdate> updates = playerUpdates.Value;
 
             if (updates.Count > 0)

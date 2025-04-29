@@ -27,7 +27,7 @@ internal sealed class KickCommand(LiteNetLibService liteNetLib) : ICommandHandle
                 break;
             case CommandOrigin.PLAYER:
             case CommandOrigin.SERVER:
-                if (!await liteNetLib.KickAsync(playerToKick.Id, reason))
+                if (!await liteNetLib.KickAsync(playerToKick.SessionId, reason))
                 {
                     await context.ReplyAsync($"Failed to kick '{playerToKick.Name}'");
                 }

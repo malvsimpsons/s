@@ -266,7 +266,7 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
         if (deltaOperations != 0 && configProvider.Value.SafeBuilding)
         {
             logger.LogWarning("Ignoring a {TypeName} packet from [{PlayerName}] which is {Operations}", nameof(PieceDeconstructed), player.Name, Math.Abs(deltaOperations) + (deltaOperations > 0 ? " operations ahead" : " operations late"));
-            await NotifyPlayerDesync(player.Id);
+            await NotifyPlayerDesync(player.SessionId);
             return (null, -1);
         }
 
@@ -305,10 +305,10 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
         return true;
     }
 
-    private async Task NotifyPlayerDesync(PeerId player)
+    private async Task NotifyPlayerDesync(SessionId playerSessionId)
     {
         Dictionary<NitroxId, int> operations = GetEntitiesOperations(worldEntityManager.GetGlobalRootEntities(true));
-        await packetSender.SendPacket(new BuildingDesyncWarning(operations), player);
+        await packetSender.SendPacket(new BuildingDesyncWarning(operations), playerSessionId);
     }
 
     public static Dictionary<NitroxId, int> GetEntitiesOperations(List<GlobalRootEntity> entities)

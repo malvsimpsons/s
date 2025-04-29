@@ -84,7 +84,8 @@ public sealed partial class LiveMixin_TakeDamage_Patch : NitroxPatch, IDynamicPa
                 return false;
         }
 
-        Resolve<IPacketSender>().Send(new PvpAttack(remotePlayerIdentifier.RemotePlayer.PlayerId, damage, attackType));
+        // TODO: FIX THIS - GET SESSION ID INSTEAD OF PLAYER ID
+        // Resolve<IPacketSender>().Send(new PvpAttack(remotePlayerIdentifier.RemotePlayer.PlayerId, damage, attackType));
         return true;
     }
 

@@ -32,15 +32,13 @@ public interface ICommandContext
     /// </summary>
     /// <param name="id">The id of the receiving user.</param>
     /// <param name="message">The message to send.</param>
-    Task MessageAsync(PeerId id, string message);
+    Task MessageAsync(SessionId id, string message);
 
     /// <summary>
     ///     Sends a message to all other users.
     /// </summary>
     /// <param name="message">The message to send to all users.</param>
     Task MessageAllAsync(string message);
-
-    ValueTask SendAsync<T>(T data, PeerId peerId);
 
     ValueTask SendAsync<T>(T data, SessionId sessionId);
     ValueTask SendToAll<T>(T data);

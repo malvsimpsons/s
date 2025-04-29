@@ -25,8 +25,8 @@ internal class OpCommand(PlayerRepository playerRepository) : ICommandHandler<Co
                 {
 
                 }
-                await context.SendAsync(new PermsChanged(targetPlayer.Permissions), targetPlayer.Id); // Notify this player that they can show all the admin-related stuff
-                await context.MessageAsync(targetPlayer.Id, $"You were promoted to {targetPlayer.Permissions}");
+                await context.SendAsync(new PermsChanged(targetPlayer.Permissions), targetPlayer.SessionId); // Notify this player that they can show all the admin-related stuff
+                await context.MessageAsync(targetPlayer.SessionId, $"You were promoted to {targetPlayer.Permissions}");
                 await context.ReplyAsync($"Updated {targetPlayer.Name}'s permissions to {targetPlayer.Permissions}");
                 break;
         }

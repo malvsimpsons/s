@@ -28,9 +28,9 @@ internal class PromoteCommand(PlayerRepository playerRepository) : ICommandHandl
                     await context.ReplyAsync($"Failed to set permissions to {permissions} for player id {targetPlayer.Id}");
                     break;
                 }
-                await context.SendAsync(new PermsChanged(targetPlayer.Permissions), targetPlayer.Id);
+                await context.SendAsync(new PermsChanged(targetPlayer.Permissions), targetPlayer.SessionId);
                 await context.ReplyAsync($"Updated {targetPlayer.Name}'s permissions to {permissions}");
-                await context.MessageAsync(targetPlayer.Id, $"You've been promoted to {permissions}");
+                await context.MessageAsync(targetPlayer.SessionId, $"You've been promoted to {permissions}");
                 break;
         }
     }

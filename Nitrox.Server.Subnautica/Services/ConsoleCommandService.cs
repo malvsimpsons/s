@@ -24,7 +24,7 @@ internal sealed class ConsoleCommandService(CommandService commandService, Playe
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) => await HandleConsoleInputAsync(stoppingToken);
 
-    private void SubmitInput(string input) => commandService.ExecuteCommand(input, new HostToServerCommandContext(playerRepository, packetSender));
+    private void SubmitInput(string input) => commandService.ExecuteCommand(input, new HostToServerCommandContext(packetSender));
 
     /// <summary>
     ///     Handles per-key input of the console.

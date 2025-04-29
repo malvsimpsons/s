@@ -25,7 +25,7 @@ internal class UnmuteCommand(PlayerRepository playerRepository) : ICommandHandle
                 break;
             case not null when await playerRepository.GetPlayerNameIfNotMuted(targetPlayer.Id) is not null:
                 await context.ReplyAsync($"{targetPlayer.Name} is already unmuted");
-                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, false), targetPlayer.Id);
+                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, false), targetPlayer.SessionId);
                 break;
             case not null:
                 if (!await playerRepository.SetPlayerMuted(targetPlayer.Id, false))
@@ -33,8 +33,8 @@ internal class UnmuteCommand(PlayerRepository playerRepository) : ICommandHandle
                     await context.ReplyAsync($"Failed to unmute {targetPlayer.Name}");
                     break;
                 }
-                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, false), targetPlayer.Id);
-                await context.MessageAsync(targetPlayer.Id, "You're no longer muted");
+                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, false), targetPlayer.SessionId);
+                await context.MessageAsync(targetPlayer.SessionId, "You're no longer muted");
                 await context.ReplyAsync($"Unmuted {targetPlayer.Name}");
                 break;
         }

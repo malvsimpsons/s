@@ -17,9 +17,11 @@ public record ConnectedPlayerDto
     public PeerId Id { get; init; }
 
     /// <summary>
-    ///     Gets the auto incremented session ID of the connected player. This ID is not globally unique and should only be valid while the player is
-    ///     connected.
+    ///     Gets the auto incremented session ID of the connected player.
     /// </summary>
+    /// <remarks>
+    ///     This ID is not globally unique, so don't store it for a long time.
+    /// </remarks>
     public SessionId SessionId { get; init; }
 
     /// <summary>

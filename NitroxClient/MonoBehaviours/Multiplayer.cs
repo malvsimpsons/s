@@ -133,7 +133,7 @@ namespace NitroxClient.MonoBehaviours
                     {
                         throw new Exception($"Failed to find packet processor for packet {packet}");
                     }
-                    processor.Execute(null, packet);
+                    processor.Execute(null, packet).ContinueWithHandleError();
                 }
                 catch (Exception ex)
                 {

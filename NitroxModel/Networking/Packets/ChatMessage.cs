@@ -5,12 +5,12 @@ namespace NitroxModel.Networking.Packets;
 [Serializable]
 public class ChatMessage : Packet
 {
-    public SessionId PlayerId { get; }
+    public SessionId SenderId { get; }
     public string Text { get; }
 
-    public ChatMessage(SessionId playerId, string text)
+    public ChatMessage(SessionId senderId, string text)
     {
-        PlayerId = playerId;
+        SenderId = senderId;
         Text = text;
     }
 }

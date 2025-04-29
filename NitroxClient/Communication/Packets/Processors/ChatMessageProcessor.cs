@@ -29,7 +29,7 @@ namespace NitroxClient.Communication.Packets.Processors
 
         public Task Process(IPacketProcessContext context, ChatMessage message)
         {
-            if (message.PlayerId != PeerId.SERVER_ID)
+            if (message.SenderId != PeerId.SERVER_ID)
             {
                 LogClientMessage(message);
             }
@@ -45,19 +45,19 @@ namespace NitroxClient.Communication.Packets.Processors
             // The message can come from either the local player or other players
             string playerName;
             NitroxColor color;
-            if (localPlayer.PlayerId == message.PlayerId)
+            if (localPlayer.PlayerId == message.SenderId)
             {
                 playerName = localPlayer.PlayerName;
                 color = localPlayer.PlayerSettings.PlayerColor;
             }
             else
             {
-                Optional<RemotePlayer> remotePlayer = remotePlayerManager.Find(message.PlayerId);
+                Optional<RemotePlayer> remotePlayer = remotePlayerManager.Find(message.SenderId);
                 if (!remotePlayer.HasValue)
                 {
                     string playerTableFormatted = string.Join("\n", remotePlayerManager.GetAll().Select(ply => $"Name: '{ply.PlayerName}', Id: {ply.PlayerId}"));
-                    Log.Error($"Tried to add chat message for remote player that could not be found with id '${message.PlayerId}' and message: '{message.Text}'.\nAll remote players right now:\n{playerTableFormatted}");
-                    throw new Exception($"Tried to add chat message for remote player that could not be found with id '${message.PlayerId}' and message: '{message.Text}'.\nAll remote players right now:\n{playerTableFormatted}");
+                    Log.Error($"Tried to add chat message for remote player that could not be found with id '${message.SenderId}' and message: '{message.Text}'.\nAll remote players right now:\n{playerTableFormatted}");
+                    throw new Exception($"Tried to add chat message for remote player that could not be found with id '${message.SenderId}' and message: '{message.Text}'.\nAll remote players right now:\n{playerTableFormatted}");
                 }
 
                 playerName = remotePlayer.Value.PlayerName;

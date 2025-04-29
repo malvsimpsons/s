@@ -29,6 +29,6 @@ internal class PvpAttackProcessor(IOptions<SubnauticaServerOptions> configProvid
         }
 
         packet.Damage *= multiplier;
-        await context.Send(packet, packet.TargetPlayerId);
+        await context.Send(packet, packet.TargetSessionId);
     }
 }

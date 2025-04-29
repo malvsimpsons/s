@@ -5,12 +5,19 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using NitroxModel.Networking.Packets.Processors.Core;
+#if NET5_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 
 namespace NitroxModel.Networking.Packets.Core;
 
-public class PacketProcessorsInvoker
+public sealed class PacketProcessorsInvoker
 {
+#if NET5_0_OR_GREATER
+    private readonly FrozenDictionary<Type, Entry> packetTypeToProcessorEntry;
+#else
     private readonly Dictionary<Type, Entry> packetTypeToProcessorEntry;
+#endif
 
     public PacketProcessorsInvoker(IEnumerable<IPacketProcessor> packetProcessors)
     {
@@ -20,21 +27,26 @@ public class PacketProcessorsInvoker
         }
 
         // TODO: Allow processors to handle multiple packet types (i.e. generate multiple "Entry" objects per processor type)
-        packetTypeToProcessorEntry = packetProcessors.Select(pInstance =>
-                                                     {
-                                                         return pInstance.GetType()
-                                                                         .GetInterfaces()
-                                                                         .Where(i => typeof(IPacketProcessor).IsAssignableFrom(i))
-                                                                         .Select(i => new
-                                                                         {
-                                                                             Type = i,
-                                                                             PacketType = i.GetGenericArguments().FirstOrDefault(t => typeof(Packet).IsAssignableFrom(t))
-                                                                         })
-                                                                         .Where(p => p.PacketType != null)
-                                                                         .Select(p => new Entry(pInstance, p.Type, p.PacketType))
-                                                                         .FirstOrDefault();
-                                                     })
-                                                     .ToDictionary(entry => entry.PacketType, entry => entry);
+        Dictionary<Type, Entry> lookup = packetProcessors.Select(pInstance =>
+                                                         {
+                                                             return pInstance.GetType()
+                                                                             .GetInterfaces()
+                                                                             .Where(i => typeof(IPacketProcessor).IsAssignableFrom(i))
+                                                                             .Select(i => new
+                                                                             {
+                                                                                 Type = i,
+                                                                                 PacketType = i.GetGenericArguments().FirstOrDefault(t => typeof(Packet).IsAssignableFrom(t))
+                                                                             })
+                                                                             .Where(p => p.PacketType != null)
+                                                                             .Select(p => new Entry(pInstance, p.Type, p.PacketType))
+                                                                             .First();
+                                                         })
+                                                         .ToDictionary(entry => entry.PacketType, entry => entry);
+#if NET5_0_OR_GREATER
+        packetTypeToProcessorEntry = lookup.ToFrozenDictionary();
+#else
+        packetTypeToProcessorEntry = lookup;
+#endif
     }
 
     public Entry GetProcessor(Packet packet)
@@ -48,7 +60,7 @@ public class PacketProcessorsInvoker
         return null;
     }
 
-    public class Entry
+    public sealed class Entry
     {
         private static readonly Type[] expectedProcessorParameterTypes = [typeof(IPacketProcessContext), typeof(Packet)];
         private readonly Func<IPacketProcessContext, Packet, Task> invoker;

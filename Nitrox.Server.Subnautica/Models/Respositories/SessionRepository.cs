@@ -16,6 +16,9 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     /// <summary>
     ///     Minutes to wait before letting a session id be reused.
     /// </summary>
+    /// <remarks>
+    ///     It's important to give plenty of time for the server to finish any processing. Otherwise, impersonation issues can happen.
+    /// </remarks>
     private const int SESSION_ID_REUSE_LOCK_IN_MINUTES = 5;
 
     private readonly DatabaseService databaseService = databaseService;

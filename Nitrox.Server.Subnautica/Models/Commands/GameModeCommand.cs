@@ -40,7 +40,7 @@ internal class GameModeCommand(IServerPacketSender packetSender, PlayerRepositor
                 }
 
                 await packetSender.SendPacketToAll(GameModeChanged.ForPlayer(targetPlayer.SessionId, gameMode));
-                await context.MessageAsync(targetPlayer.Id, $"GameMode changed to {gameMode}");
+                await context.MessageAsync(targetPlayer.SessionId, $"GameMode changed to {gameMode}");
                 if (context.Origin == CommandOrigin.SERVER)
                 {
                     await context.ReplyAsync($"Changed {targetPlayer.Name} [{targetPlayer.Id}]'s gamemode to {gameMode}");

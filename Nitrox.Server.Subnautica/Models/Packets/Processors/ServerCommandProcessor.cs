@@ -24,6 +24,6 @@ internal sealed class ServerCommandProcessor(CommandService commandService, Play
             return;
         }
         logger.LogInformation("{PlayerName} issued command: /{Command}", player.Name, packet.Cmd);
-        commandService.ExecuteCommand(packet.Cmd, new PlayerToServerCommandContext(playerRepository, packetSender, player));
+        commandService.ExecuteCommand(packet.Cmd, new PlayerToServerCommandContext(packetSender, player));
     }
 }

@@ -18,7 +18,7 @@ internal record AuthProcessorContext : IPacketProcessContext<(PeerId PlayerId, S
         Sender = sender;
     }
 
-    public async Task Send<T>(T packet, PeerId peerId) where T : Packet => await packetSender.SendPacket(packet, peerId);
+    public async Task Send<T>(T packet, SessionId sessionId) where T : Packet => await packetSender.SendPacket(packet, sessionId);
 
     public async Task ReplyToSender<T>(T packet) where T : Packet => await packetSender.SendPacket(packet, Sender.SessionId);
 

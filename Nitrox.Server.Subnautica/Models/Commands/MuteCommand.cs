@@ -26,12 +26,12 @@ internal class MuteCommand(PlayerRepository playerRepository) : ICommandHandler<
                 break;
             case not null when await playerRepository.GetPlayerNameIfNotMuted(targetPlayer.Id) == null:
                 await context.ReplyAsync($"{targetPlayer.Name} is already muted");
-                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, true), targetPlayer.Id);
+                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, true), targetPlayer.SessionId);
                 break;
             case not null:
                 await playerRepository.SetPlayerMuted(targetPlayer.Id, true);
-                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, true), targetPlayer.Id);
-                await context.MessageAsync(targetPlayer.Id, "You're now muted");
+                await context.SendAsync(new MutePlayer(targetPlayer.SessionId, true), targetPlayer.SessionId);
+                await context.MessageAsync(targetPlayer.SessionId, "You're now muted");
                 await context.ReplyAsync($"Muted {targetPlayer.Name}");
                 break;
             default:

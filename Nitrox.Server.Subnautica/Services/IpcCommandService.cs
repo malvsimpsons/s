@@ -31,7 +31,7 @@ internal sealed class IpcCommandService(CommandService commandService, PlayerRep
             try
             {
                 string command = await ReadStringAsync(stoppingToken);
-                commandService.ExecuteCommand(command, new HostToServerCommandContext(playerRepository, packetSender));
+                commandService.ExecuteCommand(command, new HostToServerCommandContext(packetSender));
             }
             catch (OperationCanceledException)
             {

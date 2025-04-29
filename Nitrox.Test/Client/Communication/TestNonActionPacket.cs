@@ -1,4 +1,6 @@
-﻿namespace Nitrox.Test.Client.Communication
+﻿using NitroxModel.Networking.Packets;
+
+namespace Nitrox.Test.Client.Communication
 {
     [Serializable]
     public class TestNonActionPacket : Packet

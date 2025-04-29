@@ -49,18 +49,13 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         server = new NetManager(listener);
     }
 
-    public async Task<bool> KickAsync(PeerId peerId, string reason)
+    public async Task<bool> KickAsync(SessionId sessionId, string reason)
     {
-        PlayerSession session = await sessionRepository.GetSessionAsync(peerId);
-        if (session == null)
+        if (!peersBySessionId.TryGetValue(sessionId, out NetPeer peer))
         {
             return false;
         }
-        if (!peersBySessionId.TryGetValue(session.Id, out NetPeer peer))
-        {
-            return false;
-        }
-        await SendPacket(new PlayerKicked(reason), session.Id);
+        await SendPacket(new PlayerKicked(reason), sessionId);
         server.DisconnectPeer(peer); // This will trigger client disconnect, which will clear the session data.
         return true;
     }
@@ -232,17 +227,6 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         }
     }
 
-    public async ValueTask SendPacket<T>(T packet, PeerId peerId) where T : Packet
-    {
-        PlayerSession session = await sessionRepository.GetSessionAsync(peerId);
-        if (session == null)
-        {
-            logger.LogWarning("Cannot send packet {TypeName} as no session is known for player id {PlayerId}", packet?.GetType().Name, peerId);
-            return;
-        }
-        await SendPacket(packet, session.Id);
-    }
-
     public ValueTask SendPacket<T>(T packet, SessionId sessionId) where T : Packet
     {
         if (!peersBySessionId.TryGetValue(sessionId, out NetPeer peer) || peer.ConnectionState != ConnectionState.Connected)
@@ -261,19 +245,6 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
             SendPacket(packet, pair.Value);
         }
         return ValueTask.CompletedTask;
-    }
-
-    public async ValueTask SendPacketToOthers<T>(T packet, PeerId excludedPlayerId) where T : Packet
-    {
-        PlayerSession session = await sessionRepository.GetSessionAsync(excludedPlayerId);
-        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
-        {
-            if (pair.Key == session.Player.Id)
-            {
-                continue;
-            }
-            SendPacket(packet, pair.Value);
-        }
     }
 
     public ValueTask SendPacketToOthers<T>(T packet, SessionId excludedSessionId) where T : Packet

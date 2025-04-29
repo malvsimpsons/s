@@ -31,7 +31,7 @@ internal class DeopCommand(PlayerRepository playerRepository) : ICommandHandler<
                     break;
                 }
                 await context.SendAsync(new PermsChanged(DEOP_PERMS_RESULT), targetPlayer.SessionId); // Notify so they no longer get admin stuff on client (which would in any way stop working)
-                await context.MessageAsync(targetPlayer.Id, $"You were demoted to {DEOP_PERMS_RESULT}");
+                await context.MessageAsync(targetPlayer.SessionId, $"You were demoted to {DEOP_PERMS_RESULT}");
                 await context.ReplyAsync($"Updated {targetPlayer.Name}'s permissions to {DEOP_PERMS_RESULT}");
                 break;
         }
