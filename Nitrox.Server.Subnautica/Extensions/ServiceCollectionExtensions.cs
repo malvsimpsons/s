@@ -76,7 +76,7 @@ internal static partial class ServiceCollectionExtensions
                 .Configure((SqliteOptions options, IHostEnvironment environment) =>
                 {
                     // In development mode we might want to inspect the database while it's running - not just through this server but also via IDE.
-                    // For this, we need extra stability against corruption from SQLite. These settings accomplish that.
+                    // For this, we need extra stability against corruption by SQLite. These settings accomplish that.
                     if (environment.IsDevelopment())
                     {
                         options.Synchronous = SqliteOptions.Sync.NORMAL;

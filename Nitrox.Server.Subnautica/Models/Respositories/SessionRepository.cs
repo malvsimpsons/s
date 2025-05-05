@@ -17,14 +17,22 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     ///     Minutes to wait before letting a session id be reused.
     /// </summary>
     /// <remarks>
-    ///     It's important to give plenty of time for the server to finish any processing. Otherwise, impersonation issues can happen.
+    ///     It's important to give plenty of time for the server to finish any processing. Otherwise, impersonation issues can
+    ///     happen.
     /// </remarks>
-    private const int SESSION_ID_REUSE_LOCK_IN_MINUTES = 5;
+    private const int SESSION_ID_REUSE_LOCK_IN_MINUTES = 10;
 
     private readonly DatabaseService databaseService = databaseService;
     private readonly ILogger<SessionRepository> logger = logger;
     private readonly Lock sessionIdLock = new();
-    private readonly SortedList<DateTimeOffset, SessionId> usedSessionIds = [];
+
+    /// <summary>
+    ///     Stopwatch is used instead of <see cref="DateTimeOffset.UtcNow" /> so session logic is independent of system time.
+    ///     Otherwise, if host changes system time, session could be reused earlier than expected.
+    /// </summary>
+    private readonly Stopwatch sessionStopWatch = Stopwatch.StartNew();
+
+    private readonly SortedList<TimeSpan, SessionId> usedSessionIds = [];
     private SessionId nextSessionId = 1;
     private ISessionCleaner[] sessionCleaners;
 
@@ -86,17 +94,18 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
                 logger.LogWarning("Failed to delete session data on session id {SessionId}", sessionId);
                 return;
             }
-            MarkSessionIdAsUsed(sessionId);
-            logger.LogTrace("Session data by id {SessionId} has been removed", sessionId);
         }
+
+        MarkSessionIdAsUsed(sessionId);
+        logger.LogTrace("Session #{SessionId} data has been removed", sessionId);
     }
 
     private SessionId GetNextSessionId()
     {
         lock (sessionIdLock)
         {
-            (DateTimeOffset timeThreshold, SessionId sessionId) = usedSessionIds.FirstOrDefault();
-            if (sessionId > 0 && timeThreshold <= DateTimeOffset.UtcNow)
+            (TimeSpan timeThreshold, SessionId sessionId) = usedSessionIds.FirstOrDefault();
+            if (sessionId > 0 && timeThreshold <= sessionStopWatch.Elapsed)
             {
                 usedSessionIds.Remove(timeThreshold);
                 return sessionId;
@@ -114,7 +123,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
             {
                 throw new Exception($"Tried to add duplicate session id {sessionId} to used session ids");
             }
-            usedSessionIds.Add(DateTimeOffset.UtcNow.AddMinutes(SESSION_ID_REUSE_LOCK_IN_MINUTES), sessionId);
+            usedSessionIds.Add(sessionStopWatch.Elapsed.Add(TimeSpan.FromMinutes(SESSION_ID_REUSE_LOCK_IN_MINUTES)), sessionId);
         }
     }
 

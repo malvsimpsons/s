@@ -84,16 +84,23 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         foreach (PropertyInfo property in options.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
         {
             ConfigurationKeyNameAttribute configKeyAttr = property.GetCustomAttribute<ConfigurationKeyNameAttribute>();
-            if (configKeyAttr == null)
+            string pragmaKey = configKeyAttr?.Name;
+            if (string.IsNullOrWhiteSpace(pragmaKey))
             {
+                continue;
+            }
+            string pragmaValue = property.GetValue(options)?.ToString() ?? "";
+            if (string.IsNullOrWhiteSpace(pragmaValue))
+            {
+                logger.LogWarning("Pragma {Key} has no value", pragmaKey, pragmaValue);
                 continue;
             }
 
             pragmaBuilder
                 .Append("PRAGMA ")
-                .Append(configKeyAttr.Name)
+                .Append(pragmaKey)
                 .Append('=')
-                .Append(property.GetValue(options)?.ToString() ?? "")
+                .Append(pragmaValue)
                 .Append(';');
         }
         if (pragmaBuilder.Length > 0)
