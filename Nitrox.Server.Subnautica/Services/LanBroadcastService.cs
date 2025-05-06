@@ -4,7 +4,6 @@ using System.Threading;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using NitroxModel.Constants;
@@ -63,7 +62,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
             listener?.ClearNetworkReceiveUnconnectedEvent();
             server?.Stop();
             pollTimer?.Dispose();
-            logger.LogDebug("stopped");
+            logger.ZLogDebug($"stopped");
             throw;
         }
     }
@@ -74,7 +73,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
     {
         if (runAsUser)
         {
-            logger.LogDebug("Adjusting to option changes...");
+            logger.ZLogDebug($"Adjusting to option changes...");
         }
         if (options.LanDiscoveryEnabled)
         {
@@ -85,7 +84,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
             pollTimer.Period = TimeSpan.FromMilliseconds(ACTIVE_POLL_INTERVAL_MS);
             if (runAsUser)
             {
-                logger.LogInformation("enabled");
+                logger.ZLogInformation($"enabled");
             }
             logger.LogDebug("broadcasting on port {Port}", selectedPort);
         }
@@ -95,7 +94,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
             pollTimer.Period = TimeSpan.FromMilliseconds(INACTIVE_POLL_INTERVAL_MS);
             if (runAsUser)
             {
-                logger.LogInformation("disabled");
+                logger.ZLogInformation($"disabled");
             }
         }
     }

@@ -7,9 +7,10 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class DiscordRequestIPProcessor(IOptions<SubnauticaServerOptions> optionsProvider) : IAuthPacketProcessor<DiscordRequestIP>
+internal class DiscordRequestIPProcessor(IOptions<SubnauticaServerOptions> optionsProvider, ILogger<DiscordRequestIPProcessor> logger) : IAuthPacketProcessor<DiscordRequestIP>
 {
     private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
+    private readonly ILogger<DiscordRequestIPProcessor> logger = logger;
 
     private string ipPort;
 
@@ -20,7 +21,7 @@ internal class DiscordRequestIPProcessor(IOptions<SubnauticaServerOptions> optio
             string result = await GetIpAsync();
             if (result == "")
             {
-                Log.Error("Couldn't get external Ip for discord request.");
+                logger.ZLogError($"Couldn't provide server external IP to session #{context.Sender.SessionId}");
                 return;
             }
 

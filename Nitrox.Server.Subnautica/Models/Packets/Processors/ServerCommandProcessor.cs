@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Nitrox.Server.Subnautica.Models.Commands.Core;
+﻿using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;

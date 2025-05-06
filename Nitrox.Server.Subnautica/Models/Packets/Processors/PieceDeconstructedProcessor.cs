@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Dto;
 using NitroxModel.Networking.Packets;
@@ -20,7 +18,7 @@ internal sealed class PieceDeconstructedProcessor(GameLogic.Bases.BuildingManage
         ConnectedPlayerDto connectedPlayer = await playerRepository.GetConnectedPlayerBySessionIdAsync(context.Sender.SessionId);
         if (connectedPlayer == null)
         {
-            logger.LogWarning("Lost connection with player id {PlayerId}", context.Sender);
+            logger.ZLogWarning($"Lost connection with player id {context.Sender:@PlayerId}");
             packet.BaseData = null;
             packet.OperationId = -1;
             await context.ReplyToOthers(packet);

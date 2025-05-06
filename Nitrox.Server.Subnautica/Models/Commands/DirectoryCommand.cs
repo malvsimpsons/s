@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
@@ -18,11 +17,11 @@ internal class DirectoryCommand(ILogger<DirectoryCommand> logger) : ICommandHand
 
         if (!Directory.Exists(path))
         {
-            logger.LogError("Unable to open Nitrox directory {Path} because it does not exist", path);
+            logger.ZLogError($"Unable to open Nitrox directory {path} because it does not exist");
             return Task.CompletedTask;
         }
 
-        logger.LogInformation("Opening directory {Path}", path);
+        logger.ZLogInformation($"Opening directory {path}");
         Process.Start(new ProcessStartInfo(path) { UseShellExecute = true, Verb = "open" })?.Dispose();
         return Task.CompletedTask;
     }

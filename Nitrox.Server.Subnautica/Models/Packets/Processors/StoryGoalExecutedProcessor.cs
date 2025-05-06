@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Networking.Packets;
@@ -15,7 +14,7 @@ internal sealed class StoryGoalExecutedProcessor(StoryScheduleService storySched
 
     public async Task Process(AuthProcessorContext context, StoryGoalExecuted packet)
     {
-        logger.LogDebug("Processing {Packet}", packet);
+        logger.ZLogDebug($"Processing {packet}");
         // TODO: USE DATABASE
         // The switch is structure is similar to StoryGoal.Execute()
         // bool added = storyGoalData.CompletedGoals.Add(packet.Key);

@@ -2,9 +2,9 @@ using Microsoft.Extensions.Logging.Console;
 
 namespace Nitrox.Server.Subnautica.Core.Configuration;
 
-public class NitroxConsoleOptions : ConsoleFormatterOptions
+public class NitroxFormatterOptions : ConsoleFormatterOptions
 {
-    public NitroxConsoleOptions()
+    public NitroxFormatterOptions()
     {
         TimestampFormat = "[HH:mm:ss.fff] ";
     }

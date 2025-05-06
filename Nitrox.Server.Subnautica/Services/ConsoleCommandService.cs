@@ -2,7 +2,6 @@ using System;
 using System.Text;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
@@ -33,7 +32,7 @@ internal sealed class ConsoleCommandService(CommandService commandService, Playe
     {
         if (Console.IsInputRedirected)
         {
-            logger.LogDebug("Input stream is redirected");
+            logger.ZLogDebug($"Input stream is redirected");
             await Task.Run(() =>
             {
                 while (!ct.IsCancellationRequested)
@@ -44,13 +43,13 @@ internal sealed class ConsoleCommandService(CommandService commandService, Playe
             {
                 if (t.IsFaulted)
                 {
-                    logger.LogError(t.Exception, "Failed to read console input");
+                    logger.ZLogError(t.Exception, $"Failed to read console input");
                 }
             }, ct);
         }
         else
         {
-            logger.LogDebug("Input stream is available");
+            logger.ZLogDebug($"Input stream is available");
             StringBuilder inputLineBuilder = new();
 
             void ClearInputLine()

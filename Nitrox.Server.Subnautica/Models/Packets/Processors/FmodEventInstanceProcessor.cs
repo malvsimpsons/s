@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.GameLogic.FMOD;
 using NitroxModel.Networking.Packets;
@@ -15,7 +14,7 @@ internal class FmodEventInstanceProcessor(FmodService fmodService, ILogger<FmodE
     {
         if (!fmodService.TryGetSoundData(packet.AssetPath, out SoundData soundData))
         {
-            logger.LogError("whitelist has no item for {Path}", packet.AssetPath);
+            logger.ZLogError($"whitelist has no item for {packet.AssetPath}");
             return;
         }
 

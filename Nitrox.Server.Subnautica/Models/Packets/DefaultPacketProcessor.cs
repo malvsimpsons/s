@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Dto;
 using NitroxModel.Networking.Packets;
 
@@ -52,7 +50,7 @@ internal sealed class DefaultPacketProcessor(PlayerRepository playerRepository, 
     {
         if (!loggingPacketBlackList.Contains(packet.GetType()))
         {
-            logger.LogDebug("Using default packet processor for: {Packet} and player {PlayerId}", packet, context.Sender);
+            logger.ZLogDebug($"Using default packet processor for: {packet:@Packet} and session #{context.Sender.SessionId:@SessionId}");
         }
 
         if (defaultPacketProcessorBlacklist.Contains(packet.GetType()))
@@ -60,7 +58,8 @@ internal sealed class DefaultPacketProcessor(PlayerRepository playerRepository, 
             ConnectedPlayerDto player = await playerRepository.GetConnectedPlayerBySessionIdAsync(context.Sender.SessionId);
             if (player != null)
             {
-                logger.LogErrorOnce("Player {PlayerName} [{PlayerId}] sent a packet which is blacklisted by the server. It's likely that the said player is using a modified version of Nitrox and action could be taken accordingly.", player.Name, player.Id);
+                // TODO: Log error once
+                logger.ZLogError($"Player {player.Name:@PlayerName} [{player.Id:@PlayerId}] sent a packet which is blacklisted by the server. It's likely that the said player is using a modified version of Nitrox and action could be taken accordingly.");
             }
         }
         await context.ReplyToOthers(packet);

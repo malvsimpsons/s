@@ -6,7 +6,6 @@ using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Configuration;
@@ -37,6 +36,10 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             {
                 await db.Database.EnsureDeletedAsync(cancellationToken);
                 await db.Database.EnsureCreatedAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -92,7 +95,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             string pragmaValue = property.GetValue(options)?.ToString() ?? "";
             if (string.IsNullOrWhiteSpace(pragmaValue))
             {
-                logger.LogWarning("Pragma {Key} has no value", pragmaKey, pragmaValue);
+                logger.ZLogWarning($"Pragma {pragmaKey:@Key} has no value");
                 continue;
             }
 

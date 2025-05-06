@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Nitrox.Server.Subnautica.Services;
 
@@ -24,7 +23,7 @@ internal sealed class PreventMultiServerInitService(ILogger<PreventMultiServerIn
 
     public async Task StartingAsync(CancellationToken cancellationToken)
     {
-        logger.LogDebug("Taking mutex lock on server initializations");
+        logger.ZLogDebug($"Taking mutex lock on server initializations");
         await HoldMutexAsync(cancellationToken);
     }
 
@@ -64,14 +63,14 @@ internal sealed class PreventMultiServerInitService(ILogger<PreventMultiServerIn
             }
             catch (OperationCanceledException)
             {
-                logger.LogDebug("Holding mutex was cancelled");
+                logger.ZLogDebug($"Holding mutex was cancelled");
             }
             finally
             {
                 callerGate.Release();
                 mutexReleaseGate.Wait(-1);
                 mutex.ReleaseMutex();
-                logger.LogDebug("Releasing hold on server initializations");
+                logger.ZLogDebug($"Releasing hold on server initializations");
             }
         });
         await mutexReleaseGate.WaitAsync(-1, ct);

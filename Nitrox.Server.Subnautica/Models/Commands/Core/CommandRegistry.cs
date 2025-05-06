@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Core;
@@ -67,7 +66,7 @@ internal sealed class CommandRegistry
             RegisterHandler(handler);
         }
         SpanHandlerLookup = HandlerLookup.GetAlternateLookup<ReadOnlySpan<char>>();
-        logger.LogDebug("{CommandCount} commands found and registered", commandHandlers.Length);
+        logger.ZLogDebug($"{commandHandlers.Length:@CommandCount} commands found and registered");
 
         IArgConverter[] converters = [.. argConverters];
         foreach (IArgConverter converter in converters)
@@ -202,7 +201,7 @@ internal sealed class CommandRegistry
 
     private void RegisterHandler(CommandHandlerEntry handler)
     {
-        logger.LogTrace("Adding {Handler}", handler);
+        logger.ZLogTrace($"Adding {handler}");
 
         string ownerName = handler.Name;
         if (!HandlerLookup.TryGetValue(ownerName, out List<CommandHandlerEntry> handlers))

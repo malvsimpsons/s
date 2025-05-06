@@ -5,25 +5,26 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class VehicleDockingProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<VehicleDocking>
+internal sealed class VehicleDockingProcessor(EntityRegistry entityRegistry, ILogger<VehicleDockingProcessor> logger) : IAuthPacketProcessor<VehicleDocking>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
+    private readonly ILogger<VehicleDockingProcessor> logger = logger;
 
     public async Task Process(AuthProcessorContext context, VehicleDocking packet)
     {
         if (!entityRegistry.TryGetEntityById(packet.VehicleId, out Entity vehicleEntity))
         {
-            Log.Error($"Unable to find vehicle to dock {packet.VehicleId}");
+            logger.ZLogError($"Unable to find vehicle to dock {packet.VehicleId}");
             return;
         }
 
         if (!entityRegistry.TryGetEntityById(packet.DockId, out Entity dockEntity))
         {
-            Log.Error($"Unable to find dock {packet.DockId} for docking vehicle {packet.VehicleId}");
+            logger.ZLogError($"Unable to find dock {packet.DockId} for docking vehicle {packet.VehicleId}");
             return;
         }
 
         entityRegistry.ReparentEntity(vehicleEntity, dockEntity);
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

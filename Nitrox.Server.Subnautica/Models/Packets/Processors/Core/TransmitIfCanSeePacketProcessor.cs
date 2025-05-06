@@ -1,5 +1,4 @@
 using System;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures;
 using NitroxModel.Networking.Packets;
 

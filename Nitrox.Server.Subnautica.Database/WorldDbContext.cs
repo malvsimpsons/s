@@ -38,6 +38,9 @@ public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContex
             .Properties<NitroxVector3>()
             .HaveConversion<NitroxVector3Converter>();
         builder
+            .Properties<NitroxQuaternion>()
+            .HaveConversion<NitroxQuaternionConverter>();
+        builder
             .Properties<SessionId>()
             .HaveConversion<SessionIdConverter>();
         builder

@@ -1,11 +1,12 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
@@ -13,7 +14,7 @@ using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Helper;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using ZLogger.Providers;
 
 namespace Nitrox.Server.Subnautica;
 
@@ -72,9 +73,7 @@ public class Program
     {
         // TODO: Don't use NitroxModel.Log in this project.
 
-        // TODO: pass logs to serilog with rolling log files strategy.
-
-        // TODO: Investigate Entity Framework query pre-compiling.
+        // TODO: Investigate Entity Framework query pre-compiling and other SQL optimizations.
 
         HostApplicationBuilder builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
         {
@@ -91,9 +90,22 @@ public class Program
                .SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information)
                .AddFilter("Nitrox.Server.Subnautica", level => level > LogLevel.Trace || (level == LogLevel.Trace && Debugger.IsAttached))
                .AddFilter("Microsoft", LogLevel.Warning)
-               .AddNitroxConsole(options =>
+               .AddZLoggerConsole(options =>
                {
-                   options.ColorBehavior = startOptions.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled;
+                   options.UseNitroxFormatter(formatterOptions =>
+                   {
+                       formatterOptions.ColorBehavior = startOptions.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled;
+                   });
+               })
+               .AddZLoggerRollingFile((options, provider) =>
+               {
+                   ServerStartOptions serverStartOptions = provider.GetRequiredService<IOptions<ServerStartOptions>>().Value;
+                   options.FilePathSelector = (timestamp, sequenceNumber) => $"{Path.Combine(serverStartOptions.GetServerLogsPath(), timestamp.ToLocalTime().ToString("yyyy-MM-dd"))}_server_{sequenceNumber:000}.log";
+                   options.RollingInterval = RollingInterval.Day;
+                   options.UseNitroxFormatter(formatterOptions =>
+                   {
+                       formatterOptions.ColorBehavior = LoggerColorBehavior.Disabled;
+                   });
                });
         builder.Services
                .Configure<HostOptions>(options =>

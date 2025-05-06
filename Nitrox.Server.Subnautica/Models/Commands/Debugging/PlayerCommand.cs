@@ -1,6 +1,5 @@
 #if DEBUG
 using System.ComponentModel;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Dto;

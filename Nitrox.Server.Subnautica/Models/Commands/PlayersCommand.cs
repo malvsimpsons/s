@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Respositories;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;

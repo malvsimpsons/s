@@ -1,21 +1,21 @@
 using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities.Metadata;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class EntityMetadataUpdateProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<EntityMetadataUpdate>
+internal class EntityMetadataUpdateProcessor(EntityRegistry entityRegistry, ILogger<EntityMetadataUpdateProcessor> logger) : IAuthPacketProcessor<EntityMetadataUpdate>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
+    private readonly ILogger<EntityMetadataUpdateProcessor> logger = logger;
 
     public async Task Process(AuthProcessorContext context, EntityMetadataUpdate packet)
     {
         if (!entityRegistry.TryGetEntityById(packet.Id, out Entity entity))
         {
-            Log.Error($"Entity metadata {packet.NewValue.GetType()} updated on an entity unknown to the server {packet.Id}");
+            logger.ZLogError($"Entity metadata {packet.NewValue.GetType():@TypeName} updated on an entity unknown to the server {packet.Id}");
             return;
         }
 

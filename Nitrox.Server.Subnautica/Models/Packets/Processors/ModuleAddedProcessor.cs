@@ -7,9 +7,10 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal class ModuleAddedProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<ModuleAdded>
+internal class ModuleAddedProcessor(EntityRegistry entityRegistry, ILogger<ModuleAddedProcessor> logger) : IAuthPacketProcessor<ModuleAdded>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
+    private readonly ILogger<ModuleAddedProcessor> logger = logger;
 
     public async Task Process(AuthProcessorContext context, ModuleAdded packet)
     {
@@ -17,7 +18,7 @@ internal class ModuleAddedProcessor(EntityRegistry entityRegistry) : IAuthPacket
 
         if (!entity.HasValue)
         {
-            Log.Error($"Could not find entity {packet.Id} module added to a vehicle.");
+            logger.ZLogError($"Could not find entity {packet.Id} module added to a vehicle.");
             return;
         }
 
@@ -29,7 +30,7 @@ internal class ModuleAddedProcessor(EntityRegistry entityRegistry) : IAuthPacket
             entityRegistry.AddOrUpdate(moduleEntity);
 
             // Have other players respawn the item inside the inventory.
-            context.ReplyToOthers(new SpawnEntities(moduleEntity, forceRespawn: true));
+            await context.ReplyToOthers(new SpawnEntities(moduleEntity, forceRespawn: true));
         }
     }
 }

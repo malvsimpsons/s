@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Hibernation;
 
 namespace Nitrox.Server.Subnautica.Services;

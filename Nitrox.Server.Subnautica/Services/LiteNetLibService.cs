@@ -9,7 +9,6 @@ using System.Threading.Channels;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Configuration;
@@ -82,7 +81,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         {
             throw new Exception("Failed to start LiteNetLib service");
         }
-        logger.LogDebug("Now listening for connections");
+        logger.ZLogDebug($"Now listening for connections");
 
         try
         {
@@ -100,7 +99,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
             }
             await Task.Delay(500, CancellationToken.None); // TODO: Need async function to wait for all packets to be sent away.
             server.Stop();
-            logger.LogDebug("stopped");
+            logger.ZLogDebug($"stopped");
             listener.ClearPeerConnectedEvent();
             listener.ClearPeerDisconnectedEvent();
             listener.ClearNetworkReceiveEvent();
@@ -132,6 +131,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
             PlayerSession session = await sessionRepository.GetOrCreateSessionAsync(request.RemoteEndPoint.Address.ToString(), (ushort)request.RemoteEndPoint.Port);
             if (session == null)
             {
+                // TODO: Tell user that all session slots are taken.
                 request.Reject();
                 return;
             }

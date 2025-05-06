@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 
@@ -51,7 +50,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
 
         if (!registry.TryGetHandlersByCommandName(context, commandName, out List<CommandHandlerEntry> handlers))
         {
-            logger.LogInformation("Unknown command {CommandName}", commandName.ToString());
+            logger.ZLogInformation($"Unknown command {commandName.ToString():@CommandName}");
             return;
         }
 
@@ -176,7 +175,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error occurred while executing command {Command}", inputText);
+            logger.ZLogError(ex, $"Error occurred while executing command {inputText:@Command}");
         }
     }
 }

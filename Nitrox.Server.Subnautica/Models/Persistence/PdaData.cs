@@ -63,7 +63,8 @@ internal record PdaData
         }
         else
         {
-            Log.Debug($"There was an attempt of adding a duplicated entry in the KnownTechTypes: [{techType.Name}]");
+            // TODO: USE DATABASE - handle as constraint
+            // logger.ZLogDebug($"There was an attempt of adding a duplicated entry in the KnownTechTypes: [{techType.Name}]");
         }
     }
 
@@ -75,7 +76,8 @@ internal record PdaData
         }
         else
         {
-            Log.Debug($"There was an attempt of adding a duplicated entry in the AnalyzedTechTypes: [{techType.Name}]");
+            // TODO: USE DATABASE - handle as constraint
+            // logger.ZLogDebug($"There was an attempt of adding a duplicated entry in the AnalyzedTechTypes: [{techType.Name}]");
         }
     }
 
@@ -87,7 +89,8 @@ internal record PdaData
         }
         else
         {
-            Log.Debug($"There was an attempt of adding a duplicated entry in the EncyclopediaEntries: [{entry}]");
+            // TODO: USE DATABASE - handle as constraint
+            // logger.ZLogDebug($"There was an attempt of adding a duplicated entry in the EncyclopediaEntries: [{entry}]");
         }
     }
 
@@ -95,7 +98,8 @@ internal record PdaData
     {
         if (PdaLog.Contains(entry))
         {
-            Log.Debug($"There was an attempt of adding a duplicated entry in the PDALog: [{entry.Key}]");
+            // TODO: USE DATABASE - handle as constraint
+            // logger.ZLogDebug($"There was an attempt of adding a duplicated entry in the PDALog: [{entry.Key}]");
             return;
         }
         PdaLog.Add(entry);

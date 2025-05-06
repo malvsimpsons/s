@@ -1,7 +1,6 @@
 using System.IO;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using NitroxModel.GameLogic.FMOD;

@@ -5,9 +5,10 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class VehicleUndockingProcessor(EntityRegistry entityRegistry) : IAuthPacketProcessor<VehicleUndocking>
+internal sealed class VehicleUndockingProcessor(EntityRegistry entityRegistry, ILogger<VehicleUndockingProcessor> logger) : IAuthPacketProcessor<VehicleUndocking>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
+    private readonly ILogger<VehicleUndockingProcessor> logger = logger;
 
     public async Task Process(AuthProcessorContext context, VehicleUndocking packet)
     {
@@ -15,19 +16,19 @@ internal sealed class VehicleUndockingProcessor(EntityRegistry entityRegistry) :
         {
             if (!entityRegistry.TryGetEntityById(packet.VehicleId, out Entity vehicleEntity))
             {
-                Log.Error($"Unable to find vehicle to undock {packet.VehicleId}");
+                logger.ZLogError($"Unable to find vehicle to undock {packet.VehicleId}");
                 return;
             }
 
             if (!entityRegistry.GetEntityById(vehicleEntity.ParentId).HasValue)
             {
-                Log.Error($"Unable to find docked vehicles parent {vehicleEntity.ParentId} to undock from");
+                logger.ZLogError($"Unable to find docked vehicles parent {vehicleEntity.ParentId} to undock from");
                 return;
             }
 
             entityRegistry.RemoveFromParent(vehicleEntity);
         }
 
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

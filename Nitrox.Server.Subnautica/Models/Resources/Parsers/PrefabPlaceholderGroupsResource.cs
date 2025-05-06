@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Nitrox.Server.Subnautica.Models.Resources.Catalog;
@@ -348,7 +347,7 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
         }
         if (!addressableCatalog.TryGetValue(classId, out string[] assetPaths))
         {
-            Log.Error($"Couldn't get PrefabPlaceholder with classId: {classId}");
+            logger.ZLogError($"Couldn't get PrefabPlaceholder with classId: {classId}");
             return default;
         }
 

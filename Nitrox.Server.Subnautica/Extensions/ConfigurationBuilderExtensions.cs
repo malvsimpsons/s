@@ -12,8 +12,8 @@ internal static class ConfigurationBuilderExtensions
     public static IConfigurationBuilder AddNitroxConfigFile<TOptions>(this IConfigurationBuilder configurationBuilder, string filePath, string configSectionPath = "", bool optional = false, bool reloadOnChange = false) where TOptions : class, new()
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
-        string dirPath = Path.GetDirectoryName(filePath);
-        Directory.CreateDirectory(dirPath ?? throw new ArgumentException(nameof(filePath)));
+        string dirPath = Path.GetDirectoryName(filePath) ?? throw new ArgumentException(nameof(filePath));
+        Directory.CreateDirectory(dirPath);
         if (!File.Exists(filePath))
         {
             NitroxConfig.CreateFile<TOptions>(filePath);

@@ -1,5 +1,4 @@
 using System;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Dto;
@@ -60,7 +59,7 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
             return;
         }
         await packetSender.SendPacketToOthers(new ChatMessage(SessionId.SERVER_ID, message), OriginId);
-        Logger.LogInformation("Player {PlayerName} #{PlayerId} sent a message to everyone:{Message}", Player.Name, Player.Id, message);
+        Logger.ZLogInformation($"Player {Player.Name:@PlayerName} #{Player.Id:@PlayerId} sent a message to everyone:{message:@ChatMessage}");
     }
 
     public async ValueTask SendAsync<T>(T data, SessionId sessionId)

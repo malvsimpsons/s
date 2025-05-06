@@ -1,5 +1,4 @@
 using System;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Networking.Packets;

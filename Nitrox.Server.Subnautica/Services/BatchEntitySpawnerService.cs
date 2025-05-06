@@ -25,7 +25,8 @@ internal class BatchEntitySpawnerService(
     IEntityBootstrapperManager entityBootstrapperManager,
     PrefabPlaceholderGroupsResource prefabResources,
     SubnauticaServerRandom random,
-    IOptions<SubnauticaServerOptions> options)
+    IOptions<SubnauticaServerOptions> options,
+    ILogger<BatchEntitySpawnerService> logger)
     : IHostedService
 {
     private static readonly NitroxQuaternion prefabZUpRotation = NitroxQuaternion.FromEuler(-90f, 0f, 0f);
@@ -40,6 +41,7 @@ internal class BatchEntitySpawnerService(
     private readonly PrefabPlaceholderGroupsResource prefabResources = prefabResources;
     private readonly SubnauticaServerRandom random = random;
     private readonly IUweWorldEntityFactory worldEntityFactory = worldEntityFactory;
+    private readonly ILogger<BatchEntitySpawnerService> logger = logger;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -90,7 +92,7 @@ internal class BatchEntitySpawnerService(
         }
         else if (!fullCacheCreation)
         {
-            Log.Info($"Spawning {entities.Count} entities from {spawnPoints.Count} spawn points in batch {batchId}");
+            logger.ZLogInformation($"Spawning {entities.Count} entities from {spawnPoints.Count} spawn points in batch {batchId}");
         }
 
         for (int x = 0; x < entities.Count; x++) // Throws on duplicate Entities already but nice to know which ones
@@ -99,7 +101,7 @@ internal class BatchEntitySpawnerService(
             {
                 if (entities[x] == entities[y] && x != y)
                 {
-                    Log.Error($"Duplicate Entity detected! {entities[x]}");
+                    logger.ZLogError($"Duplicate Entity detected! {entities[x]}");
                 }
             }
         }

@@ -15,30 +15,17 @@ public record PlayContext
 
     public NitroxVector3 Position { get; set; }
 
+    /// <summary>
+    ///     Synchronization id of the player object in the Subnautica world.
+    /// </summary>
     public NitroxId NitroxId { get; set; }
 
+    /// <summary>
+    ///     Synchronization id of the structure the player has entered.
+    /// </summary>
+    /// <remarks>
+    ///     Subnautica uses <c>SubRoot</c> terminology for any interior the player can enter (like cyclops, seamoth or player
+    ///     bases).
+    /// </remarks>
     public NitroxId SubRootId { get; set; }
-
-    // TODO: Store this
-    // public List<NitroxTechType> UsedItems { get; set; } = [];
-    // public Optional<NitroxId>[] QuickSlotsBindingIds { get; set; } = [];
-    // public Dictionary<string, NitroxId> EquippedItems { get; set; } = [];
-    // public NitroxVector3 SpawnPosition { get; set; }
-    // public NitroxQuaternion SpawnRotation { get; set; }
-    // /// <summary>
-    // ///     Gets the survival stats of the player in the game world.
-    // /// </summary>
-    // public PlayerStats PlayerStats { get; set; }
-    // /// <summary>
-    // ///     Synchronization id of the player object in the Subnautica world.
-    // /// </summary>
-    // public NitroxId NitroxId { get; set; }
-    // /// <summary>
-    // ///     Synchronization id of the structure the player has entered.
-    // /// </summary>
-    // /// <remarks>
-    // ///     Subnautica uses <c>SubRoot</c> terminology for any interior the player can enter (like cyclops, seamoth or player
-    // ///     bases).
-    // /// </remarks>
-    // public NitroxId SubRootId { get; set; }
 }

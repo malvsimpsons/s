@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using NitroxModel.DataStructures.GameLogic.Entities;
@@ -51,7 +50,7 @@ internal sealed class VehicleMovementsPacketProcessor(EntityRegistry entityRegis
 
         if (packet.Data.Count > 0)
         {
-            context.ReplyToOthers(packet);
+            await context.ReplyToOthers(packet);
         }
     }
 }

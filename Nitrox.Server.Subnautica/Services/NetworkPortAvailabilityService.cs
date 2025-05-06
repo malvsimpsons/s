@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using NitroxModel.Helper;
@@ -59,7 +58,7 @@ internal sealed class NetworkPortAvailabilityService(IOptions<SubnauticaServerOp
                 }
                 if (endPoint == null)
                 {
-                    logger.LogDebug("Port {Port} UDP is available", options.ServerPort);
+                    logger.ZLogDebug($"Port {options.ServerPort:@Port} UDP is available");
                     break;
                 }
 

@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Nitrox.Server.Subnautica.Models.Hibernation;

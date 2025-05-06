@@ -7,13 +7,6 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 [Table("StoryGoals")]
 public record StoryGoal
 {
-    public enum GoalPhase
-    {
-        NONE,
-        RADIO_QUEUE,
-        COMPLETED
-    }
-
     public int Id { get; set; }
 
     /// <summary>
@@ -35,4 +28,11 @@ public record StoryGoal
     [Required]
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTimeOffset Changed { get; set; } = DateTimeOffset.Now; // TODO: VERIFY THIS WORKS
+
+    public enum GoalPhase
+    {
+        NONE,
+        RADIO_QUEUE,
+        COMPLETED
+    }
 }

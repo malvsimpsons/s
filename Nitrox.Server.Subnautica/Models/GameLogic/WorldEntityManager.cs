@@ -36,9 +36,11 @@ internal class WorldEntityManager
     private readonly Dictionary<AbsoluteEntityCell, Dictionary<NitroxId, WorldEntity>> worldEntitiesByCell;
 
     private readonly Lock worldEntitiesLock = new();
+    private readonly ILogger<WorldEntityManager> logger;
 
-    public WorldEntityManager(EntityRegistry entityRegistry, BatchEntitySpawnerService batchEntitySpawnerService)
+    public WorldEntityManager(EntityRegistry entityRegistry, BatchEntitySpawnerService batchEntitySpawnerService, ILogger<WorldEntityManager> logger)
     {
+        this.logger = logger;
         List<WorldEntity> worldEntities = entityRegistry.GetEntities<WorldEntity>();
 
         globalRootEntitiesById = entityRegistry.GetEntities<GlobalRootEntity>().ToDictionary(entity => entity.Id);
@@ -101,7 +103,8 @@ internal class WorldEntityManager
         {
             if (!entityRegistry.TryGetEntityById(id, out worldEntity))
             {
-                Log.WarnOnce($"[{nameof(WorldEntityManager)}] Can't update entity position of {id} because it isn't registered");
+                // TODO: Log this only one time per id
+                logger.ZLogWarning($"Can't update entity position of {id} because it isn't registered");
                 newCell = null;
                 return false;
             }
@@ -223,7 +226,7 @@ internal class WorldEntityManager
                 {
                     int spawned = LoadUnspawnedEntities(new(x, y, z), true);
 
-                    Log.Debug($"Loaded {spawned} entities from batch ({x}, {y}, {z})");
+                    logger.ZLogDebug($"Loaded {spawned} entities from batch ({x}, {y}, {z})");
 
                     batchesLoaded++;
                 }
@@ -231,7 +234,7 @@ internal class WorldEntityManager
 
             if (batchesLoaded > 0)
             {
-                Log.Info($"Loading : {(int)(100f * batchesLoaded / totalBatches)}%");
+                logger.ZLogInformation($"Loading : {(int)(100f * batchesLoaded / totalBatches)}%");
             }
         }
     }

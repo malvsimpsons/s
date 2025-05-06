@@ -1,6 +1,5 @@
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Networking.Packets;
@@ -87,7 +86,7 @@ internal sealed class StoryTimingService(IServerPacketSender packetSender, TimeS
         // }
 
         packetSender.SendPacketToAll(new AuroraAndTimeUpdate(GetTimeData(), true));
-        logger.LogInformation("Restored Aurora, will explode again in {AuroraExplodeEta} minutes", GetMinutesBeforeAuroraExplosion());
+        logger.ZLogInformation($"Restored Aurora, will explode again in {GetMinutesBeforeAuroraExplosion():@AuroraExplodeEta} minutes");
     }
 
     /// <summary>

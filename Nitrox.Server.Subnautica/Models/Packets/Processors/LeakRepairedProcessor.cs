@@ -12,7 +12,7 @@ internal class LeakRepairedProcessor(WorldEntityManager worldEntityManager) : IA
     {
         if (worldEntityManager.TryDestroyEntity(packet.LeakId, out _))
         {
-            context.ReplyToOthers(packet);
+            await context.ReplyToOthers(packet);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
+﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
 using NitroxModel.Networking.Packets;
 
@@ -19,6 +18,6 @@ internal class ChatMessageProcessor(PlayerRepository playerRepository, ILogger<C
             return;
         }
         await context.ReplyToAll(packet);
-        logger.LogInformation("{PlayerName}: {Chat}", playerName, packet.Text);
+        logger.ZLogInformation($"{playerName:@PlayerName}: {packet.Text:@ChatMessage}");
     }
 }

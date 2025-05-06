@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using NitroxModel.Networking.Packets;
@@ -14,7 +13,7 @@ internal class MultiplayerSessionPolicyRequestProcessor(IOptions<SubnauticaServe
     // This will extend in the future when we look into different options for auth
     public async Task Process(AnonProcessorContext context, MultiplayerSessionPolicyRequest packet)
     {
-        logger.LogInformation("Providing session policies...");
+        logger.ZLogInformation($"Providing session policies...");
         SubnauticaServerOptions options = optionsProvider.Value;
         await context.ReplyToSender(new MultiplayerSessionPolicy(packet.CorrelationId, options.DisableConsole, options.MaxConnections, options.IsPasswordRequired()));
     }

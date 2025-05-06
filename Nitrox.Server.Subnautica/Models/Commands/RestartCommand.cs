@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
@@ -16,7 +15,7 @@ internal sealed class RestartCommand(ILogger<RestartCommand> logger, IHostApplic
     {
         if (Debugger.IsAttached)
         {
-            logger.LogError("Server can not be restarted while a debugger is attached.");
+            logger.ZLogError($"Server can not be restarted while a debugger is attached.");
             return Task.CompletedTask;
         }
 
@@ -24,7 +23,7 @@ internal sealed class RestartCommand(ILogger<RestartCommand> logger, IHostApplic
         string program = currentProcess.MainModule?.FileName;
         if (program == null)
         {
-            logger.LogError("Failed to get location of server.");
+            logger.ZLogError($"Failed to get location of server.");
             return Task.CompletedTask;
         }
 

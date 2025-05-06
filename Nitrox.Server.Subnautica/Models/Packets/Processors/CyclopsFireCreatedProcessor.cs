@@ -7,6 +7,6 @@ internal class CyclopsFireCreatedProcessor : IAuthPacketProcessor<CyclopsFireCre
 {
     public async Task Process(AuthProcessorContext context, CyclopsFireCreated packet)
     {
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Mono.Nat;
 using Nitrox.Server.Subnautica.Models.Configuration;
@@ -135,7 +134,7 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
     {
         if (await NatHelper.DeletePortMappingAsync(port, Protocol.Udp, cancellationToken))
         {
-            logger.LogInformation("Port forward rule removed for {Port} UDP", port);
+            logger.LogInformation("Removed port forward rule {Port} UDP", port);
         }
         else
         {

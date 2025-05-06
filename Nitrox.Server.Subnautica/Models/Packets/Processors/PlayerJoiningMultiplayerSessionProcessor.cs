@@ -19,7 +19,8 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
     WorldEntityManager worldEntityManager,
     EscapePodService escapePodService,
     EntityRegistry entityRegistry,
-    IOptions<SubnauticaServerOptions> optionsProvider)
+    IOptions<SubnauticaServerOptions> optionsProvider,
+    ILogger<PlayerJoiningMultiplayerSessionProcessor> logger)
     : IAnonPacketProcessor<PlayerJoiningMultiplayerSession>
 {
     private readonly EntityRegistry entityRegistry = entityRegistry;
@@ -29,6 +30,7 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
     private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
     private readonly StoryTimingService storyTimingService = storyTimingService;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
+    private readonly ILogger<PlayerJoiningMultiplayerSessionProcessor> logger = logger;
 
     public async Task Process(AnonProcessorContext context, PlayerJoiningMultiplayerSession packet)
     {
@@ -108,7 +110,7 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
         {
             return playerWorldEntity;
         }
-        Log.Error($"Unable to find player entity for {player.Name}. Re-creating one");
+        logger.ZLogError($"Unable to find player entity for {player.Name}. Re-creating one");
         return SetupPlayerEntity(player);
     }
 }

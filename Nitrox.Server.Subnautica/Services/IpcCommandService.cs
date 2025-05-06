@@ -4,7 +4,6 @@ using System.IO.Pipes;
 using System.Text;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
@@ -24,7 +23,7 @@ internal sealed class IpcCommandService(CommandService commandService, PlayerRep
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogDebug("Starting IPC host for command input");
+        logger.ZLogDebug($"Starting IPC host for command input");
 
         while (!stoppingToken.IsCancellationRequested)
         {

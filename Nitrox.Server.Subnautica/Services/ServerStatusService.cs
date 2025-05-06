@@ -1,9 +1,7 @@
 using System;
-using System.Diagnostics;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
@@ -33,16 +31,16 @@ internal sealed class ServerStatusService([FromKeyedServices(typeof(ServerStatus
 
     public Task StartingAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("Starting Nitrox server {ReleasePhase} v{Version} for {GameName}", NitroxEnvironment.ReleasePhase, NitroxEnvironment.Version, GameInfo.Subnautica.FullName);
-        logger.LogInformation("Using game files from {Path}", startOptions.Value.GameInstallPath);
-        logger.LogInformation("Using world name {SaveName}", startOptions.Value.SaveName);
+        logger.ZLogInformation($"Starting Nitrox server {NitroxEnvironment.ReleasePhase:@ReleasePhase} v{NitroxEnvironment.Version:@Version} for {GameInfo.Subnautica.FullName:@GameName}");
+        logger.ZLogInformation($"Using game files from {startOptions.Value.GameInstallPath:@Path}");
+        logger.ZLogInformation($"Using world name {startOptions.Value.SaveName:@SaveName}");
         return Task.CompletedTask;
     }
 
     public Task StartedAsync(CancellationToken cancellationToken)
     {
         appStartStopWatch.Stop();
-        logger.LogInformation("Server started in {TimeSpan} seconds", Math.Round(appStartStopWatch.Elapsed.TotalSeconds, 3));
+        logger.ZLogInformation($"Server started in {Math.Round(appStartStopWatch.Elapsed.TotalSeconds, 3):@Seconds} seconds");
         return Task.CompletedTask;
     }
 

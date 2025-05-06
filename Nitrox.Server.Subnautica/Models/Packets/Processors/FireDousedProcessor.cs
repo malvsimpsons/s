@@ -7,6 +7,6 @@ internal class FireDousedProcessor : IAuthPacketProcessor<FireDoused>
 {
     public async Task Process(AuthProcessorContext context, FireDoused packet)
     {
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }

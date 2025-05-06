@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using NitroxModel.DataStructures.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Core;

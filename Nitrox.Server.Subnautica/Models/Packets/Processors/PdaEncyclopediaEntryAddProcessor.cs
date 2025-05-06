@@ -12,6 +12,6 @@ internal sealed class PdaEncyclopediaEntryAddProcessor : IAuthPacketProcessor<Pd
     {
         // TODO: USE DATABASE
         // pdaStateData.AddEncyclopediaEntry(packet.Key);
-        context.ReplyToOthers(packet);
+        await context.ReplyToOthers(packet);
     }
 }
