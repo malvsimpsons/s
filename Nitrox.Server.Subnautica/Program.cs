@@ -76,8 +76,6 @@ public class Program
     {
         // TODO: Investigate Entity Framework query pre-compiling and other SQL optimizations.
 
-        // TODO: Add log redaction
-
         // TODO: Add "log once" behavior
 
         HostApplicationBuilder builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
