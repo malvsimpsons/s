@@ -1,12 +1,15 @@
 using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using Nitrox.Server.Subnautica.Core.Configuration;
 using Nitrox.Server.Subnautica.Core.Formatters;
+using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 
 namespace Nitrox.Server.Subnautica.Extensions;
 
-public static class ZLoggerOptionsExtensions
+internal static class ZLoggerOptionsExtensions
 {
-    public static T UseNitroxFormatter<T>(this T options, Action<NitroxFormatterOptions> configure = null) where T : ZLoggerOptions
+    public static T UseNitroxFormatter<T>(this T options, Action<NitroxFormatterOptions> configure = null, IServiceProvider provider = null) where T : ZLoggerOptions
     {
         options.UseFormatter(() =>
         {

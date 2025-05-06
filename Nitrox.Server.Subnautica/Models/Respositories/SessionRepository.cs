@@ -54,7 +54,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
             db.PlayerSessions.Add(playerSession);
             if (await db.SaveChangesAsync() != 1)
             {
-                logger.LogError("Failed to create session for {Address}:{Port}", address, port);
+                logger.ZLogError($"Failed to create session for {address.ToSensitive():@Address}:{port:@Port}");
                 return null;
             }
         }

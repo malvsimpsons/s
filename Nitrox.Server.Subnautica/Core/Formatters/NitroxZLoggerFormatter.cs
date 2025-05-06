@@ -2,12 +2,15 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging.Console;
 using Nitrox.Server.Subnautica.Core.Configuration;
+using Nitrox.Server.Subnautica.Core.Redaction;
+using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 
 namespace Nitrox.Server.Subnautica.Core.Formatters;
 
-public class NitroxZLoggerFormatter : IZLoggerFormatter
+internal class NitroxZLoggerFormatter : IZLoggerFormatter
 {
     private static volatile int emitAnsiColorCodes = -1;
 
@@ -40,7 +43,6 @@ public class NitroxZLoggerFormatter : IZLoggerFormatter
     }
 
     internal NitroxFormatterOptions FormatterOptions { get; init; }
-
 
     public void FormatLogEntry(IBufferWriter<byte> writer, IZLoggerEntry entry)
     {
@@ -80,12 +82,54 @@ public class NitroxZLoggerFormatter : IZLoggerFormatter
 
         // category - if type name, truncate namespace.
         writer.Write(" "u8);
-        writer.Write(entry.LogInfo.Category.Utf8Span[(entry.LogInfo.Category.Utf8Span.LastIndexOf("."u8) + 1) ..]);
+        if (entry.LogInfo.Category.Utf8Span.LastIndexOf("."u8) is var dotIndex and > -1)
+        {
+            writer.Write(entry.LogInfo.Category.Utf8Span[(dotIndex + 1) ..]);
+        }
+        else
+        {
+            writer.Write(entry.LogInfo.Category.Utf8Span);
+        }
         writer.Write(": "u8);
 
         // scope information
         WriteScopeInformation(writer, entry.LogInfo.ScopeState);
-        entry.ToString(writer);
+
+        if (!FormatterOptions.UseRedaction || !HasParameterOfType<ISensitiveData>(entry))
+        {
+            entry.ToString(writer);
+        }
+        else
+        {
+            ReadOnlySpan<char> originalFormat = entry.GetOriginalFormat().AsSpan();
+            StringBuilder sb = new();
+            ValueMatch lastMatch = default;
+            int matchIterIndex = 0;
+            foreach (ValueMatch match in Regex.EnumerateMatches(originalFormat, @"\{[^\}]+\}", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.NonBacktracking))
+            {
+                sb.Append(originalFormat[(lastMatch.Index + lastMatch.Length)..match.Index]);
+                lastMatch = match;
+
+                ReadOnlySpan<char> key = originalFormat.Slice(match.Index, match.Length).Trim(['{', '}']);
+                object value = entry.GetParameterValue(matchIterIndex);
+                if (value is ISensitiveData sensitive)
+                {
+                    sb.Append(Redact(key, sensitive.ToString().AsSpan()));
+                }
+                else
+                {
+                    sb.Append(value);
+                }
+
+                matchIterIndex++;
+            }
+            ReadOnlySpan<char> lastPart = originalFormat[(lastMatch.Index + lastMatch.Length)..];
+            if (!lastPart.IsEmpty)
+            {
+                sb.Append(lastPart);
+            }
+            writer.Write(sb.ToString());
+        }
 
         // Example:
         // System.InvalidOperationException
@@ -96,6 +140,32 @@ public class NitroxZLoggerFormatter : IZLoggerFormatter
             writer.Write(exception.ToString());
         }
         writer.WriteLine();
+    }
+
+    private static bool HasParameterOfType<T>(IZLoggerEntry entry)
+    {
+        for (int i = 0; i < entry.ParameterCount; i++)
+        {
+            if (typeof(T).IsAssignableFrom(entry.GetParameterType(i)))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ReadOnlySpan<char> Redact(ReadOnlySpan<char> key, ReadOnlySpan<char> value)
+    {
+        foreach (IRedactor redactor in FormatterOptions.GetRedactorsByKey(key))
+        {
+            RedactResult result = redactor.Redact(key, value);
+            if (result.IsRedacted == false)
+            {
+                continue;
+            }
+            return result.Value;
+        }
+        return "<REDACTED>";
     }
 
     private static ReadOnlySpan<byte> GetLogLevelText(LogLevel logLevel) =>

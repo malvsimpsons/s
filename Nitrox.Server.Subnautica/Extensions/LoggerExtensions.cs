@@ -1,19 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Nitrox.Server.Subnautica.Core.Redaction;
 
 namespace Nitrox.Server.Subnautica.Extensions;
 
-public static class LoggerExtensions
+internal static partial class LoggerExtensions
 {
-    private static readonly HashSet<int> logOnceCache = [];
-
-    public static void LogErrorOnce(this ILogger logger, string message, params object[] args)
-    {
-        if (!logOnceCache.Add(HashCode.Combine(message, args.Select(a => a.GetHashCode()))))
-        {
-            return;
-        }
-        logger.LogError(message, args);
-    }
+    [ZLoggerMessage(Level = LogLevel.Information, Message = "Using game files from {path}")]
+    public static partial void LogGameInstallPathUsage(this ILogger logger, SensitiveData<string> path);
 }

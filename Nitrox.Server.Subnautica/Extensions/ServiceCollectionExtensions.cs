@@ -8,6 +8,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
@@ -176,6 +177,9 @@ internal static partial class ServiceCollectionExtensions
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IGameResource), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
     private static partial IServiceCollection AddGameResources(this IServiceCollection services);
+
+    [GenerateServiceRegistrations(AssignableTo = typeof(IRedactor), Lifetime = ServiceLifetime.Singleton)]
+    internal static partial IServiceCollection AddRedactors(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IHibernate), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddHibernators(this IServiceCollection services);

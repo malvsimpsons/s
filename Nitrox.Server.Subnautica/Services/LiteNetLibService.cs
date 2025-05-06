@@ -123,7 +123,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
 
         if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request, peersBySessionId)))
         {
-            logger.LogWarning("Failed to queue client connect request task for {Address}:{Port}", request.RemoteEndPoint.Address.ToString(), request.RemoteEndPoint.Port);
+            logger.ZLogWarning($"Failed to queue client connect request task for {request.RemoteEndPoint.ToSensitive():@EndPoint}");
         }
 
         static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request, ConcurrentDictionary<SessionId, NetPeer> peersBySessionId)
@@ -151,11 +151,11 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         }
         if (!sessionId.HasValue || !taskChannel.Writer.TryWrite(sessionRepository.DeleteSessionAsync(sessionId.Value)))
         {
-            logger.LogWarning("Failed to queue client disconnect task for {EndPoint}", peer as EndPoint);
+            logger.ZLogWarning($"Failed to queue client disconnect task for {(peer as EndPoint).ToSensitive():@EndPoint}");
         }
     }
 
-    private void PeerConnected(NetPeer peer) => logger.LogInformation("Connection made by {Address}:{Port}", peer.Address, peer.Port);
+    private void PeerConnected(NetPeer peer) => logger.ZLogInformation($"Connection made by {peer.Address.ToSensitive():@Address}:{peer.Port}");
 
     private void NetworkDataReceived(NetPeer peer, NetDataReader reader, byte channel, DeliveryMethod deliveryMethod)
     {
@@ -167,7 +167,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
             Packet packet = Packet.Deserialize(packetData);
             if (!taskChannel.Writer.TryWrite(ProcessPacket(peer, packet)))
             {
-                logger.LogError("Failed to queue packet processor task for packet type {TypeName} from {Address}:{Port}", packet.GetType().Name, peer.Address, peer.Port);
+                logger.ZLogError($"Failed to queue packet processor task for packet type {packet.GetType().Name:@TypeName} from {peer.Address:@Address}:{peer.Port:@Port}");
             }
         }
         finally
@@ -179,7 +179,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     private async Task ProcessPacket(NetPeer peer, Packet packet)
     {
         PlayerSession session = await sessionRepository.GetOrCreateSessionAsync(peer.Address.ToString(), (ushort)peer.Port);
-        logger.LogTrace("Incoming packet {TypeName} by session #{SessionId}", packet.GetType().Name, session.Id);
+        logger.ZLogTrace($"Incoming packet {packet.GetType().Name:@TypeName} by session #{session.Id:@SessionId}");
         IPacketProcessor packetProcessor = packetRegistryService.GetProcessor(session, packet);
 
         try
@@ -231,7 +231,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     {
         if (!peersBySessionId.TryGetValue(sessionId, out NetPeer peer) || peer.ConnectionState != ConnectionState.Connected)
         {
-            logger.LogWarning("Cannot send packet {TypeName} to closed connection {EndPoint} with session id {SessionId}", packet?.GetType().Name, peer as IPEndPoint, sessionId);
+            logger.ZLogWarning($"Cannot send packet {packet?.GetType().Name:@TypeName} to closed connection {(peer as IPEndPoint).ToSensitive():@EndPoint} with session id {sessionId}");
             return ValueTask.CompletedTask;
         }
         SendPacket(packet, peer);
@@ -280,11 +280,11 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         }
         if (disconnectedSession is { Player.Id: var playerId, Player.Name: {} playerName })
         {
-            logger.LogInformation("Player {PlayerName} #{PlayerId} on {EndPoint} disconnected", playerName, playerId, peer as EndPoint);
+            logger.ZLogInformation($"Player {playerName:@PlayerName} #{playerId:@PlayerId} on {(peer as EndPoint).ToSensitive():@EndPoint} disconnected");
         }
         else
         {
-            logger.LogInformation("Session #{SessionId} on {EndPoint} disconnected", disconnectedSession.Id, peer as EndPoint);
+            logger.ZLogInformation($"Session #{disconnectedSession.Id:@SessionId} on {(peer as EndPoint).ToSensitive():@EndPoint} disconnected");
         }
         Disconnect disconnectPacket = new(disconnectedSession.Id);
         foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)

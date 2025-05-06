@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Core;
+using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
@@ -71,9 +74,11 @@ public class Program
 
     private static async Task StartServerAsync(string[] args)
     {
-        // TODO: Don't use NitroxModel.Log in this project.
-
         // TODO: Investigate Entity Framework query pre-compiling and other SQL optimizations.
+
+        // TODO: Add log redaction
+
+        // TODO: Add "log once" behavior
 
         HostApplicationBuilder builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
         {
@@ -90,13 +95,7 @@ public class Program
                .SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information)
                .AddFilter("Nitrox.Server.Subnautica", level => level > LogLevel.Trace || (level == LogLevel.Trace && Debugger.IsAttached))
                .AddFilter("Microsoft", LogLevel.Warning)
-               .AddZLoggerConsole(options =>
-               {
-                   options.UseNitroxFormatter(formatterOptions =>
-                   {
-                       formatterOptions.ColorBehavior = startOptions.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled;
-                   });
-               })
+               .AddZLoggerConsole(options => options.UseNitroxFormatter(configure: formatterOptions => formatterOptions.ColorBehavior = startOptions.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled))
                .AddZLoggerRollingFile((options, provider) =>
                {
                    ServerStartOptions serverStartOptions = provider.GetRequiredService<IOptions<ServerStartOptions>>().Value;
@@ -105,6 +104,8 @@ public class Program
                    options.UseNitroxFormatter(formatterOptions =>
                    {
                        formatterOptions.ColorBehavior = LoggerColorBehavior.Disabled;
+                       formatterOptions.UseRedaction = true;
+                       formatterOptions.Redactors = provider.GetService<IEnumerable<IRedactor>>()?.ToArray() ?? [];
                    });
                });
         builder.Services
@@ -125,6 +126,7 @@ public class Program
                .AddSubnauticaEntityManagement()
                .AddSubnauticaResources()
                .AddHibernation()
+               .AddRedactors()
                .AddKeyedSingleton<Stopwatch>(typeof(ServerStatusService), serverStartStopWatch)
                .AddHostedSingletonService<ServerStatusService>()
                .AddHostedSingletonService<PortForwardService>()
