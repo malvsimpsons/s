@@ -10,11 +10,14 @@ using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 
 namespace Nitrox.Server.Subnautica.Core.Formatters;
 
-internal class NitroxZLoggerFormatter : IZLoggerFormatter
+internal partial class NitroxZLoggerFormatter : IZLoggerFormatter
 {
     private static volatile int emitAnsiColorCodes = -1;
 
-    public bool WithLineBreak => false;
+    [GeneratedRegex(@"\{[^\}]+\}", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.NonBacktracking)]
+    private partial Regex LogParameterRegex { get; }
+
+    public bool WithLineBreak => true;
 
     private static bool EmitAnsiColorCodes
     {
@@ -105,7 +108,7 @@ internal class NitroxZLoggerFormatter : IZLoggerFormatter
             StringBuilder sb = new();
             ValueMatch lastMatch = default;
             int matchIterIndex = 0;
-            foreach (ValueMatch match in Regex.EnumerateMatches(originalFormat, @"\{[^\}]+\}", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.NonBacktracking))
+            foreach (ValueMatch match in LogParameterRegex.EnumerateMatches(originalFormat))
             {
                 sb.Append(originalFormat[(lastMatch.Index + lastMatch.Length)..match.Index]);
                 lastMatch = match;
@@ -139,20 +142,33 @@ internal class NitroxZLoggerFormatter : IZLoggerFormatter
             // exception message
             writer.Write(exception.ToString());
         }
-        writer.WriteLine();
     }
 
-    private static bool HasParameterOfType<T>(IZLoggerEntry entry)
+    private static bool HasParameterOfType<T>(in IZLoggerEntry entry)
     {
-        for (int i = 0; i < entry.ParameterCount; i++)
+        Type type = typeof(T);
+        int parameterCount = entry.ParameterCount;
+        for (int i = 0; i < parameterCount; i++)
         {
-            if (typeof(T).IsAssignableFrom(entry.GetParameterType(i)))
+            if (entry.GetParameterType(i) == type)
             {
                 return true;
             }
         }
         return false;
     }
+
+    private static ReadOnlySpan<byte> GetLogLevelText(LogLevel logLevel) =>
+        logLevel switch
+        {
+            LogLevel.Trace => "[trce]"u8,
+            LogLevel.Debug => "[dbug]"u8,
+            LogLevel.Information => "[info]"u8,
+            LogLevel.Warning => "[warn]"u8,
+            LogLevel.Error => "[fail]"u8,
+            LogLevel.Critical => "[crit]"u8,
+            _ => throw new ArgumentOutOfRangeException(nameof(logLevel))
+        };
 
     private ReadOnlySpan<char> Redact(ReadOnlySpan<char> key, ReadOnlySpan<char> value)
     {
@@ -167,18 +183,6 @@ internal class NitroxZLoggerFormatter : IZLoggerFormatter
         }
         return "<REDACTED>";
     }
-
-    private static ReadOnlySpan<byte> GetLogLevelText(LogLevel logLevel) =>
-        logLevel switch
-        {
-            LogLevel.Trace => "[trce]"u8,
-            LogLevel.Debug => "[dbug]"u8,
-            LogLevel.Information => "[info]"u8,
-            LogLevel.Warning => "[warn]"u8,
-            LogLevel.Error => "[fail]"u8,
-            LogLevel.Critical => "[crit]"u8,
-            _ => throw new ArgumentOutOfRangeException(nameof(logLevel))
-        };
 
     private ConsoleColors GetLogLevelConsoleColors(LogLevel logLevel)
     {

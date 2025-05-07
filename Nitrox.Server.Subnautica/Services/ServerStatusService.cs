@@ -15,9 +15,10 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Service which prints out information at appropriate time in the app life cycle.
 /// </summary>
-internal sealed class ServerStatusService([FromKeyedServices(typeof(ServerStatusService))] Stopwatch appStartStopWatch, IOptions<ServerStartOptions> startOptions, IServerPacketSender packetSender, ILogger<ServerStatusService> logger)
+internal sealed class ServerStatusService([FromKeyedServices(typeof(ServerStatusService))] Stopwatch appStartStopWatch, GameInfo gameInfo, IOptions<ServerStartOptions> startOptions, IServerPacketSender packetSender, ILogger<ServerStatusService> logger)
     : IHostedLifecycleService
 {
+    private readonly GameInfo gameInfo = gameInfo;
     private readonly ILogger<ServerStatusService> logger = logger;
     private readonly IServerPacketSender packetSender = packetSender;
     private readonly IOptions<ServerStartOptions> startOptions = startOptions;
@@ -28,9 +29,9 @@ internal sealed class ServerStatusService([FromKeyedServices(typeof(ServerStatus
 
     public Task StartingAsync(CancellationToken cancellationToken)
     {
-        logger.ZLogInformation($"Starting Nitrox server {NitroxEnvironment.ReleasePhase:@ReleasePhase} v{NitroxEnvironment.Version:@Version} for {GameInfo.Subnautica.FullName:@GameName}");
+        logger.LogServerStarting(NitroxEnvironment.ReleasePhase, NitroxEnvironment.Version, gameInfo.FullName);
         logger.LogGameInstallPathUsage(startOptions.Value.GameInstallPath);
-        logger.ZLogInformation($"Using world name {startOptions.Value.SaveName:@SaveName}");
+        logger.LogSaveUsage(startOptions.Value.SaveName);
         return Task.CompletedTask;
     }
 
@@ -61,16 +62,16 @@ internal sealed class ServerStatusService([FromKeyedServices(typeof(ServerStatus
         logger.ZLogInformation($"127.0.0.1 - You (Local)");
         if (wanIp.Result != null)
         {
-            logger.ZLogInformation($"{wanIp.Result.ToSensitive():@ip} - Friends on another internet network (Port Forwarding)");
+            logger.LogWanIp(wanIp.Result);
         }
         if (hamachiIp.Result != null)
         {
-            logger.ZLogInformation($"{hamachiIp.Result.ToSensitive():@ip} - Friends using Hamachi (VPN)");
+            logger.LogHamachiIp(hamachiIp.Result);
         }
         // LAN IP could be null if all Ethernet/Wi-Fi interfaces are disabled.
         if (lanIp.Result != null)
         {
-            logger.ZLogInformation($"{lanIp.Result.ToSensitive():@ip} - Friends on same internet network (LAN)");
+            logger.LogLanIp(lanIp.Result);
         }
     }
 }

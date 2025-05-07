@@ -201,7 +201,7 @@ internal sealed class CommandRegistry
 
     private void RegisterHandler(CommandHandlerEntry handler)
     {
-        logger.ZLogTrace($"Adding {handler}");
+        logger.LogCommandHandlerAdded(handler);
 
         string ownerName = handler.Name;
         if (!HandlerLookup.TryGetValue(ownerName, out List<CommandHandlerEntry> handlers))
