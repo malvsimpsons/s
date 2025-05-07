@@ -68,7 +68,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
                 logger.LogError("Too many arguments passed to command {CommandName}", commandName.ToString());
                 return;
             }
-            ranges[rangeIndex++] = new Range(match.Index, match.Length);
+            ranges[rangeIndex++] = new Range(match.Index, match.Index + match.Length);
         }
 
         // Convert text ranges into object args. First arg is always the context (and should be accounted for in algorithm below).
