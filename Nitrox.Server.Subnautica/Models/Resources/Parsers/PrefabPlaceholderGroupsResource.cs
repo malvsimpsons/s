@@ -27,14 +27,14 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
     private readonly Configuration.ServerStartOptions options = optionsProvider.Value;
     private readonly ConcurrentDictionary<string, PrefabPlaceholderAsset> placeholdersByClassId = new();
     private readonly JsonSerializer serializer = new() { TypeNameHandling = TypeNameHandling.Auto };
-    private Task<Dictionary<string, PrefabPlaceholdersGroupAsset>> prefabPlaceholdersGroupPathsCache;
+    private readonly TaskCompletionSource<Dictionary<string, PrefabPlaceholdersGroupAsset>> prefabPlaceholdersGroupPathsCache = new();
 
     public ConcurrentDictionary<string, string[]> RandomPossibilitiesByClassId = [];
-    public Dictionary<string, PrefabPlaceholdersGroupAsset> PrefabPlaceholdersGroupPaths => LoadPrefabsAndSpawnPossibilitiesAsync().GetAwaiter().GetResult();
+    public Dictionary<string, PrefabPlaceholdersGroupAsset> PrefabPlaceholdersGroupPaths => prefabPlaceholdersGroupPathsCache.Task.GetAwaiter().GetResult();
 
     public async Task LoadAsync(CancellationToken cancellationToken)
     {
-        await (prefabPlaceholdersGroupPathsCache = LoadPrefabsAndSpawnPossibilitiesAsync(cancellationToken));
+        prefabPlaceholdersGroupPathsCache.TrySetResult(await LoadPrefabsAndSpawnPossibilitiesAsync(cancellationToken));
     }
 
     private static Dictionary<string, string> LoadPrefabDatabase(string fullFilename)
@@ -70,13 +70,8 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
         prefabGameObjectInfo = assetFileInst.file.Metadata.GetAssetInfo(rootAssetPathId);
     }
 
-    private async Task<Dictionary<string, PrefabPlaceholdersGroupAsset>> LoadPrefabsAndSpawnPossibilitiesAsync(CancellationToken cancellationToken = default)
+    private Task<Dictionary<string, PrefabPlaceholdersGroupAsset>> LoadPrefabsAndSpawnPossibilitiesAsync(CancellationToken cancellationToken = default)
     {
-        if (prefabPlaceholdersGroupPathsCache != null)
-        {
-            return await prefabPlaceholdersGroupPathsCache;
-        }
-
         string prefabDatabasePath = Path.Combine(options.GetSubnauticaResourcesPath(), "StreamingAssets", "SNUnmanagedData", "prefabs.db");
 
         // Get all prefab-classIds linked to the (partial) bundle path
@@ -100,7 +95,7 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
 
         // Get all needed data for the filtered PrefabPlaceholdersGroups to construct PrefabPlaceholdersGroupAssets and add them to the dictionary by classId
         Validate.IsFalse(RandomPossibilitiesByClassId.IsEmpty);
-        return result;
+        return Task.FromResult(result);
     }
 
     private Dictionary<string, PrefabPlaceholdersGroupAsset> CreateOrLoadPrefabCache(string nitroxCachePath)
