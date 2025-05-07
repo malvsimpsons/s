@@ -193,7 +193,7 @@ public partial class LaunchGameViewModel : RoutableViewModelBase
     {
         string fromValue = HttpUtility.UrlEncode($"{DateTime.UtcNow.AddYears(-1):M/d/yyyy}");
         string toValue = HttpUtility.UrlEncode($"{DateTime.UtcNow:M/d/yyyy}");
-        ProcessUtils.OpenUrl($"https://github.com/SubnauticaNitrox/Nitrox/graphs/contributors?from={fromValue}&to={toValue}");
+        ProcessEx.OpenUrl($"https://github.com/SubnauticaNitrox/Nitrox/graphs/contributors?from={fromValue}&to={toValue}");
     }
 
     /// <summary>

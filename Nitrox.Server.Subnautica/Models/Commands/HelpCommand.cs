@@ -20,7 +20,7 @@ internal sealed class HelpCommand(Func<CommandRegistry> registryProvider) : ICom
     private readonly Func<CommandRegistry> registryProvider = registryProvider;
 
     [Description("Shows this help page")]
-    public Task Execute(ICommandContext context)
+    public async Task Execute(ICommandContext context)
     {
         StringBuilder sb = new();
         sb.AppendLine("~~~ COMMAND HELP PAGE ~~~");
@@ -37,21 +37,19 @@ internal sealed class HelpCommand(Func<CommandRegistry> registryProvider) : ICom
             }
             sb.AppendLine(handler.ToString());
         }
-        context.ReplyAsync(sb.Remove(sb.Length - Environment.NewLine.Length, Environment.NewLine.Length).ToString());
-        return Task.CompletedTask;
+        await context.ReplyAsync(sb.Remove(sb.Length - Environment.NewLine.Length, Environment.NewLine.Length).ToString());
     }
 
     [Description("Shows the help page of the given command")]
-    public Task Execute(ICommandContext context, string commandName)
+    public async Task Execute(ICommandContext context, string commandName)
     {
-        if (!TryShowHelpForCommand(context, commandName))
+        if (!await TryShowHelpForCommandAsync(context, commandName))
         {
-            context.ReplyAsync($"No command exists with the name {commandName}");
+            await context.ReplyAsync($"No command exists with the name {commandName}");
         }
-        return Task.CompletedTask;
     }
 
-    private bool TryShowHelpForCommand(ICommandContext context, string commandName)
+    private async ValueTask<bool> TryShowHelpForCommandAsync(ICommandContext context, string commandName)
     {
         if (!registryProvider().TryGetHandlersByCommandName(context, commandName, out List<CommandHandlerEntry> handlers))
         {
@@ -95,7 +93,7 @@ internal sealed class HelpCommand(Func<CommandRegistry> registryProvider) : ICom
                 sb.Append(handler.ToDisplayString(false));
             }
         }
-        context.ReplyAsync(sb.ToString());
+        await context.ReplyAsync(sb.ToString());
         return true;
     }
 }

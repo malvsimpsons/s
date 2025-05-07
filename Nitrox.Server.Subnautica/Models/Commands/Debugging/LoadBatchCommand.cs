@@ -14,14 +14,12 @@ internal sealed class LoadBatchCommand(BatchEntitySpawnerService batchEntitySpaw
     private readonly BatchEntitySpawnerService batchEntitySpawnerService = batchEntitySpawnerService;
 
     [Description("Loads entities at x y z")]
-    public Task Execute(ICommandContext context, int xCoordinate, int yCoordinate, int zCoordinate)
+    public async Task Execute(ICommandContext context, int xCoordinate, int yCoordinate, int zCoordinate)
     {
         NitroxInt3 batchId = new(xCoordinate, yCoordinate, zCoordinate);
         List<Entity> entities = batchEntitySpawnerService.LoadUnspawnedEntities(batchId);
 
-        context.ReplyAsync($"Loaded {entities.Count} entities from batch {batchId}");
-
-        return Task.CompletedTask;
+        await context.ReplyAsync($"Loaded {entities.Count} entities from batch {batchId}");
     }
 }
 #endif

@@ -150,7 +150,7 @@ internal partial class NitroxZLoggerFormatter : IZLoggerFormatter
         int parameterCount = entry.ParameterCount;
         for (int i = 0; i < parameterCount; i++)
         {
-            if (entry.GetParameterType(i) == type)
+            if (type.IsAssignableFrom(entry.GetParameterType(i)))
             {
                 return true;
             }

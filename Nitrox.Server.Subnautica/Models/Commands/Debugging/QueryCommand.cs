@@ -15,29 +15,26 @@ internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipDa
     private readonly SimulationOwnershipData simulationOwnershipData = simulationOwnershipData;
 
     [Description("Query the entity associated with the given NitroxId")]
-    public Task Execute(ICommandContext context, [Description("NitroxId of an entity")] NitroxId entityId)
+    public async Task Execute(ICommandContext context, [Description("NitroxId of an entity")] NitroxId entityId)
     {
         if (!entityRegistry.TryGetEntityById(entityId, out Entity entity))
         {
-            context.ReplyAsync($"Entity with id {entityId} not found");
-            return Task.CompletedTask;
+            await context.ReplyAsync($"Entity with id {entityId} not found");
         }
 
-        context.ReplyAsync(entity.ToString());
+        await context.ReplyAsync(entity.ToString());
         if (entity is WorldEntity worldEntity)
         {
-            context.ReplyAsync(worldEntity.AbsoluteEntityCell.ToString());
+            await context.ReplyAsync(worldEntity.AbsoluteEntityCell.ToString());
         }
         if (simulationOwnershipData.TryGetLock(entityId, out SimulationOwnershipData.PlayerLock playerLock))
         {
-            context.ReplyAsync($"Lock owner player id: {playerLock.PlayerId}");
+            await context.ReplyAsync($"Lock owner player id: {playerLock.PlayerId}");
         }
         else
         {
-            context.ReplyAsync("Not locked");
+            await context.ReplyAsync("Not locked");
         }
-
-        return Task.CompletedTask;
     }
 }
 #endif

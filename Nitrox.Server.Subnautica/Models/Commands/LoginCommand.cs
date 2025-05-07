@@ -11,7 +11,7 @@ internal class LoginCommand(IOptions<Configuration.SubnauticaServerOptions> opti
     private readonly IOptions<Configuration.SubnauticaServerOptions> optionsProvider = optionsProvider;
 
     [Description("Log in to server as admin (requires password)")]
-    public Task Execute(ICommandContext context, [Description("The admin password for the server")] string adminPassword)
+    public async Task Execute(ICommandContext context, [Description("The admin password for the server")] string adminPassword)
     {
         switch (context)
         {
@@ -20,18 +20,16 @@ internal class LoginCommand(IOptions<Configuration.SubnauticaServerOptions> opti
                 {
                     // TODO: USE DATABASE
                     // player.Permissions = Perms.ADMIN;
-                    context.ReplyAsync($"You've been made {nameof(Perms.ADMIN)} on this server!");
+                    await context.ReplyAsync($"You've been made {nameof(Perms.ADMIN)} on this server!");
                 }
                 else
                 {
-                    context.ReplyAsync("Incorrect Password");
+                    await context.ReplyAsync("Incorrect Password");
                 }
                 break;
             default:
-                context.ReplyAsync("You already have admin permissions");
+                await context.ReplyAsync("You already have admin permissions");
                 break;
         }
-
-        return Task.CompletedTask;
     }
 }
