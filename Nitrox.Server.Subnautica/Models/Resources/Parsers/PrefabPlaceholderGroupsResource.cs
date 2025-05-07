@@ -32,10 +32,9 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
     public ConcurrentDictionary<string, string[]> RandomPossibilitiesByClassId = [];
     public Dictionary<string, PrefabPlaceholdersGroupAsset> PrefabPlaceholdersGroupPaths => LoadPrefabsAndSpawnPossibilitiesAsync().GetAwaiter().GetResult();
 
-    public Task LoadAsync(CancellationToken cancellationToken)
+    public async Task LoadAsync(CancellationToken cancellationToken)
     {
-        prefabPlaceholdersGroupPathsCache = LoadPrefabsAndSpawnPossibilitiesAsync(cancellationToken);
-        return Task.CompletedTask;
+        await (prefabPlaceholdersGroupPathsCache = LoadPrefabsAndSpawnPossibilitiesAsync(cancellationToken));
     }
 
     private static Dictionary<string, string> LoadPrefabDatabase(string fullFilename)
@@ -115,7 +114,7 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while deserializing the game Cache. Re-creating it.");
+            logger.ZLogWarning($"An error occurred while deserializing the prefab cache. Re-creating it: {ex.Message:@Error}");
         }
         if (cache.HasValue)
         {
