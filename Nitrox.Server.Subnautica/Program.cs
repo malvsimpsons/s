@@ -1,23 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Core;
-using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Helper;
-using ZLogger.Providers;
 
 namespace Nitrox.Server.Subnautica;
 
@@ -93,26 +86,14 @@ public class Program
                .SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information)
                .AddFilter("Nitrox.Server.Subnautica", level => level > LogLevel.Trace || (level == LogLevel.Trace && Debugger.IsAttached))
                .AddFilter("Microsoft", LogLevel.Warning)
-               .AddZLoggerConsole(options => options.UseNitroxFormatter(configure: formatterOptions => formatterOptions.ColorBehavior = startOptions.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled))
-               .AddZLoggerRollingFile((options, provider) =>
-               {
-                   ServerStartOptions serverStartOptions = provider.GetRequiredService<IOptions<ServerStartOptions>>().Value;
-                   options.FilePathSelector = (timestamp, sequenceNumber) => $"{Path.Combine(serverStartOptions.GetServerLogsPath(), timestamp.ToLocalTime().ToString("yyyy-MM-dd"))}_server_{sequenceNumber:000}.log";
-                   options.RollingInterval = RollingInterval.Day;
-                   options.UseNitroxFormatter(formatterOptions =>
-                   {
-                       formatterOptions.ColorBehavior = LoggerColorBehavior.Disabled;
-                       formatterOptions.UseRedaction = true;
-                       formatterOptions.Redactors = provider.GetService<IEnumerable<IRedactor>>()?.ToArray() ?? [];
-                   });
-               });
+               .AddNitroxLogging();
         builder.Services
                .Configure<HostOptions>(options =>
                {
                    options.ServicesStartConcurrently = true;
                    options.ServicesStopConcurrently = true;
                })
-               .AddAppOptions()
+               .AddNitroxOptions()
                // Add initialization services - diagnoses the server environment on startup.
                .AddHostedSingletonService<PreventMultiServerInitService>()
                .AddHostedSingletonService<NetworkPortAvailabilityService>()
@@ -124,9 +105,7 @@ public class Program
                .AddSubnauticaEntityManagement()
                .AddSubnauticaResources()
                .AddHibernation()
-               .AddRedactors()
-               .AddKeyedSingleton<Stopwatch>(typeof(ServerStatusService), serverStartStopWatch)
-               .AddHostedSingletonService<ServerStatusService>()
+               .AddServerStatusService(serverStartStopWatch)
                .AddHostedSingletonService<PortForwardService>()
                .AddHostedSingletonService<LanBroadcastService>()
                .AddHostedSingletonService<TimeService>()

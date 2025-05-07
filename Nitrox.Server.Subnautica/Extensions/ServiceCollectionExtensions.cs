@@ -8,6 +8,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
@@ -31,6 +33,7 @@ using NitroxModel.Networking.Packets.Processors.Core;
 using NitroxServer.GameLogic.Entities;
 using NitroxServer.GameLogic.Entities.Spawning;
 using ServiceScan.SourceGenerator;
+using ZLogger.Providers;
 
 namespace Nitrox.Server.Subnautica.Extensions;
 
@@ -42,7 +45,7 @@ internal static partial class ServiceCollectionExtensions
 
     public static IServiceCollection AddSingletonLazyArrayProvider<T>(this IServiceCollection services) => services.AddSingleton<Func<T[]>>(provider => () => provider.GetRequiredService<IEnumerable<T>>().ToArray());
 
-    public static IServiceCollection AddAppOptions(this IServiceCollection services)
+    public static IServiceCollection AddNitroxOptions(this IServiceCollection services)
     {
         services.AddOptionsWithValidateOnStart<ServerStartOptions, ServerStartOptions.Validator>()
                 .BindConfiguration("")
@@ -86,6 +89,30 @@ internal static partial class ServiceCollectionExtensions
                 });
         return services;
     }
+
+    public static ILoggingBuilder AddNitroxLogging(this ILoggingBuilder builder)
+    {
+        builder.Services.AddRedactors();
+        return builder.AddZLoggerConsole(static (options, provider) =>
+                                             options.UseNitroxFormatter(formatterOptions => formatterOptions.ColorBehavior =
+                                                                            provider.GetRequiredService<IOptions<ServerStartOptions>>().Value.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled))
+                      .AddZLoggerRollingFile(static (options, provider) =>
+                      {
+                          ServerStartOptions serverStartOptions = provider.GetRequiredService<IOptions<ServerStartOptions>>().Value;
+                          options.FilePathSelector = (timestamp, sequenceNumber) => $"{Path.Combine(serverStartOptions.GetServerLogsPath(), timestamp.ToLocalTime().ToString("yyyy-MM-dd"))}_server_{sequenceNumber:000}.log";
+                          options.RollingInterval = RollingInterval.Day;
+                          options.UseNitroxFormatter(formatterOptions =>
+                          {
+                              formatterOptions.ColorBehavior = LoggerColorBehavior.Disabled;
+                              formatterOptions.UseRedaction = true;
+                              formatterOptions.Redactors = provider.GetService<IEnumerable<IRedactor>>()?.ToArray() ?? [];
+                          });
+                      });
+    }
+
+    public static IServiceCollection AddServerStatusService(this IServiceCollection services, Stopwatch serverStartStopWatch) =>
+        services.AddKeyedSingleton<Stopwatch>(typeof(ServerStatusService), serverStartStopWatch)
+                .AddHostedSingletonService<ServerStatusService>();
 
     public static IServiceCollection AddPackets(this IServiceCollection services) =>
         services
@@ -131,10 +158,7 @@ internal static partial class ServiceCollectionExtensions
                                options.EnableSensitiveDataLogging();
                            }
 
-                           SqliteConnectionStringBuilder sqlConnectionBuilder = new()
-                           {
-                               DataSource = Path.Combine(startOptions.GetServerSavePath(), "world.db")
-                           };
+                           SqliteConnectionStringBuilder sqlConnectionBuilder = new() { DataSource = Path.Combine(startOptions.GetServerSavePath(), "world.db") };
                            options.UseSqlite(sqlConnectionBuilder.ToString());
                        })
                        .AddHostedSingletonService<DatabaseService>()
@@ -175,11 +199,11 @@ internal static partial class ServiceCollectionExtensions
         services.AddHostedSingletonService<HibernationService>()
                 .AddHibernators();
 
+    [GenerateServiceRegistrations(AssignableTo = typeof(IRedactor), Lifetime = ServiceLifetime.Singleton)]
+    private static partial IServiceCollection AddRedactors(this IServiceCollection services);
+
     [GenerateServiceRegistrations(AssignableTo = typeof(IGameResource), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
     private static partial IServiceCollection AddGameResources(this IServiceCollection services);
-
-    [GenerateServiceRegistrations(AssignableTo = typeof(IRedactor), Lifetime = ServiceLifetime.Singleton)]
-    internal static partial IServiceCollection AddRedactors(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IHibernate), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddHibernators(this IServiceCollection services);
