@@ -22,7 +22,7 @@ internal sealed class PlayerRepository(DatabaseService databaseService) : IPlaye
                        .AsNoTracking()
                        .Include(p => p.Session)
                        .Include(p => p.Session.Player)
-                       .Where(p => p.Session.Id == sessionId)
+                       .Where(p => p.Session.Id == sessionId && p.Session.Active)
                        .FirstOrDefaultAsync();
     }
 
@@ -31,6 +31,7 @@ internal sealed class PlayerRepository(DatabaseService databaseService) : IPlaye
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
         return await db.PlayerSessions
                        .Include(p => p.Player)
+                       .Where(p => p.Active)
                        .Select(s => s.ToConnectedPlayerDto())
                        .ToArrayAsync();
     }
@@ -43,6 +44,7 @@ internal sealed class PlayerRepository(DatabaseService databaseService) : IPlaye
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
         return await db.PlayerSessions
                        .Include(p => p.Player)
+                       .Where(p => p.Active)
                        .Where(p => p.Player.Name == name)
                        .Select(p => p.ToConnectedPlayerDto())
                        .ToArrayAsync();
@@ -53,16 +55,18 @@ internal sealed class PlayerRepository(DatabaseService databaseService) : IPlaye
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
         return await db.PlayerSessions
                        .Include(p => p.Player)
+                       .Where(p => p.Active)
                        .Where(p => p.Player.Id == playerId)
                        .Select(p => p.ToConnectedPlayerDto())
                        .FirstOrDefaultAsync();
     }
-    
+
     public async Task<ConnectedPlayerDto> GetConnectedPlayerBySessionIdAsync(SessionId sessionId)
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
         return await db.PlayerSessions
                        .Include(p => p.Player)
+                       .Where(p => p.Active)
                        .Where(p => p.Id == sessionId)
                        .Select(p => p.ToConnectedPlayerDto())
                        .FirstOrDefaultAsync();

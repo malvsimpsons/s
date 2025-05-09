@@ -8,10 +8,10 @@ namespace Nitrox.Server.Subnautica.Models.Commands;
 internal class WhoisCommand : ICommandHandler<ConnectedPlayerDto>
 {
     [Description("Shows information about a player")]
-    public async Task Execute(ICommandContext context, [Description("The players name")] ConnectedPlayerDto player)
+    public async Task Execute(ICommandContext context, [Description("The player to check out")] ConnectedPlayerDto player)
     {
         StringBuilder builder = new($"==== {player.Name} ====\n");
-        builder.AppendLine($"ID: {player.Id}");
+        builder.AppendLine($"Session ID: {player.SessionId}");
         builder.AppendLine($"Role: {player.Permissions}");
         // TODO: USE DATABASE
         // builder.AppendLine($"Position: {player.Position.X}, {player.Position.Y}, {player.Position.Z}");

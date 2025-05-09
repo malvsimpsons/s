@@ -33,6 +33,12 @@ public record PlayerSession
     public Player Player { get; set; }
 
     /// <summary>
+    ///     True if session is actively used by a client.
+    /// </summary>
+    [Required]
+    public bool Active { get; set; } = true;
+
+    /// <summary>
     ///     Gets the endpoint address of the client. Can be IPv4 or IPv6.
     /// </summary>
     [Required]

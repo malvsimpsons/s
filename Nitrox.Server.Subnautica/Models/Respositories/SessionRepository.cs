@@ -71,6 +71,20 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
                        .FirstOrDefaultAsync();
     }
 
+    public async Task<bool> SetSessionInactive(SessionId sessionId)
+    {
+        await using WorldDbContext db = await databaseService.GetDbContextAsync();
+        int changeCount = await db.PlayerSessions
+                                  .Where(s => s.Id == sessionId && s.Active)
+                                  .ExecuteUpdateAsync(setters => setters.SetProperty(s => s.Active, false));
+        return changeCount switch
+        {
+            1 => true,
+            < 1 => false,
+            _ => throw new Exception($"Too many changes happened while setting session #{sessionId} inactive. Rows affected: {changeCount}.")
+        };
+    }
+
     public async Task DeleteSessionAsync(SessionId sessionId)
     {
         await using (WorldDbContext db = await databaseService.GetDbContextAsync())
@@ -83,20 +97,24 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
             {
                 return;
             }
-
+            if (!await SetSessionInactive(session.Id))
+            {
+                logger.ZLogWarning($"Failed to set session #{session.Id:@SessionId} inactive");
+                return;
+            }
             await RunSessionCleanersAsync(session);
 
             // Now delete the session and its data (the latter happens through FOREIGN KEY CASCADE DELETE on session id)
             db.Remove(session);
             if (await db.SaveChangesAsync() <= 0)
             {
-                logger.LogWarning("Failed to delete session data on session id {SessionId}", sessionId);
+                logger.ZLogWarning($"Failed to delete session #{sessionId} data");
                 return;
             }
         }
 
         MarkSessionIdAsUsed(sessionId);
-        logger.LogTrace("Session #{SessionId} data has been removed", sessionId);
+        logger.ZLogTrace($"Session #{sessionId} data has been removed");
     }
 
     private SessionId GetNextSessionId()
@@ -114,6 +132,9 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
         }
     }
 
+    /// <summary>
+    ///     Blocks the session id from being reused until later.
+    /// </summary>
     private void MarkSessionIdAsUsed(SessionId sessionId)
     {
         lock (sessionIdLock)
