@@ -75,7 +75,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
         {
             logger.ZLogDebug($"Adjusting to option changes...");
         }
-        if (options.LanDiscoveryEnabled)
+        if (options.LanDiscovery)
         {
             if (!StartListening())
             {

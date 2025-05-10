@@ -45,10 +45,10 @@ public sealed partial class SubnauticaServerOptions
     public float DefaultInfectionValue { get; set; } = 0.1f;
 
     [PropertyDescription("If set to true, the server will try to open port on your router via UPnP")]
-    public bool AutoPortForward { get; set; } = true;
+    public bool PortForward { get; set; } = true;
 
     [PropertyDescription("Determines whether the server will listen for and reply to LAN discovery requests.")]
-    public bool LanDiscoveryEnabled { get; set; } = true;
+    public bool LanDiscovery { get; set; } = true;
 
     public PlayerStatsData DefaultPlayerStats => new(DefaultOxygenValue, DefaultMaxOxygenValue, DefaultHealthValue, DefaultHungerValue, DefaultThirstValue, DefaultInfectionValue);
 

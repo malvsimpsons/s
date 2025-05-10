@@ -69,7 +69,7 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
             IDisposable optionsMonitorDisposable = optionsProvider.OnChange(options =>
             {
                 logger.LogTrace("Adjusting for options change...");
-                if (options.AutoPortForward)
+                if (options.PortForward)
                 {
                     // Remove ports opened prior. TODO: Delay closing port if player connections are still active?
                     foreach (KeyValuePair<ushort, bool> pair in openedPorts)
@@ -97,7 +97,7 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
 
         async Task QueueInitialPortOpenAsync()
         {
-            if (optionsProvider.CurrentValue is { AutoPortForward: true, ServerPort: var port })
+            if (optionsProvider.CurrentValue is { PortForward: true, ServerPort: var port })
             {
                 await portForwardChannel.Writer.WriteAsync(new PortForwardAction(port, true), stoppingToken);
             }
