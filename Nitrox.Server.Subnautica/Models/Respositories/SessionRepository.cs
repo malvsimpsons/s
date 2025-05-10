@@ -33,7 +33,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
 
     private readonly SortedList<TimeSpan, SessionId> usedSessionIds = [];
     private SessionId nextSessionId = 1;
-    private ISessionCleaner[] sessionCleaners;
+    private OrderedDictionary<int, ISessionCleaner> sessionCleaners;
 
     public async Task<PlayerSession> GetOrCreateSessionAsync(string address, ushort port)
     {
@@ -102,6 +102,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
                 logger.ZLogWarning($"Failed to set session #{session.Id:@SessionId} inactive");
                 return;
             }
+            session.Active = false;
             await RunSessionCleanersAsync(session);
 
             // Now delete the session and its data (the latter happens through FOREIGN KEY CASCADE DELETE on session id)
@@ -153,8 +154,8 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     /// </summary>
     private async Task RunSessionCleanersAsync(PlayerSession session)
     {
-        sessionCleaners ??= sessionCleanersProvider();
-        foreach (ISessionCleaner cleaner in sessionCleaners)
+        sessionCleaners ??= new OrderedDictionary<int, ISessionCleaner>(sessionCleanersProvider().Select(c => new KeyValuePair<int, ISessionCleaner>(c.SessionCleanPriority, c)));
+        foreach (ISessionCleaner cleaner in sessionCleaners.Values)
         {
             try
             {

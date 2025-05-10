@@ -27,6 +27,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// </summary>
 internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISessionCleaner
 {
+    public int SessionCleanPriority => int.MinValue;
     private readonly IHostEnvironment hostEnvironment;
     private readonly SessionRepository sessionRepository;
     private readonly EventBasedNetListener listener;

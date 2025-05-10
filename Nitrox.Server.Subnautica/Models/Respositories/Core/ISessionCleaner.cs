@@ -7,5 +7,10 @@ namespace Nitrox.Server.Subnautica.Models.Respositories.Core;
 /// </summary>
 public interface ISessionCleaner
 {
+    /// <summary>
+    ///     Gets the requested priority of the session cleaner. Higher values are called before lower values.
+    /// </summary>
+    public int SessionCleanPriority => 0;
+
     Task CleanSessionAsync(PlayerSession disconnectedSession);
 }
