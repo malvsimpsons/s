@@ -61,7 +61,7 @@ public class LiteNetLibClient : IClient
         Log.Info("Initializing LiteNetLibClient...");
 
         // ConfigureAwait(false) is needed because Unity uses a custom "UnitySynchronizationContext". Which makes async/await work like Unity coroutines.
-        // Because this Task.Run is async-over-sync this would otherwise blocks the main thread as it wants to, without ConfigureAwait(false), continue on the same thread (i.e. main thread).
+        // Because this Task.Run is async-over-sync this would otherwise block the main thread as it wants to, without ConfigureAwait(false), continue on the same thread (i.e. main thread).
         await Task.Run(() =>
         {
             client.Start();

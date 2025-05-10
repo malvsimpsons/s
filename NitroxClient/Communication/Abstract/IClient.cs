@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using NitroxModel.Networking.Packets;
+﻿using NitroxModel.Networking.Packets;
 
 namespace NitroxClient.Communication.Abstract
 {
