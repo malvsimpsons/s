@@ -19,6 +19,7 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
     WorldEntityManager worldEntityManager,
     EscapePodService escapePodService,
     EntityRegistry entityRegistry,
+    SessionSettings sessionSettings,
     IOptions<SubnauticaServerOptions> optionsProvider,
     ILogger<PlayerJoiningMultiplayerSessionProcessor> logger)
     : IAnonPacketProcessor<PlayerJoiningMultiplayerSession>
@@ -31,6 +32,7 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
     private readonly StoryTimingService storyTimingService = storyTimingService;
     private readonly WorldEntityManager worldEntityManager = worldEntityManager;
     private readonly ILogger<PlayerJoiningMultiplayerSessionProcessor> logger = logger;
+    private readonly SessionSettings sessionSettings;
 
     public async Task Process(AnonProcessorContext context, PlayerJoiningMultiplayerSession packet)
     {
@@ -88,7 +90,8 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
         //                                           storyTimingService.GetTimeData(),
         //                                           isFirstPlayer,
         //                                           BuildingManager.GetEntitiesOperations(globalRootEntities),
-        //                                           optionsProvider.Value.KeepInventoryOnDeath
+        //                                           optionsProvider.Value.KeepInventoryOnDeath,
+        //                                           sessionSettings
         // );
         //
         // player.SendPacket(initialPlayerSync);

@@ -35,9 +35,16 @@ public class EntityReparentedProcessor : IClientPacketProcessor<EntityReparented
 
         if (entity.Value.TryGetComponent(out Pickupable pickupable))
         {
+            WaterParkItem waterParkItem = pickupable.GetComponent<WaterParkItem>();
             // If the entity is being parented to a WaterPark
             if (newParent.TryGetComponent(out WaterPark waterPark))
             {
+                // If the entity is already in a WaterPark
+                if (waterParkItem.currentWaterPark)
+                {
+                    waterParkItem.SetWaterPark(waterPark);
+                    return Task.CompletedTask;
+                }
                 pickupable.SetVisible(false);
                 pickupable.Activate(false);
                 waterPark.AddItem(pickupable);
@@ -45,7 +52,7 @@ public class EntityReparentedProcessor : IClientPacketProcessor<EntityReparented
                 return Task.CompletedTask;
             }
             // If the entity was parented to a WaterPark but is picked up by someone
-            else if (pickupable.TryGetComponent(out WaterParkItem waterParkItem))
+            else if (waterParkItem)
             {
                 pickupable.Deactivate();
                 waterParkItem.SetWaterPark(null);

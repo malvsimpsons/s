@@ -1,5 +1,6 @@
 using NitroxClient.GameLogic.Bases;
 using NitroxModel.Networking.Packets;
+using NitroxModel.Packets;
 
 namespace NitroxClient.Communication.Packets.Processors;
 
@@ -27,3 +28,5 @@ public class BaseDeconstructedProcessor : BuildProcessor<BaseDeconstructed> { }
 public class PieceDeconstructedProcessor : BuildProcessor<PieceDeconstructed> { }
 
 public class WaterParkDeconstructedProcessor : BuildProcessor<WaterParkDeconstructed> { }
+
+public class LargeWaterParkDeconstructedProcessor : BuildProcessor<LargeWaterParkDeconstructed> { }

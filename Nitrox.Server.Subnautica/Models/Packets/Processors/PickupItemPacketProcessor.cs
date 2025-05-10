@@ -17,14 +17,15 @@ internal sealed class PickupItemPacketProcessor(EntityRegistry entityRegistry, W
 
     public async Task Process(AuthProcessorContext context, PickupItem packet)
     {
-        if (simulationOwnershipData.RevokeOwnerOfId(packet.Id))
+        NitroxId id = packet.Item.Id;
+        if (simulationOwnershipData.RevokeOwnerOfId(id))
         {
             ushort serverId = ushort.MaxValue;
-            SimulationOwnershipChange simulationOwnershipChange = new(packet.Id, serverId, SimulationLockType.TRANSIENT);
+            SimulationOwnershipChange simulationOwnershipChange = new(id, serverId, SimulationLockType.TRANSIENT);
             await context.ReplyToAll(simulationOwnershipChange);
         }
 
-        StopTrackingExistingWorldEntity(packet.Id);
+        StopTrackingExistingWorldEntity(id);
 
         entityRegistry.AddOrUpdate(packet.Item);
 

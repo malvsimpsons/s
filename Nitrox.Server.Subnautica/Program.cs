@@ -10,6 +10,7 @@ using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Serialization;
 using Nitrox.Server.Subnautica.Services;
+using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Helper;
 
 namespace Nitrox.Server.Subnautica;
@@ -114,6 +115,7 @@ public class Program
                .AddHostedSingletonService<StoryScheduleService>()
                .AddHostedSingletonService<FmodService>()
                .AddSingleton(_ => GameInfo.Subnautica)
+               .AddSingleton<SessionSettings>()
                .AddSingleton<SubnauticaServerProtoBufSerializer>()
                .AddSingleton<NtpSyncer>()
                .AddTransient<SubnauticaServerRandom>();

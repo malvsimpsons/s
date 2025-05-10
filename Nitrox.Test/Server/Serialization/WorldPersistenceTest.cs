@@ -141,6 +141,12 @@ public class WorldPersistenceTest
         AssertHelper.IsListEqual(worldData.EntityData.Entities.OrderBy(x => x.Id), worldDataAfter.EntityData.Entities.OrderBy(x => x.Id), EntityTest);
     }
 
+    [DataTestMethod, DynamicWorldDataAfter]
+    public void GlobalRootDataTest(PersistedWorldData worldDataAfter, string serializerName)
+    {
+        AssertHelper.IsListEqual(worldData.GlobalRootData.Entities.OrderBy(x => x.Id), worldDataAfter.GlobalRootData.Entities.OrderBy(x => x.Id), EntityTest);
+    }
+
     private static void EntityTest(Entity entity, Entity entityAfter)
     {
         Assert.AreEqual(entity.Id, entityAfter.Id);
@@ -205,7 +211,13 @@ public class WorldPersistenceTest
                 Assert.AreEqual(metadata.Duration, metadataAfter.Duration);
                 break;
             case PlantableMetadata metadata when entityAfter.Metadata is PlantableMetadata metadataAfter:
-                Assert.AreEqual(metadata.Progress, metadataAfter.Progress);
+                Assert.AreEqual(metadata.TimeStartGrowth, metadataAfter.TimeStartGrowth);
+                Assert.AreEqual(metadata.SlotID, metadataAfter.SlotID);
+                // FruitPlantMetadata field is not checked before it's only temporary
+                break;
+            case FruitPlantMetadata metadata when entityAfter.Metadata is FruitPlantMetadata metadataAfter:
+                Assert.IsTrue(metadata.PickedStates.SequenceEqual(metadataAfter.PickedStates));
+                Assert.AreEqual(metadata.TimeNextFruit, metadataAfter.TimeNextFruit);
                 break;
             case CyclopsMetadata metadata when entityAfter.Metadata is CyclopsMetadata metadataAfter:
                 Assert.AreEqual(metadata.SilentRunningOn, metadataAfter.SilentRunningOn);

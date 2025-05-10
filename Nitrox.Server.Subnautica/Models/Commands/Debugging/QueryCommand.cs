@@ -23,7 +23,7 @@ internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipDa
         }
 
         await context.ReplyAsync(entity.ToString());
-        if (entity is WorldEntity worldEntity)
+        if (entity is WorldEntity { Transform: not null } worldEntity)
         {
             await context.ReplyAsync(worldEntity.AbsoluteEntityCell.ToString());
         }

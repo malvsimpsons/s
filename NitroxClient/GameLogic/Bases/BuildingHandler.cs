@@ -15,6 +15,7 @@ using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 using NitroxModel.DataStructures.Util;
 using Nitrox.Model.Subnautica.DataStructures;
 using NitroxModel.Networking.Packets;
+using NitroxModel.Packets;
 using UnityEngine;
 
 namespace NitroxClient.GameLogic.Bases;
@@ -258,6 +259,7 @@ public partial class BuildingHandler : MonoBehaviour
             using (PacketSuppressor<BaseDeconstructed>.Suppress())
             using (PacketSuppressor<PieceDeconstructed>.Suppress())
             using (PacketSuppressor<WaterParkDeconstructed>.Suppress())
+            using (PacketSuppressor<LargeWaterParkDeconstructed>.Suppress())
             using (Temp.Fill(pieceDeconstructed))
             {
                 baseDeconstructable.Deconstruct();
@@ -291,6 +293,7 @@ public partial class BuildingHandler : MonoBehaviour
         public List<NitroxId> MovedChildrenIds;
         public (NitroxId, NitroxId) ChildrenTransfer;
         public bool Transfer;
+        public Dictionary<NitroxId, List<NitroxId>> MovedChildrenIdsByNewHostId;
 
         public void Dispose()
         {
@@ -299,6 +302,7 @@ public partial class BuildingHandler : MonoBehaviour
             MovedChildrenIds = null;
             ChildrenTransfer = (null, null);
             Transfer = false;
+            MovedChildrenIdsByNewHostId = null;
         }
 
         public TemporaryBuildData Fill(PieceDeconstructed pieceDeconstructed)
@@ -309,6 +313,11 @@ public partial class BuildingHandler : MonoBehaviour
                 NewWaterPark = waterParkDeconstructed.NewWaterPark;
                 MovedChildrenIds = waterParkDeconstructed.MovedChildrenIds;
                 Transfer = waterParkDeconstructed.Transfer;
+                return this;
+            }
+            if (pieceDeconstructed is LargeWaterParkDeconstructed largeWaterParkDeconstructed)
+            {
+                MovedChildrenIdsByNewHostId = largeWaterParkDeconstructed.MovedChildrenIdsByNewHostId;
             }
             return this;
         }
