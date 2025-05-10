@@ -5,7 +5,7 @@ using NitroxClient.GameLogic.InitialSync.Abstract;
 using NitroxClient.MonoBehaviours;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.Util;
-using NitroxModel_Subnautica.DataStructures;
+using Nitrox.Model.Subnautica.DataStructures;
 using NitroxModel.Networking.Packets;
 using UnityEngine;
 using Math = System.Math;

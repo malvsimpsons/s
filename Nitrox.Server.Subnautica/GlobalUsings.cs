@@ -2,7 +2,6 @@ global using System.Threading.Tasks;
 global using NitroxModel;
 global using Microsoft.Extensions.Logging;
 global using NitroxModel.Networking;
-global using NitroxModel.Subnautica.Extensions;
 global using NitroxServer.Extensions;
 global using Nitrox.Server.Subnautica.Extensions;
 global using Nitrox.Server.Subnautica.Extensions.Dto;

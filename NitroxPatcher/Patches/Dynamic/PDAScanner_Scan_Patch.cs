@@ -6,7 +6,7 @@ using HarmonyLib;
 using NitroxClient.Communication.Abstract;
 using NitroxModel.DataStructures;
 using NitroxModel.Helper;
-using NitroxModel_Subnautica.DataStructures;
+using Nitrox.Model.Subnautica.DataStructures;
 using NitroxModel.Networking.Packets;
 using UnityEngine;
 

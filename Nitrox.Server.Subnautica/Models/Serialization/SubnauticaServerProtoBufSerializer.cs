@@ -1,4 +1,4 @@
-using NitroxModel_Subnautica.DataStructures.Surrogates;
+using Nitrox.Model.Subnautica.DataStructures.Surrogates;
 using NitroxModel.DataStructures.Unity;
 using NitroxServer.Serialization;
 using UnityEngine;
@@ -7,12 +7,12 @@ namespace Nitrox.Server.Subnautica.Models.Serialization;
 
 public class SubnauticaServerProtoBufSerializer : ServerProtoBufSerializer
 {
-    public SubnauticaServerProtoBufSerializer() : base("Assembly-CSharp", "Assembly-CSharp-firstpass", "NitroxModel", "NitroxModel-Subnautica")
+    public SubnauticaServerProtoBufSerializer() : base("Assembly-CSharp", "Assembly-CSharp-firstpass", "NitroxModel", "Nitrox.Model.Subnautica")
     {
         RegisterHardCodedTypes();
     }
 
-    // Register here all hard coded types, that come from NitroxModel-Subnautica or Nitrox.Server.Subnautica
+    // Register here all hard coded types, that come from Nitrox.Model.Subnautica or Nitrox.Server.Subnautica
     private void RegisterHardCodedTypes()
     {
         Model.Add(typeof(Light), true);

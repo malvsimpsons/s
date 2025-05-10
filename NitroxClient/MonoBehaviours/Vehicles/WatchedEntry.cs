@@ -1,5 +1,5 @@
 using NitroxModel.DataStructures;
-using NitroxModel_Subnautica.DataStructures;
+using Nitrox.Model.Subnautica.DataStructures;
 using NitroxModel.Networking.Packets;
 using UnityEngine;
 

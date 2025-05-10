@@ -1,5 +1,5 @@
 using Nitrox.Server.Subnautica.Models.Resources.Parsers;
-using NitroxModel_Subnautica.DataStructures;
+using Nitrox.Model.Subnautica.DataStructures;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using UWE;
 

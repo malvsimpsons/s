@@ -1,5 +1,6 @@
 ﻿using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Session;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
@@ -8,7 +9,7 @@ internal sealed class MultiplayerSessionReservationRequestProcessor(ILogger<Mult
     public async Task Process(AnonProcessorContext context, MultiplayerSessionReservationRequest packet)
     {
         // TODO: USE DATABASE
-        // logger.LogInformation("Processing reservation request from {Username}", packet.AuthenticationContext.Username);
+        logger.LogInformation("Processing reservation request from {Username}", packet.AuthenticationContext.Username);
         // AuthenticationContext authenticationContext = packet.AuthenticationContext;
         // MultiplayerSessionReservation reservation = playerManager.ReservePlayerContext(
         //     context.Sender,

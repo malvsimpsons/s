@@ -21,7 +21,7 @@ public abstract record Packet
         static IEnumerable<Type> FindTypesInModelAssemblies()
         {
             return AppDomain.CurrentDomain.GetAssemblies()
-                            .Where(assembly => new[] { nameof(NitroxModel), "NitroxModel-Subnautica" }
+                            .Where(assembly => new[] { nameof(NitroxModel), "Nitrox.Model.Subnautica" }
                                        .Contains(assembly.GetName().Name))
                             .SelectMany(assembly =>
                             {

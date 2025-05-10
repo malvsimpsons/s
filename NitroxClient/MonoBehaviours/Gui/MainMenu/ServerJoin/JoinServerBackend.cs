@@ -10,7 +10,7 @@ using NitroxClient.MonoBehaviours.Gui.MainMenu.ServersList;
 using NitroxModel.Core;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.Helper;
-using NitroxModel_Subnautica.DataStructures;
+using Nitrox.Model.Subnautica.DataStructures;
 using NitroxModel.Networking.Session;
 using UnityEngine;
 

@@ -1,8 +1,9 @@
 using System.ComponentModel;
+using Nitrox.Model.Subnautica.Extensions;
+using Nitrox.Model.Subnautica.Packets;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
-using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 

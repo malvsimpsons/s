@@ -1,3 +1,4 @@
+using Nitrox.Model.Subnautica.Packets;
 using NitroxModel;
 using NitroxModel.Networking.Packets;
 using Story;
