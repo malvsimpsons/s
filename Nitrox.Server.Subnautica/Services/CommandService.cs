@@ -13,7 +13,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Enables processing of commands from a string.
 /// </summary>
-internal sealed partial class CommandService(CommandRegistry registry, ILogger<CommandService> logger, ILoggerFactory loggerFactory) : IHostedLifecycleService
+internal sealed partial class CommandService(CommandRegistry registry, ILogger<CommandService> logger, ILoggerFactory loggerFactory) : IHostedLifecycleService, ICommandSubmit
 {
     private const int MAX_ARGS = 8;
     private readonly ILogger<CommandService> logger = logger;

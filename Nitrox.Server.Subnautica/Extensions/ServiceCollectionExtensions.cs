@@ -139,6 +139,7 @@ internal static partial class ServiceCollectionExtensions
         }
         return services
                .AddHostedSingletonService<CommandService>()
+               .AddSingleton<ICommandSubmit, CommandService>(provider => provider.GetRequiredService<CommandService>())
                .AddSingleton<CommandRegistry>()
                .AddSingleton<Func<CommandRegistry>>(provider => provider.GetRequiredService<CommandRegistry>)
                .AddCommandHandlers()

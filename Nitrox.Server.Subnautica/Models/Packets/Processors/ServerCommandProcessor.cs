@@ -2,15 +2,14 @@
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.Dto;
 using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors;
 
-internal sealed class ServerCommandProcessor(CommandService commandService, PlayerRepository playerRepository, IServerPacketSender packetSender, ILogger<ServerCommandProcessor> logger) : IAuthPacketProcessor<ServerCommand>
+internal sealed class ServerCommandProcessor(ICommandSubmit commandSubmit, PlayerRepository playerRepository, IServerPacketSender packetSender, ILogger<ServerCommandProcessor> logger) : IAuthPacketProcessor<ServerCommand>
 {
-    private readonly CommandService commandService = commandService;
+    private readonly ICommandSubmit commandSubmit = commandSubmit;
     private readonly PlayerRepository playerRepository = playerRepository;
     private readonly IServerPacketSender packetSender = packetSender;
     private readonly ILogger<ServerCommandProcessor> logger = logger;
@@ -23,6 +22,6 @@ internal sealed class ServerCommandProcessor(CommandService commandService, Play
             return;
         }
         logger.LogInformation("{PlayerName} issued command: /{Command}", player.Name, packet.Cmd);
-        commandService.ExecuteCommand(packet.Cmd, new PlayerToServerCommandContext(packetSender, player));
+        commandSubmit.ExecuteCommand(packet.Cmd, new PlayerToServerCommandContext(packetSender, player));
     }
 }
