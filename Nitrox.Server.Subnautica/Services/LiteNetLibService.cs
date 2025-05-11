@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Channels;
@@ -263,14 +264,21 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     
     private void SendPacket(Packet packet, NetPeer peer)
     {
-        byte[] packetData = packet.Serialize();
-        using EasyPool<NetDataWriter>.Lease lease = EasyPool<NetDataWriter>.Rent();
-        ref NetDataWriter writer = ref lease.GetRef();
-        writer ??= new NetDataWriter();
-        writer.Reset();
-        writer.Put(packetData.Length);
-        writer.Put(packetData);
-        peer.Send(writer, (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
+        // Get stream from pool.
+        using EasyPool<MemoryStream>.Lease lease = EasyPool<MemoryStream>.Rent();
+        ref MemoryStream stream = ref lease.GetRef();
+        stream ??= new MemoryStream(ushort.MaxValue);
+
+        // Write packet into stream.
+        int startPos = (int)stream.Position;
+        packet.SerializeInto(stream);
+        int bytesWritten = (int)(stream.Position - startPos);
+
+        // Send data
+        peer.Send(stream.GetBuffer().AsSpan().Slice(startPos, bytesWritten), (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
+
+        // Cleanup pooled data.
+        stream.Position = 0;
     }
 
     public Task CleanSessionAsync(PlayerSession disconnectedSession)
