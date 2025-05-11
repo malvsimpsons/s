@@ -21,7 +21,12 @@ internal sealed class NetworkPortAvailabilityService(IOptions<SubnauticaServerOp
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public async Task StartingAsync(CancellationToken cancellationToken) => await WaitForAvailablePortAsync(options.ServerPort, ct: cancellationToken);
+    public async Task StartingAsync(CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
+        await WaitForAvailablePortAsync(options.ServerPort, ct: cts.Token);
+    }
 
     public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
@@ -29,18 +34,8 @@ internal sealed class NetworkPortAvailabilityService(IOptions<SubnauticaServerOp
 
     public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    private async Task WaitForAvailablePortAsync(int port, TimeSpan timeout = default, CancellationToken ct = default)
+    private async Task WaitForAvailablePortAsync(int port, CancellationToken ct = default)
     {
-        if (timeout == default)
-        {
-            timeout = TimeSpan.FromSeconds(30);
-        }
-        else
-        {
-            Validate.IsTrue(timeout.TotalSeconds >= 5, "Timeout must be at least 5 seconds.");
-        }
-
-        DateTimeOffset time = DateTimeOffset.UtcNow;
         bool first = true;
         try
         {
@@ -65,11 +60,11 @@ internal sealed class NetworkPortAvailabilityService(IOptions<SubnauticaServerOp
                 if (first)
                 {
                     first = false;
-                    PrintPortWarn(logger, port, timeout);
+                    PrintPortWarn(logger, port);
                 }
                 else
                 {
-                    PrintPortWarn(logger, port, timeout - (DateTimeOffset.UtcNow - time));
+                    PrintPortWarn(logger, port);
                 }
 
                 await Task.Delay(3000, ct);
@@ -80,7 +75,7 @@ internal sealed class NetworkPortAvailabilityService(IOptions<SubnauticaServerOp
             // ignored
         }
 
-        static void PrintPortWarn(ILogger logger, int port, TimeSpan timeRemaining) =>
-            logger.LogWarning("Port {port} UDP is already in use. Please change the server port or close out any program that may be using it. Retrying for {Seconds} seconds until it is available...", port, Math.Floor(timeRemaining.TotalSeconds));
+        static void PrintPortWarn(ILogger logger, int port) =>
+            logger.ZLogWarning($"Port {port:@Port} UDP is already in use. Please change the server port or close out any program that may be using it. Retrying...");
     }
 }
