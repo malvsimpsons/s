@@ -4,11 +4,13 @@ using NitroxModel.Networking;
 
 namespace Nitrox.Server.Subnautica.Database.Models;
 
+// TODO: TRUNCATE TABLE ON SERVER STARTUP
+
 /// <summary>
 ///     The active sessions table. Deleting a session will also purge all session data (FOREIGN KEY CASCADE DELETE).
 /// </summary>
 /// <remarks>
-///     On startup, truncate this table.
+///     On startup, this table is truncated.
 /// </remarks>
 [Table("PlayerSession")]
 public record PlayerSession
@@ -17,6 +19,17 @@ public record PlayerSession
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public SessionId Id { get; set; }
 
+    /// <summary>
+    ///     Gets or sets the connection attached to this session. Can be NULL.
+    /// </summary>
+    /// <remarks>
+    ///     <b>Is <c>NULL</c> if</b>:
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>Client disconnected but session is still being migrated.</description>
+    ///         </item>
+    ///     </list>
+    /// </remarks>
     public Connection Connection { get; set; }
 
     /// <summary>
