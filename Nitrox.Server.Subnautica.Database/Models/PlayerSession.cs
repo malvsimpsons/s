@@ -8,7 +8,7 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 ///     The active sessions table. Deleting a session will also purge all session data (FOREIGN KEY CASCADE DELETE).
 /// </summary>
 /// <remarks>
-///     On startup, should ensure this table is truncated.
+///     On startup, truncate this table.
 /// </remarks>
 [Table("PlayerSession")]
 public record PlayerSession

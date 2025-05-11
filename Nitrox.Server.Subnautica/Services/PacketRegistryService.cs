@@ -56,9 +56,9 @@ internal sealed class PacketRegistryService(Func<IPacketProcessor[]> packetProce
             }
         }
         packetTypeToAnonProcessorLookup = anonLookupBuilder.ToFrozenDictionary();
-        logger.LogDebug("{Count} anonymous packet processors found and registered", packetTypeToAnonProcessorLookup.Count);
+        logger.ZLogDebug($"{packetTypeToAnonProcessorLookup.Count:@Count} anonymous packet processors found and registered");
         packetTypeToAuthProcessorLookup = authLookupBuilder.ToFrozenDictionary();
-        logger.LogDebug("{Count} authenticated packet processors found and registered", packetTypeToAuthProcessorLookup.Count);
+        logger.ZLogDebug($"{packetTypeToAuthProcessorLookup.Count:@Count} authenticated packet processors found and registered");
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -71,7 +71,7 @@ internal sealed class PacketRegistryService(Func<IPacketProcessor[]> packetProce
             IPacketProcessor processor = packetTypeToAuthProcessorLookup.GetValueOrDefault(packetType, defaultProcessor);
             if (processor is not IAuthPacketProcessor authProcessor)
             {
-                logger.LogWarning("No authenticated processor is defined for packet {TypeName}", packetType);
+                logger.ZLogWarning($"No authenticated processor is defined for packet {packetType:@TypeName}");
                 return null;
             }
 
