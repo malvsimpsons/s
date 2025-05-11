@@ -41,18 +41,23 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
         PlayerSession playerSession = await db.PlayerSessions
                                               .AsTracking()
                                               .Include(s => s.Player)
-                                              .Where(s => s.Address == address && s.Port == port)
+                                              .Include(s => s.Connection)
+                                              .Where(s => s.Connection.Address == address && s.Connection.Port == port)
                                               .FirstOrDefaultAsync();
         if (playerSession == null)
         {
             playerSession = new PlayerSession
             {
                 Id = GetNextSessionId(),
-                Address = address,
-                Port = port
+                Connection = new()
+                {
+                    Address = address,
+                    Port = port
+                }
             };
+            db.Connections.Add(playerSession.Connection);
             db.PlayerSessions.Add(playerSession);
-            if (await db.SaveChangesAsync() != 1)
+            if (await db.SaveChangesAsync() < 1)
             {
                 logger.ZLogError($"Failed to create session for {address.ToSensitive():@Address}:{port:@Port}");
                 return null;
@@ -62,27 +67,16 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
         return playerSession;
     }
 
-    public async Task<PlayerSession> GetSessionAsync(PeerId peerId)
-    {
-        await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        return await db.PlayerSessions
-                       .Include(s => s.Player)
-                       .Where(s => s.Player.Id == peerId)
-                       .FirstOrDefaultAsync();
-    }
-
     public async Task<bool> SetSessionInactive(SessionId sessionId)
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        int changeCount = await db.PlayerSessions
-                                  .Where(s => s.Id == sessionId && s.Active)
-                                  .ExecuteUpdateAsync(setters => setters.SetProperty(s => s.Active, false));
-        return changeCount switch
-        {
-            1 => true,
-            < 1 => false,
-            _ => throw new Exception($"Too many changes happened while setting session #{sessionId} inactive. Rows affected: {changeCount}.")
-        };
+        PlayerSession session = await db.PlayerSessions
+                                        .AsTracking()
+                                        .Include(s => s.Connection)
+                                        .FirstOrDefaultAsync(s => s.Id == sessionId);
+        db.Connections.Remove(session.Connection);
+        session.Connection = null;
+        return await db.SaveChangesAsync() > 0;
     }
 
     public async Task DeleteSessionAsync(SessionId sessionId)
@@ -102,7 +96,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
                 logger.ZLogWarning($"Failed to set session #{session.Id:@SessionId} inactive");
                 return;
             }
-            session.Active = false;
+            session.Connection = null;
             await RunSessionCleanersAsync(session);
 
             // Now delete the session and its data (the latter happens through FOREIGN KEY CASCADE DELETE on session id)
@@ -163,7 +157,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error occurred during session cleaning in {TypeName}", cleaner.GetType().Name);
+                logger.ZLogError(ex, $"Error occurred during session cleaning in {cleaner.GetType().Name:@TypeName}");
             }
         }
     }

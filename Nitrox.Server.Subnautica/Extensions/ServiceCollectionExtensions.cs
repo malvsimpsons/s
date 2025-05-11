@@ -96,7 +96,7 @@ internal static partial class ServiceCollectionExtensions
                     if (environment.IsDevelopment())
                     {
                         options.Synchronous = SqliteOptions.Sync.NORMAL;
-                        options.JournalMode = SqliteOptions.JournalingMode.WAL;
+                        options.LockingMode = SqliteOptions.LockMode.NORMAL;
                     }
                 });
         return services;
