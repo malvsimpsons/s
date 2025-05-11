@@ -41,6 +41,18 @@ internal static partial class ServiceCollectionExtensions
 {
     private static readonly Lazy<string> newWorldSeed = new(() => StringHelper.GenerateRandomString(10));
 
+    /// <summary>
+    ///     Adds the fallback implementation for the interface if no other implementation is set.
+    /// </summary>
+    public static IServiceCollection AddFallback<TInterface, TFallback>(this IServiceCollection services, IServiceProvider provider) where TInterface : class where TFallback : class, TInterface
+    {
+        if (provider.GetService<TInterface>() is null)
+        {
+            services.AddSingleton<TInterface, TFallback>();
+        }
+        return services;
+    }
+
     public static IServiceCollection AddHostedSingletonService<T>(this IServiceCollection services) where T : class, IHostedService => services.AddSingleton<T>().AddHostedService(provider => provider.GetRequiredService<T>());
 
     public static IServiceCollection AddSingletonLazyArrayProvider<T>(this IServiceCollection services) => services.AddSingleton<Func<T[]>>(provider => () => provider.GetRequiredService<IEnumerable<T>>().ToArray());

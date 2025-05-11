@@ -125,14 +125,9 @@ public class Program
         if (builder.Environment.IsDevelopment())
         {
             ServiceProvider provider = builder.Services.BuildServiceProvider();
-            if (provider.GetService<IServerPacketSender>() is null)
-            {
-                builder.Services.AddSingleton<IServerPacketSender, NopServerPacketSender>();
-            }
-            if (provider.GetService<ICommandSubmit>() is null)
-            {
-                builder.Services.AddSingleton<ICommandSubmit, NopCommandSubmit>();
-            }
+            builder.Services
+                   .AddFallback<IServerPacketSender, NopServerPacketSender>(provider)
+                   .AddFallback<ICommandSubmit, NopCommandSubmit>(provider);
         }
 
         await builder.Build().RunAsync();
