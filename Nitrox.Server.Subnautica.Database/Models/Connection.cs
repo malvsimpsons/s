@@ -7,6 +7,7 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 ///     An active connection to the server.
 /// </summary>
 [Table("Connections")]
+[Index(nameof(Address), nameof(Port), IsUnique = true)]
 public record Connection
 {
     [Key]

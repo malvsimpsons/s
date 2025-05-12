@@ -21,7 +21,7 @@ internal sealed partial class SqliteOptions
 
     [Required]
     [ConfigurationKeyName("page_size")]
-    public int PageSize { get; set; } = -32768;
+    public int PageSize { get; set; } = -10000;
 
     /// <inheritdoc cref="Sync" />
     [Required]

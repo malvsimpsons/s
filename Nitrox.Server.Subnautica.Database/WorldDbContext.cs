@@ -25,6 +25,22 @@ public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContex
     {
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder builder)
+    {
+        EnableEfMigrations(builder);
+
+        base.OnConfiguring(builder);
+
+        static void EnableEfMigrations(DbContextOptionsBuilder builder)
+        {
+            // Required for "dotnet ef migrations add ..." to work, shouldn't be used for development/production.
+            if (!builder.IsConfigured)
+            {
+                builder.UseSqlite();
+            }
+        }
+    }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
         base.ConfigureConventions(builder);

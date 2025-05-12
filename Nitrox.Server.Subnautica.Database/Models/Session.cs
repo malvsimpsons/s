@@ -13,10 +13,11 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 ///     On startup, this table is truncated.
 /// </remarks>
 [Table("Sessions")]
+[Index($"{nameof(Connection)}Id", IsUnique = true)]
+[Index($"{nameof(Player)}Id", IsUnique = true)]
 public record Session
 {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public SessionId Id { get; set; }
 
     /// <summary>
