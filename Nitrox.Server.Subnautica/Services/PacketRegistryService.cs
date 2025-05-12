@@ -3,7 +3,6 @@ using System;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Nitrox.Server.Subnautica.Database.Models;
-using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using NitroxModel.Networking.Packets;
 using NitroxModel.Networking.Packets.Core;
 using NitroxModel.Networking.Packets.Processors.Core;
@@ -26,13 +25,5 @@ internal sealed class PacketRegistryService(Func<IPacketProcessor[]> packetProce
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public PacketProcessorsInvoker.Entry GetProcessor(Session session, Packet packet)
-    {
-        PacketProcessorsInvoker.Entry entry = packetProcessorsInvoker.GetProcessor(packet.GetType());
-        if (session is { Player.Id: var playerId } && playerId > 0 && !typeof(IAuthPacketProcessor).IsAssignableFrom(entry.InterfaceType))
-        {
-            return packetProcessorsInvoker.GetProcessor(typeof(Packet));
-        }
-        return entry;
-    }
+    public PacketProcessorsInvoker.Entry GetProcessor(Type packetType) => packetProcessorsInvoker.GetProcessor(packetType);
 }

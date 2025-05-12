@@ -62,9 +62,14 @@ public sealed class PacketProcessorsInvoker
 
     public Entry GetProcessor(Type packetType)
     {
-        if (packetTypeToProcessorEntry.TryGetValue(packetType, out Entry processor))
+        Type current = packetType;
+        while (current != null)
         {
-            return processor;
+            if (packetTypeToProcessorEntry.TryGetValue(packetType, out Entry processor))
+            {
+                return processor;
+            }
+            current = packetType.BaseType;
         }
 
         return null;
@@ -98,7 +103,14 @@ public sealed class PacketProcessorsInvoker
                 }
                 for (int i = 0; i < parameterInfos.Length; i++)
                 {
-                    if (!expectedProcessorParameterTypes[i].IsAssignableFrom(parameterInfos[i].ParameterType))
+                    Type expectedParamType = expectedProcessorParameterTypes[i];
+                    // For packet parameter, we want the most specific method that can handle it.
+                    if (expectedParamType == typeof(Packet))
+                    {
+                        expectedParamType = packetType;
+                    }
+
+                    if (!expectedParamType.IsAssignableFrom(parameterInfos[i].ParameterType))
                     {
                         return false;
                     }

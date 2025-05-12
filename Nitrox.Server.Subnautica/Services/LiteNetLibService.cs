@@ -24,21 +24,22 @@ using NitroxModel.Networking.Packets.Core;
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
-///     Opens the LiteNetLib channel and starts sending incoming messages to <see cref="packetRegistryService" /> for processing.
+///     Opens the LiteNetLib channel and starts sending incoming messages to <see cref="packetRegistryService" /> for
+///     processing.
 /// </summary>
 internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISessionCleaner
 {
-    public int SessionCleanPriority => int.MinValue;
+    private readonly NetDataWriter dataWriter = new();
     private readonly IHostEnvironment hostEnvironment;
-    private readonly SessionRepository sessionRepository;
     private readonly EventBasedNetListener listener;
     private readonly ILogger<LiteNetLibService> logger;
     private readonly IOptions<SubnauticaServerOptions> optionsProvider;
     private readonly PacketRegistryService packetRegistryService;
-    private readonly NetManager server;
-    private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
     private readonly ConcurrentDictionary<SessionId, NetPeer> peersBySessionId = [];
-    private readonly NetDataWriter dataWriter = new();
+    private readonly NetManager server;
+    private readonly SessionRepository sessionRepository;
+    private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
+    public int SessionCleanPriority => int.MinValue;
 
     public LiteNetLibService(PacketRegistryService packetRegistryService, SessionRepository sessionRepository, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
     {
@@ -60,6 +61,65 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         await SendPacket(new PlayerKicked(reason), sessionId);
         server.DisconnectPeer(peer); // This will trigger client disconnect, which will clear the session data.
         return true;
+    }
+
+    public ValueTask SendPacket<T>(T packet, SessionId sessionId) where T : Packet
+    {
+        if (!peersBySessionId.TryGetValue(sessionId, out NetPeer peer) || peer.ConnectionState != ConnectionState.Connected)
+        {
+            logger.ZLogWarning($"Cannot send packet {packet?.GetType().Name:@TypeName} to closed connection {(peer as IPEndPoint).ToSensitive():@EndPoint} with session id {sessionId}");
+            return ValueTask.CompletedTask;
+        }
+        SendPacket(packet, peer);
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask SendPacketToAll<T>(T packet) where T : Packet
+    {
+        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
+        {
+            SendPacket(packet, pair.Value);
+        }
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask SendPacketToOthers<T>(T packet, SessionId excludedSessionId) where T : Packet
+    {
+        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
+        {
+            if (pair.Key == excludedSessionId)
+            {
+                continue;
+            }
+            SendPacket(packet, pair.Value);
+        }
+        return ValueTask.CompletedTask;
+    }
+
+    public Task CleanSessionAsync(Session disconnectedSession)
+    {
+        if (!peersBySessionId.TryRemove(disconnectedSession.Id, out NetPeer peer))
+        {
+            return Task.CompletedTask;
+        }
+        if (disconnectedSession is { Player.Id: var playerId, Player.Name: { } playerName })
+        {
+            logger.ZLogInformation($"Player {playerName:@PlayerName} #{playerId:@PlayerId} on {(peer as EndPoint).ToSensitive():@EndPoint} disconnected");
+        }
+        else
+        {
+            logger.ZLogInformation($"Session #{disconnectedSession.Id:@SessionId} on {(peer as EndPoint).ToSensitive():@EndPoint} disconnected");
+        }
+        Disconnect disconnectPacket = new(disconnectedSession.Id);
+        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
+        {
+            if (pair.Key == disconnectedSession.Id)
+            {
+                continue;
+            }
+            SendPacket(disconnectPacket, pair.Value);
+        }
+        return Task.CompletedTask;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -176,84 +236,74 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
 
     private async Task ProcessPacket(NetPeer peer, Packet packet)
     {
+        // TODO: See if further optimization is possible.
         Session session = await sessionRepository.GetOrCreateSessionAsync(peer.Address.ToString(), (ushort)peer.Port);
-        logger.ZLogTrace($"Incoming packet {packet.GetType().Name:@TypeName} by session #{session.Id:@SessionId}");
-        PacketProcessorsInvoker.Entry processor = packetRegistryService.GetProcessor(session, packet);
+        Type packetType = packet.GetType();
+        logger.ZLogTrace($"Incoming packet {packetType.Name:@TypeName} by session #{session.Id:@SessionId}");
+        PacketProcessorsInvoker.Entry processor = packetRegistryService.GetProcessor(packetType);
 
         try
         {
-            if (typeof(IAnonPacketProcessor).IsAssignableFrom(processor.InterfaceType))
+            switch (GetProcessorTarget(processor, session))
             {
-                using EasyPool<AnonProcessorContext>.Lease lease = EasyPool<AnonProcessorContext>.Rent();
-                ref AnonProcessorContext context = ref lease.GetRef();
-                if (context == null)
-                {
-                    context = new AnonProcessorContext(session.Id, this);
-                }
-                else
-                {
-                    context.Sender = session.Id;
-                }
-                await processor.Execute(context, packet);
-            }
-            else if (typeof(IAuthPacketProcessor).IsAssignableFrom(processor.InterfaceType))
-            {
-                using EasyPool<AuthProcessorContext>.Lease lease = EasyPool<AuthProcessorContext>.Rent();
-                ref AuthProcessorContext context = ref lease.GetRef();
-                if (context == null)
-                {
-                    context = new AuthProcessorContext((session.Player.Id, session.Id), this);
-                }
-                else
-                {
-                    context.Sender = (session.Player.Id, session.Id);
-                }
-                await processor.Execute(context, packet);
-            }
-            else
-            {
-                logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packet.GetType().Name);
+                case ProcessorTarget.ANONYMOUS:
+                    using (EasyPool<AnonProcessorContext>.Lease lease = EasyPool<AnonProcessorContext>.Rent())
+                    {
+                        ref AnonProcessorContext context = ref lease.GetRef();
+                        if (context == null)
+                        {
+                            context = new AnonProcessorContext(session.Id, this);
+                        }
+                        else
+                        {
+                            context.Sender = session.Id;
+                        }
+                        await processor.Execute(context, packet);
+                    }
+                    break;
+                case ProcessorTarget.AUTHENTICATED:
+                    using (EasyPool<AuthProcessorContext>.Lease lease = EasyPool<AuthProcessorContext>.Rent())
+                    {
+                        ref AuthProcessorContext context = ref lease.GetRef();
+                        if (context == null)
+                        {
+                            context = new AuthProcessorContext((session.Player.Id, session.Id), this);
+                        }
+                        else
+                        {
+                            context.Sender = (session.Player.Id, session.Id);
+                        }
+                        await processor.Execute(context, packet);
+                    }
+                    break;
+                default:
+                    logger.ZLogWarning($"Received invalid, unauthenticated packet: {packetType.Name:@TypeName}");
+                    break;
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in packet processor {TypeName}", processor.GetType().Name);
+            logger.ZLogError(ex, $"Error in packet processor {processor.GetType().Name:@TypeName}");
         }
-    }
 
-    public ValueTask SendPacket<T>(T packet, SessionId sessionId) where T : Packet
-    {
-        if (!peersBySessionId.TryGetValue(sessionId, out NetPeer peer) || peer.ConnectionState != ConnectionState.Connected)
+        static ProcessorTarget GetProcessorTarget(PacketProcessorsInvoker.Entry processor, Session session)
         {
-            logger.ZLogWarning($"Cannot send packet {packet?.GetType().Name:@TypeName} to closed connection {(peer as IPEndPoint).ToSensitive():@EndPoint} with session id {sessionId}");
-            return ValueTask.CompletedTask;
-        }
-        SendPacket(packet, peer);
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask SendPacketToAll<T>(T packet) where T : Packet
-    {
-        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
-        {
-            SendPacket(packet, pair.Value);
-        }
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask SendPacketToOthers<T>(T packet, SessionId excludedSessionId) where T : Packet
-    {
-        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
-        {
-            if (pair.Key == excludedSessionId)
+            if (processor == null)
             {
-                continue;
+                return ProcessorTarget.INVALID;
             }
-            SendPacket(packet, pair.Value);
+            if (typeof(IAnonPacketProcessor).IsAssignableFrom(processor.InterfaceType))
+            {
+                return ProcessorTarget.ANONYMOUS;
+            }
+            if (typeof(IAuthPacketProcessor).IsAssignableFrom(processor.InterfaceType) && session.Player is { Id.IsPlayer: true })
+            {
+                return ProcessorTarget.AUTHENTICATED;
+            }
+            return ProcessorTarget.INVALID;
         }
-        return ValueTask.CompletedTask;
     }
-    
+
     private void SendPacket(Packet packet, NetPeer peer)
     {
         using EasyPool<MemoryStream>.Lease lease = EasyPool<MemoryStream>.Rent();
@@ -267,6 +317,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
 
         dataWriter.Reset();
         dataWriter.Put(packetData.Length);
+        dataWriter.ResizeIfNeed(packetData.Length + 4);
         packetData.CopyTo(dataWriter.Data.AsSpan().Slice(4));
         dataWriter.SetPosition(packetData.Length + 4);
         peer.Send(dataWriter, (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
@@ -275,29 +326,10 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         stream.Position = 0;
     }
 
-    public Task CleanSessionAsync(Session disconnectedSession)
+    private enum ProcessorTarget
     {
-        if (!peersBySessionId.TryRemove(disconnectedSession.Id, out NetPeer peer))
-        {
-            return Task.CompletedTask;
-        }
-        if (disconnectedSession is { Player.Id: var playerId, Player.Name: {} playerName })
-        {
-            logger.ZLogInformation($"Player {playerName:@PlayerName} #{playerId:@PlayerId} on {(peer as EndPoint).ToSensitive():@EndPoint} disconnected");
-        }
-        else
-        {
-            logger.ZLogInformation($"Session #{disconnectedSession.Id:@SessionId} on {(peer as EndPoint).ToSensitive():@EndPoint} disconnected");
-        }
-        Disconnect disconnectPacket = new(disconnectedSession.Id);
-        foreach (KeyValuePair<SessionId, NetPeer> pair in peersBySessionId)
-        {
-            if (pair.Key == disconnectedSession.Id)
-            {
-                continue;
-            }
-            SendPacket(disconnectPacket, pair.Value);
-        }
-        return Task.CompletedTask;
+        INVALID,
+        ANONYMOUS,
+        AUTHENTICATED
     }
 }

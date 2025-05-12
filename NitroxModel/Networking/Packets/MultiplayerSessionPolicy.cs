@@ -39,7 +39,7 @@ namespace NitroxModel.Networking.Packets
         public override string ToString()
         {
             return
-                $"{base.ToString()}, {nameof(AuthenticationAuthority)}: {AuthenticationAuthority}, {nameof(DisableConsole)}: {DisableConsole}, {nameof(MaxConnections)}: {MaxConnections}, {nameof(NitroxVersionAllowed)}: {NitroxVersionAllowed}";
+                $"{nameof(RequiresServerPassword)}: {RequiresServerPassword}, {nameof(DisableConsole)}: {DisableConsole}, {nameof(MaxConnections)}: {MaxConnections}, {nameof(NitroxVersionAllowed)}: {NitroxVersionAllowed}";
         }
     }
 }
