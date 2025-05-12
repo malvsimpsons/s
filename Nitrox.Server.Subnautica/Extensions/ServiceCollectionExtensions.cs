@@ -7,6 +7,7 @@ using AssetsTools.NET.Extra;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
@@ -44,12 +45,9 @@ internal static partial class ServiceCollectionExtensions
     /// <summary>
     ///     Adds the fallback implementation for the interface if no other implementation is set.
     /// </summary>
-    public static IServiceCollection AddFallback<TInterface, TFallback>(this IServiceCollection services, IServiceProvider provider) where TInterface : class where TFallback : class, TInterface
+    public static IServiceCollection AddFallback<TInterface, TFallback>(this IServiceCollection services) where TInterface : class where TFallback : class, TInterface
     {
-        if (provider.GetService<TInterface>() is null)
-        {
-            services.AddSingleton<TInterface, TFallback>();
-        }
+        services.TryAddSingleton<TInterface, TFallback>();
         return services;
     }
 

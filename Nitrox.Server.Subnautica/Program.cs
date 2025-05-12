@@ -124,10 +124,9 @@ public class Program
         // Add fallbacks for testing services in isolation during development.
         if (builder.Environment.IsDevelopment())
         {
-            ServiceProvider provider = builder.Services.BuildServiceProvider();
             builder.Services
-                   .AddFallback<IServerPacketSender, NopServerPacketSender>(provider)
-                   .AddFallback<ICommandSubmit, NopCommandSubmit>(provider);
+                   .AddFallback<IServerPacketSender, NopServerPacketSender>()
+                   .AddFallback<ICommandSubmit, NopCommandSubmit>();
         }
 
         await builder.Build().RunAsync();
