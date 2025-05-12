@@ -11,6 +11,6 @@ namespace NitroxClient.Communication.Abstract
         MultiplayerSessionPolicy SessionPolicy { get; }
         PlayerSettings PlayerSettings { get; }
         AuthenticationContext AuthenticationContext { get; }
-        MultiplayerSessionReservation Reservation { get; }
+        SessionReservation Reservation { get; }
     }
 }

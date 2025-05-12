@@ -12,8 +12,8 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 /// <remarks>
 ///     On startup, this table is truncated.
 /// </remarks>
-[Table("PlayerSession")]
-public record PlayerSession
+[Table("Sessions")]
+public record Session
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

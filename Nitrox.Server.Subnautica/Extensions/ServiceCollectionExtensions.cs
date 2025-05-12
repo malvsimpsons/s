@@ -105,9 +105,11 @@ internal static partial class ServiceCollectionExtensions
     public static ILoggingBuilder AddNitroxLogging(this ILoggingBuilder builder)
     {
         builder.Services.AddRedactors();
-        return builder.AddZLoggerConsole(static (options, provider) =>
-                                             options.UseNitroxFormatter(formatterOptions => formatterOptions.ColorBehavior =
-                                                                            provider.GetRequiredService<IOptions<ServerStartOptions>>().Value.IsEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled))
+        return builder.AddZLoggerConsole(static (options, provider) => options.UseNitroxFormatter(formatterOptions =>
+                      {
+                          bool isEmbedded = provider.GetRequiredService<IOptions<ServerStartOptions>>().Value.IsEmbedded;
+                          formatterOptions.ColorBehavior = isEmbedded ? LoggerColorBehavior.Disabled : LoggerColorBehavior.Enabled;
+                      }))
                       .AddZLoggerRollingFile(static (options, provider) =>
                       {
                           ServerStartOptions serverStartOptions = provider.GetRequiredService<IOptions<ServerStartOptions>>().Value;

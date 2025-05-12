@@ -176,7 +176,7 @@ internal sealed class EntitySimulation : ISessionCleaner
         await packetSender.SendPacketToAll(ownershipChangePacket);
     }
 
-    public async Task CleanSessionAsync(PlayerSession disconnectedSession)
+    public async Task CleanSessionAsync(Session disconnectedSession)
     {
         if (disconnectedSession is not { Player.Id: var playerId })
         {

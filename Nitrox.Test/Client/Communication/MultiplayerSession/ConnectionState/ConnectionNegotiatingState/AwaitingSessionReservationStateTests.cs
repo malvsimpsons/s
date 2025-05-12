@@ -13,7 +13,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
         public void NegotiateShouldTransitionToSessionRevervedAfterReceivingSuccessfulReservation()
         {
             // Arrange
-            MultiplayerSessionReservation successfulReservation = new MultiplayerSessionReservation(
+            SessionReservation successfulReservation = new SessionReservation(
                 TestConstants.TEST_CORRELATION_ID,
                 TestConstants.TEST_PLAYER_ID,
                 TestConstants.TEST_RESERVATION_KEY);
@@ -34,7 +34,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
         public void NegotiateShouldThrowUncorrelatedPacketExceptionWhenTheReservationHasTheWrongCorrelationId()
         {
             // Arrange
-            MultiplayerSessionReservation successfulReservation = new MultiplayerSessionReservation(
+            SessionReservation successfulReservation = new SessionReservation(
                 "wrong",
                 TestConstants.TEST_PLAYER_ID,
                 TestConstants.TEST_RESERVATION_KEY);
@@ -55,7 +55,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
         public void NegotiateShouldTransitionToSessionReservationRejectedAfterReceivingRejectedReservation()
         {
             // Arrange
-            MultiplayerSessionReservation rejectedReservation = new MultiplayerSessionReservation(TestConstants.TEST_CORRELATION_ID, TestConstants.TEST_REJECTION_STATE);
+            SessionReservation rejectedReservation = new SessionReservation(TestConstants.TEST_CORRELATION_ID, TestConstants.TEST_REJECTION_STATE);
 
             IMultiplayerSessionConnectionContext connectionContext = Substitute.For<IMultiplayerSessionConnectionContext>();
             connectionContext.Reservation.Returns(rejectedReservation);
@@ -74,7 +74,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
         {
             // Arrange
             IMultiplayerSessionConnectionContext connectionContext = Substitute.For<IMultiplayerSessionConnectionContext>();
-            connectionContext.Reservation.Returns((MultiplayerSessionReservation)null);
+            connectionContext.Reservation.Returns((SessionReservation)null);
 
             AwaitingSessionReservation connectionState = new AwaitingSessionReservation(TestConstants.TEST_CORRELATION_ID);
 

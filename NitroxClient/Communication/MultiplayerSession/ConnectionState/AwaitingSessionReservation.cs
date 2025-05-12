@@ -38,7 +38,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
         {
             IMultiplayerSessionConnectionState nextState = sessionConnectionContext.Reservation.ReservationState switch
             {
-                MultiplayerSessionReservationState.RESERVED => new SessionReserved(),
+                SessionReservationState.RESERVED => new SessionReserved(),
                 _ => new SessionReservationRejected(),
             };
 

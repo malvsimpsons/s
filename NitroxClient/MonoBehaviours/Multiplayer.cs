@@ -46,6 +46,7 @@ namespace NitroxClient.MonoBehaviours
         public void Awake()
         {
             NitroxServiceLocator.LifetimeScopeEnded += (_, _) => processorInvoker = null;
+            processorInvoker ??= new PacketProcessorsInvoker(NitroxServiceLocator.LocateService<IEnumerable<IPacketProcessor>>());
             client = NitroxServiceLocator.LocateService<IClient>();
             multiplayerSession = NitroxServiceLocator.LocateService<IMultiplayerSession>();
             packetReceiver = NitroxServiceLocator.LocateService<PacketReceiver>();
@@ -61,7 +62,6 @@ namespace NitroxClient.MonoBehaviours
 
         public void Update()
         {
-            processorInvoker ??= new PacketProcessorsInvoker(NitroxServiceLocator.LocateService<IEnumerable<IPacketProcessor>>());
             client.PollEvents();
 
             if (multiplayerSession.CurrentState.CurrentStage != MultiplayerSessionConnectionStage.DISCONNECTED)

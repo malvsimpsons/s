@@ -29,7 +29,7 @@ internal sealed class PlayerRepository(DatabaseService databaseService) : IPlaye
     public async Task<ConnectedPlayerDto[]> GetConnectedPlayersAsync()
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        return await db.PlayerSessions
+        return await db.Sessions
                        .Include(p => p.Player)
                        .Where(p => p.Connection != null && p.Player != null)
                        .Select(s => s.ToConnectedPlayerDto())
@@ -42,7 +42,7 @@ internal sealed class PlayerRepository(DatabaseService databaseService) : IPlaye
     public async Task<ConnectedPlayerDto[]> GetConnectedPlayersByNameAsync(string name)
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        return await db.PlayerSessions
+        return await db.Sessions
                        .Include(p => p.Player)
                        .Where(p => p.Connection != null && p.Player != null)
                        .Where(p => p.Player.Name == name)
@@ -53,7 +53,7 @@ internal sealed class PlayerRepository(DatabaseService databaseService) : IPlaye
     public async Task<ConnectedPlayerDto> GetConnectedPlayerByPlayerIdAsync(PeerId playerId)
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        return await db.PlayerSessions
+        return await db.Sessions
                        .Include(p => p.Player)
                        .Where(p => p.Connection != null && p.Player != null)
                        .Where(p => p.Player.Id == playerId)
@@ -64,7 +64,7 @@ internal sealed class PlayerRepository(DatabaseService databaseService) : IPlaye
     public async Task<ConnectedPlayerDto> GetConnectedPlayerBySessionIdAsync(SessionId sessionId)
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        return await db.PlayerSessions
+        return await db.Sessions
                        .Include(p => p.Player)
                        .Where(p => p.Connection != null && p.Player != null)
                        .Where(p => p.Id == sessionId)

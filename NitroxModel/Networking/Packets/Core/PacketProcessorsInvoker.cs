@@ -26,22 +26,32 @@ public sealed class PacketProcessorsInvoker
             throw new ArgumentOutOfRangeException(nameof(packetProcessors));
         }
 
-        // TODO: Allow processors to handle multiple packet types (i.e. generate multiple "Entry" objects per processor type)
-        Dictionary<Type, Entry> lookup = packetProcessors.Select(pInstance =>
-                                                         {
-                                                             return pInstance.GetType()
-                                                                             .GetInterfaces()
-                                                                             .Where(i => typeof(IPacketProcessor).IsAssignableFrom(i))
-                                                                             .Select(i => new
-                                                                             {
-                                                                                 Type = i,
-                                                                                 PacketType = i.GetGenericArguments().FirstOrDefault(t => typeof(Packet).IsAssignableFrom(t))
-                                                                             })
-                                                                             .Where(p => p.PacketType != null)
-                                                                             .Select(p => new Entry(pInstance, p.Type, p.PacketType))
-                                                                             .First();
-                                                         })
-                                                         .ToDictionary(entry => entry.PacketType, entry => entry);
+        IEnumerable<Entry> entries = packetProcessors.SelectMany(pInstance => pInstance.GetType()
+                                                                                      .GetInterfaces()
+                                                                                      .Where(i => typeof(IPacketProcessor).IsAssignableFrom(i))
+                                                                                      .Select(i => new
+                                                                                      {
+                                                                                          Type = i,
+                                                                                          PacketType = i.GetGenericArguments().FirstOrDefault(t => typeof(Packet).IsAssignableFrom(t))
+                                                                                      })
+                                                                                      .Where(p => p.PacketType != null)
+                                                                                      .Select(p => new Entry(pInstance, p.Type, p.PacketType)));
+        Dictionary<Type, Entry> lookup = [];
+        foreach (Entry entry in entries)
+        {
+            if (lookup.TryGetValue(entry.PacketType, out Entry value))
+            {
+                if (value.Processor != entry.Processor)
+                {
+                    throw new Exception($"Packet type {value.PacketType} has multiple handlers (A: {value.Processor.GetType()}, B: {entry.Processor.GetType()}), which is not allowed.");
+                }
+                if (entry.InterfaceType.IsAssignableFrom(value.InterfaceType))
+                {
+                    continue;
+                }
+            }
+            lookup[entry.PacketType] = entry;
+        }
 #if NET5_0_OR_GREATER
         packetTypeToProcessorEntry = lookup.ToFrozenDictionary();
 #else
@@ -66,10 +76,14 @@ public sealed class PacketProcessorsInvoker
         private readonly Func<IPacketProcessContext, Packet, Task> invoker;
 
         public Type PacketType { get; }
+        public Type InterfaceType { get; }
+
+        public object Processor => invoker.Target;
 
         internal Entry(IPacketProcessor processor, Type processorInterfaceType, Type packetType)
         {
             PacketType = packetType;
+            InterfaceType = processorInterfaceType;
 
             MethodInfo method = processor.GetType().GetMethods().FirstOrDefault(m =>
             {
@@ -103,5 +117,6 @@ public sealed class PacketProcessorsInvoker
         }
 
         public Task Execute(IPacketProcessContext context, Packet packet) => invoker(context, packet);
+        public override string ToString() => $"Processor: {invoker.Target.GetType().Name}, {nameof(InterfaceType)}: {InterfaceType.Name}";
     }
 }

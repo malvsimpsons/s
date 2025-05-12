@@ -24,7 +24,7 @@ public class PlayerManager
     private readonly ThreadSafeDictionary<string, PlayerContext> reservations = new();
     private readonly ThreadSafeSet<string> reservedPlayerNames = ["Player"]; // "Player" is often used to identify the local player and should not be used by any user
 
-    private ThreadSafeQueue<KeyValuePair<INitroxConnection, MultiplayerSessionReservationRequest>> JoinQueue { get; set; } = new();
+    private ThreadSafeQueue<KeyValuePair<INitroxConnection, SessionReservationRequest>> JoinQueue { get; set; } = new();
     private bool PlayerCurrentlyJoining { get; set; }
 
     private Timer initialSyncTimer;
@@ -55,7 +55,7 @@ public class PlayerManager
         return allPlayersByName.Values;
     }
 
-    public MultiplayerSessionReservation ReservePlayerContext(
+    public SessionReservation ReservePlayerContext(
         INitroxConnection connection,
         PlayerSettings playerSettings,
         AuthenticationContext authenticationContext,
@@ -63,21 +63,21 @@ public class PlayerManager
     {
         if (reservedPlayerNames.Count >= serverConfig.MaxConnections)
         {
-            MultiplayerSessionReservationState rejectedState = MultiplayerSessionReservationState.REJECTED | MultiplayerSessionReservationState.SERVER_PLAYER_CAPACITY_REACHED;
-            return new MultiplayerSessionReservation(correlationId, rejectedState);
+            SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.SERVER_PLAYER_CAPACITY_REACHED;
+            return new SessionReservation(correlationId, rejectedState);
         }
 
         if (!string.IsNullOrEmpty(serverConfig.ServerPassword) && (!authenticationContext.ServerPassword.HasValue || authenticationContext.ServerPassword.Value != serverConfig.ServerPassword))
         {
-            MultiplayerSessionReservationState rejectedState = MultiplayerSessionReservationState.REJECTED | MultiplayerSessionReservationState.AUTHENTICATION_FAILED;
-            return new MultiplayerSessionReservation(correlationId, rejectedState);
+            SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.AUTHENTICATION_FAILED;
+            return new SessionReservation(correlationId, rejectedState);
         }
 
         //https://regex101.com/r/eTWiEs/2/
         if (!Regex.IsMatch(authenticationContext.Username, @"^[a-zA-Z0-9._-]{3,25}$"))
         {
-            MultiplayerSessionReservationState rejectedState = MultiplayerSessionReservationState.REJECTED | MultiplayerSessionReservationState.INCORRECT_USERNAME;
-            return new MultiplayerSessionReservation(correlationId, rejectedState);
+            SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.INCORRECT_USERNAME;
+            return new SessionReservation(correlationId, rejectedState);
         }
 
         if (PlayerCurrentlyJoining)
@@ -85,14 +85,14 @@ public class PlayerManager
             if (JoinQueue.Any(pair => ReferenceEquals(pair.Key, connection)))
             {
                 // Don't enqueue the request if there is already another enqueued request by the same user
-                return new MultiplayerSessionReservation(correlationId, MultiplayerSessionReservationState.REJECTED);
+                return new SessionReservation(correlationId, SessionReservationState.REJECTED);
             }
 
-            JoinQueue.Enqueue(new KeyValuePair<INitroxConnection, MultiplayerSessionReservationRequest>(
+            JoinQueue.Enqueue(new KeyValuePair<INitroxConnection, SessionReservationRequest>(
                                   connection,
-                                  new MultiplayerSessionReservationRequest(correlationId, playerSettings, authenticationContext)));
+                                  new SessionReservationRequest(correlationId, playerSettings, authenticationContext)));
 
-            return new MultiplayerSessionReservation(correlationId, MultiplayerSessionReservationState.ENQUEUED_IN_JOIN_QUEUE);
+            return new SessionReservation(correlationId, SessionReservationState.ENQUEUED_IN_JOIN_QUEUE);
         }
 
         string playerName = authenticationContext.Username;
@@ -100,14 +100,14 @@ public class PlayerManager
         allPlayersByName.TryGetValue(playerName, out Player player);
         if (player?.IsPermaDeath == true && serverConfig.IsHardcore())
         {
-            MultiplayerSessionReservationState rejectedState = MultiplayerSessionReservationState.REJECTED | MultiplayerSessionReservationState.HARDCORE_PLAYER_DEAD;
-            return new MultiplayerSessionReservation(correlationId, rejectedState);
+            SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.HARDCORE_PLAYER_DEAD;
+            return new SessionReservation(correlationId, rejectedState);
         }
 
         if (reservedPlayerNames.Contains(playerName))
         {
-            MultiplayerSessionReservationState rejectedState = MultiplayerSessionReservationState.REJECTED | MultiplayerSessionReservationState.UNIQUE_PLAYER_NAME_CONSTRAINT_VIOLATED;
-            return new MultiplayerSessionReservation(correlationId, rejectedState);
+            SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.UNIQUE_PLAYER_NAME_CONSTRAINT_VIOLATED;
+            return new SessionReservation(correlationId, rejectedState);
         }
 
         assetsByConnection.TryGetValue(connection, out ConnectionAssets assetPackage);
@@ -137,7 +137,7 @@ public class PlayerManager
         initialSyncTimer = new Timer(InitialSyncTimerElapsed, timerData, 0, 200);
 
 
-        return new MultiplayerSessionReservation(correlationId, playerId, reservationKey);
+        return new SessionReservation(correlationId, playerId, reservationKey);
     }
 
     private void InitialSyncTimerElapsed(object state)
@@ -276,11 +276,11 @@ public class PlayerManager
         // Tell next client that it can start joining.
         if (JoinQueue.Count > 0)
         {
-            KeyValuePair<INitroxConnection, MultiplayerSessionReservationRequest> keyValuePair = JoinQueue.Dequeue();
+            KeyValuePair<INitroxConnection, SessionReservationRequest> keyValuePair = JoinQueue.Dequeue();
             INitroxConnection requestConnection = keyValuePair.Key;
-            MultiplayerSessionReservationRequest reservationRequest = keyValuePair.Value;
+            SessionReservationRequest reservationRequest = keyValuePair.Value;
 
-            MultiplayerSessionReservation reservation = ReservePlayerContext(requestConnection,
+            SessionReservation reservation = ReservePlayerContext(requestConnection,
                                                                              reservationRequest.PlayerSettings,
                                                                              reservationRequest.AuthenticationContext,
                                                                              reservationRequest.CorrelationId);

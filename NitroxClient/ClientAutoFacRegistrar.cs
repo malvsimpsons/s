@@ -142,7 +142,7 @@ namespace NitroxClient
                 .AssignableTo<IPacketProcessor>()
                 .As<IPacketProcessor>()
                 .AsSelf()
-                .SingleInstance();
+                .InstancePerLifetimeScope();
         }
 
         private void RegisterColorSwapManagers(ContainerBuilder containerBuilder)

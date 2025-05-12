@@ -27,7 +27,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
             connectionState.NegotiateReservationAsync(connectionContext);
 
             // Assert
-            serverClient.Received().Send(Arg.Any<MultiplayerSessionReservationRequest>());
+            serverClient.Received().Send(Arg.Any<SessionReservationRequest>());
         }
 
         [TestMethod]

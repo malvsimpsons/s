@@ -12,7 +12,7 @@ public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContex
     public DbSet<Player> Players { get; set; }
     public DbSet<PlayContext> PlayContexts { get; set; }
     public DbSet<Connection> Connections { get; set; }
-    public DbSet<PlayerSession> PlayerSessions { get; set; }
+    public DbSet<Session> Sessions { get; set; }
     public DbSet<SurvivalContext> PlayerSurvivalStats { get; set; }
     public DbSet<StoryGoal> StoryGoals { get; set; }
 

@@ -14,7 +14,7 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 ///     The player model that clients can assume on join. This data is kept even after server shuts down.
 /// </summary>
 /// <remarks>
-///     Use <see cref="PlayerSession" /> and dependant tables if data should be discarded when player disconnects (or when
+///     Use <see cref="Session" /> and dependant tables if data should be discarded when player disconnects (or when
 ///     server stops).
 /// </remarks>
 [Table("Players")]

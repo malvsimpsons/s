@@ -34,7 +34,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
         private void EnterMultiplayerSession(IMultiplayerSessionConnectionContext sessionConnectionContext)
         {
             IClient client = sessionConnectionContext.Client;
-            MultiplayerSessionReservation reservation = sessionConnectionContext.Reservation;
+            SessionReservation reservation = sessionConnectionContext.Reservation;
             string correlationId = reservation.CorrelationId;
             string reservationKey = reservation.ReservationKey;
 

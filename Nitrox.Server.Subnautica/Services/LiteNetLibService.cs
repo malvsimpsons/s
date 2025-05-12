@@ -19,7 +19,7 @@ using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
 using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using NitroxModel.Networking.Packets;
-using NitroxModel.Networking.Packets.Processors.Core;
+using NitroxModel.Networking.Packets.Core;
 
 namespace Nitrox.Server.Subnautica.Services;
 
@@ -38,6 +38,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     private readonly NetManager server;
     private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
     private readonly ConcurrentDictionary<SessionId, NetPeer> peersBySessionId = [];
+    private readonly NetDataWriter dataWriter = new();
 
     public LiteNetLibService(PacketRegistryService packetRegistryService, SessionRepository sessionRepository, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
     {
@@ -117,11 +118,6 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
             request.Reject();
             return;
         }
-        if (server.ConnectedPeersCount >= optionsProvider.Value.MaxConnections)
-        {
-            request.Reject();
-            return;
-        }
 
         if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request, peersBySessionId)))
         {
@@ -130,7 +126,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
 
         static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request, ConcurrentDictionary<SessionId, NetPeer> peersBySessionId)
         {
-            PlayerSession session = await sessionRepository.GetOrCreateSessionAsync(request.RemoteEndPoint.Address.ToString(), (ushort)request.RemoteEndPoint.Port);
+            Session session = await sessionRepository.GetOrCreateSessionAsync(request.RemoteEndPoint.Address.ToString(), (ushort)request.RemoteEndPoint.Port);
             if (session == null)
             {
                 // TODO: Tell user that all session slots are taken.
@@ -180,52 +176,48 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
 
     private async Task ProcessPacket(NetPeer peer, Packet packet)
     {
-        PlayerSession session = await sessionRepository.GetOrCreateSessionAsync(peer.Address.ToString(), (ushort)peer.Port);
+        Session session = await sessionRepository.GetOrCreateSessionAsync(peer.Address.ToString(), (ushort)peer.Port);
         logger.ZLogTrace($"Incoming packet {packet.GetType().Name:@TypeName} by session #{session.Id:@SessionId}");
-        IPacketProcessor packetProcessor = packetRegistryService.GetProcessor(session, packet);
+        PacketProcessorsInvoker.Entry processor = packetRegistryService.GetProcessor(session, packet);
 
         try
         {
-            switch (packetProcessor)
+            if (typeof(IAnonPacketProcessor).IsAssignableFrom(processor.InterfaceType))
             {
-                case IAnonPacketProcessor anonProcessor:
-                    using (EasyPool<AnonProcessorContext>.Lease lease = EasyPool<AnonProcessorContext>.Rent())
-                    {
-                        ref AnonProcessorContext context = ref lease.GetRef();
-                        if (context == null)
-                        {
-                            context = new AnonProcessorContext(session.Id, this);
-                        }
-                        else
-                        {
-                            context.Sender = session.Id;
-                        }
-                        await anonProcessor.Process(context, packet);
-                    }
-                    break;
-                case IAuthPacketProcessor authProcessor:
-                    using (EasyPool<AuthProcessorContext>.Lease lease = EasyPool<AuthProcessorContext>.Rent())
-                    {
-                        ref AuthProcessorContext context = ref lease.GetRef();
-                        if (context == null)
-                        {
-                            context = new AuthProcessorContext((session.Player.Id, session.Id), this);
-                        }
-                        else
-                        {
-                            context.Sender = (session.Player.Id, session.Id);
-                        }
-                        await authProcessor.Process(context, packet);
-                    }
-                    break;
-                default:
-                    logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packet.GetType().Name);
-                    break;
+                using EasyPool<AnonProcessorContext>.Lease lease = EasyPool<AnonProcessorContext>.Rent();
+                ref AnonProcessorContext context = ref lease.GetRef();
+                if (context == null)
+                {
+                    context = new AnonProcessorContext(session.Id, this);
+                }
+                else
+                {
+                    context.Sender = session.Id;
+                }
+                await processor.Execute(context, packet);
+            }
+            else if (typeof(IAuthPacketProcessor).IsAssignableFrom(processor.InterfaceType))
+            {
+                using EasyPool<AuthProcessorContext>.Lease lease = EasyPool<AuthProcessorContext>.Rent();
+                ref AuthProcessorContext context = ref lease.GetRef();
+                if (context == null)
+                {
+                    context = new AuthProcessorContext((session.Player.Id, session.Id), this);
+                }
+                else
+                {
+                    context.Sender = (session.Player.Id, session.Id);
+                }
+                await processor.Execute(context, packet);
+            }
+            else
+            {
+                logger.LogWarning("Received invalid, unauthenticated packet: {TypeName}", packet.GetType().Name);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in packet processor {TypeName}", packetProcessor.GetType().Name);
+            logger.LogError(ex, "Error in packet processor {TypeName}", processor.GetType().Name);
         }
     }
 
@@ -264,24 +256,26 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     
     private void SendPacket(Packet packet, NetPeer peer)
     {
-        // Get stream from pool.
         using EasyPool<MemoryStream>.Lease lease = EasyPool<MemoryStream>.Rent();
         ref MemoryStream stream = ref lease.GetRef();
         stream ??= new MemoryStream(ushort.MaxValue);
 
-        // Write packet into stream.
         int startPos = (int)stream.Position;
         packet.SerializeInto(stream);
         int bytesWritten = (int)(stream.Position - startPos);
+        Span<byte> packetData = stream.GetBuffer().AsSpan().Slice(startPos, bytesWritten);
 
-        // Send data
-        peer.Send(stream.GetBuffer().AsSpan().Slice(startPos, bytesWritten), (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
+        dataWriter.Reset();
+        dataWriter.Put(packetData.Length);
+        packetData.CopyTo(dataWriter.Data.AsSpan().Slice(4));
+        dataWriter.SetPosition(packetData.Length + 4);
+        peer.Send(dataWriter, (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
 
         // Cleanup pooled data.
         stream.Position = 0;
     }
 
-    public Task CleanSessionAsync(PlayerSession disconnectedSession)
+    public Task CleanSessionAsync(Session disconnectedSession)
     {
         if (!peersBySessionId.TryRemove(disconnectedSession.Id, out NetPeer peer))
         {

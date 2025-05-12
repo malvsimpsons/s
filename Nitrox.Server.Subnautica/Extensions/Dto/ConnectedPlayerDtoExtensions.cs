@@ -4,7 +4,7 @@ namespace Nitrox.Server.Subnautica.Extensions.Dto;
 
 public static class ConnectedPlayerDtoExtensions
 {
-    public static ConnectedPlayerDto ToConnectedPlayerDto(this Database.Models.PlayerSession session) =>
+    public static ConnectedPlayerDto ToConnectedPlayerDto(this Database.Models.Session session) =>
         new()
         {
             Id = session.Player.Id,

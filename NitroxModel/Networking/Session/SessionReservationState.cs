@@ -5,7 +5,7 @@ using System.Text;
 namespace NitroxModel.Networking.Session
 {
     [Flags]
-    public enum MultiplayerSessionReservationState
+    public enum SessionReservationState
     {
         RESERVED = 0,
         REJECTED = 1 << 0,
@@ -32,18 +32,18 @@ namespace NitroxModel.Networking.Session
 
     public static class MultiplayerSessionReservationStateExtensions
     {
-        public static bool HasStateFlag(this MultiplayerSessionReservationState currentState, MultiplayerSessionReservationState checkedState)
+        public static bool HasStateFlag(this SessionReservationState currentState, SessionReservationState checkedState)
         {
             return (currentState & checkedState) == checkedState;
         }
 
-        public static string Describe(this MultiplayerSessionReservationState currentState)
+        public static string Describe(this SessionReservationState currentState)
         {
             StringBuilder descriptionBuilder = new();
 
-            foreach (string reservationStateName in Enum.GetNames(typeof(MultiplayerSessionReservationState)))
+            foreach (string reservationStateName in Enum.GetNames(typeof(SessionReservationState)))
             {
-                MultiplayerSessionReservationState reservationState = (MultiplayerSessionReservationState)Enum.Parse(typeof(MultiplayerSessionReservationState), reservationStateName);
+                SessionReservationState reservationState = (SessionReservationState)Enum.Parse(typeof(SessionReservationState), reservationStateName);
                 if (currentState.HasStateFlag(reservationState))
                 {
                     DescriptionAttribute descriptionAttribute = reservationState.GetAttribute<DescriptionAttribute>();

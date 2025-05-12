@@ -78,7 +78,7 @@ public static class JoinServerBackend
                 Log.Info("Reservation rejected");
                 Log.InGame(Language.main.Get("Nitrox_RejectedSessionPolicy"));
 
-                MultiplayerSessionReservationState reservationState = multiplayerSession.Reservation.ReservationState;
+                SessionReservationState reservationState = multiplayerSession.Reservation.ReservationState;
 
                 string reservationRejectionNotification = reservationState.Describe();
 

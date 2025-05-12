@@ -35,7 +35,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
             PlayerSettings playerSettings = sessionConnectionContext.PlayerSettings;
             AuthenticationContext authenticationContext = sessionConnectionContext.AuthenticationContext;
 
-            MultiplayerSessionReservationRequest requestPacket = new(reservationCorrelationId, playerSettings, authenticationContext);
+            SessionReservationRequest requestPacket = new(reservationCorrelationId, playerSettings, authenticationContext);
             client.Send(requestPacket);
         }
 

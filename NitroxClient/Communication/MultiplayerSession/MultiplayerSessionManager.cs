@@ -28,7 +28,7 @@ namespace NitroxClient.Communication.MultiplayerSession
         public PlayerSettings PlayerSettings { get; private set; }
         public AuthenticationContext AuthenticationContext { get; private set; }
         public IMultiplayerSessionConnectionState CurrentState { get; private set; }
-        public MultiplayerSessionReservation Reservation { get; private set; }
+        public SessionReservation Reservation { get; private set; }
 
         public MultiplayerSessionManager(IClient client)
         {
@@ -96,9 +96,9 @@ namespace NitroxClient.Communication.MultiplayerSession
             CurrentState.NegotiateReservationAsync(this);
         }
 
-        public void ProcessReservationResponsePacket(MultiplayerSessionReservation reservation)
+        public void ProcessReservationResponsePacket(SessionReservation reservation)
         {
-            if (reservation.ReservationState == MultiplayerSessionReservationState.ENQUEUED_IN_JOIN_QUEUE)
+            if (reservation.ReservationState == SessionReservationState.ENQUEUED_IN_JOIN_QUEUE)
             {
                 Log.Info("Waiting in join queue…");
                 Log.InGame(Language.main.Get("Nitrox_Waiting"));

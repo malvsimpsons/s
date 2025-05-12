@@ -3,7 +3,7 @@ using NitroxModel.Networking.Packets;
 
 namespace NitroxClient.Communication.Packets.Processors
 {
-    public class MultiplayerSessionReservationProcessor : IClientPacketProcessor<MultiplayerSessionReservation>
+    public class MultiplayerSessionReservationProcessor : IClientPacketProcessor<SessionReservation>
     {
         private readonly IMultiplayerSession multiplayerSession;
 
@@ -12,7 +12,7 @@ namespace NitroxClient.Communication.Packets.Processors
             this.multiplayerSession = multiplayerSession;
         }
 
-        public Task Process(IPacketProcessContext context, MultiplayerSessionReservation packet)
+        public Task Process(IPacketProcessContext context, SessionReservation packet)
         {
             multiplayerSession.ProcessReservationResponsePacket(packet);
 

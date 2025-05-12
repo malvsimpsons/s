@@ -11,7 +11,7 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 public record PlayContext
 {
     [ForeignKey(nameof(Session.Id))]
-    public PlayerSession Session { get; set; }
+    public Session Session { get; set; }
 
     public NitroxVector3 Position { get; set; }
 

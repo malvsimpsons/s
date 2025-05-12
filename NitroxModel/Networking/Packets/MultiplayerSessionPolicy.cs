@@ -35,5 +35,11 @@ namespace NitroxModel.Networking.Packets
             MaxConnections = maxConnections;
             NitroxVersionAllowed = nitroxVersionAllowed;
         }
+
+        public override string ToString()
+        {
+            return
+                $"{base.ToString()}, {nameof(AuthenticationAuthority)}: {AuthenticationAuthority}, {nameof(DisableConsole)}: {DisableConsole}, {nameof(MaxConnections)}: {MaxConnections}, {nameof(NitroxVersionAllowed)}: {NitroxVersionAllowed}";
+        }
     }
 }

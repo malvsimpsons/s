@@ -35,28 +35,26 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     private SessionId nextSessionId = 1;
     private OrderedDictionary<int, ISessionCleaner> sessionCleaners;
 
-    public async Task<PlayerSession> GetOrCreateSessionAsync(string address, ushort port)
+    public async Task<Session> GetOrCreateSessionAsync(string address, ushort port)
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        PlayerSession playerSession = await db.PlayerSessions
-                                              .AsTracking()
-                                              .Include(s => s.Player)
-                                              .Include(s => s.Connection)
-                                              .Where(s => s.Connection.Address == address && s.Connection.Port == port)
-                                              .FirstOrDefaultAsync();
-        if (playerSession == null)
+        Session session = await db.Sessions
+                                  .Include(s => s.Player)
+                                  .Include(s => s.Connection)
+                                  .Where(s => s.Connection.Address == address && s.Connection.Port == port)
+                                  .FirstOrDefaultAsync();
+        if (session == null)
         {
-            playerSession = new PlayerSession
+            session = new Session
             {
                 Id = GetNextSessionId(),
-                Connection = new()
+                Connection = new Connection
                 {
                     Address = address,
                     Port = port
                 }
             };
-            db.Connections.Add(playerSession.Connection);
-            db.PlayerSessions.Add(playerSession);
+            db.Sessions.Add(session);
             if (await db.SaveChangesAsync() < 1)
             {
                 logger.ZLogError($"Failed to create session for {address.ToSensitive():@Address}:{port:@Port}");
@@ -64,29 +62,40 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
             }
         }
 
-        return playerSession;
+        return session;
     }
 
     public async Task<bool> SetSessionInactive(SessionId sessionId)
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        PlayerSession session = await db.PlayerSessions
-                                        .AsTracking()
-                                        .Include(s => s.Connection)
-                                        .FirstOrDefaultAsync(s => s.Id == sessionId);
+        Session session = await db.Sessions
+                                  .AsTracking()
+                                  .Include(s => s.Connection)
+                                  .FirstOrDefaultAsync(s => s.Id == sessionId);
         db.Connections.Remove(session.Connection);
-        session.Connection = null;
         return await db.SaveChangesAsync() > 0;
+    }
+
+    /// <summary>
+    ///     Gets the amount of connected sessions.
+    /// </summary>
+    public async Task<int> GetActiveSessionCount()
+    {
+        await using WorldDbContext db = await databaseService.GetDbContextAsync();
+        return await db.Sessions
+                       .Include(s => s.Connection)
+                       .Where(s => s.Connection != null)
+                       .CountAsync();
     }
 
     public async Task DeleteSessionAsync(SessionId sessionId)
     {
         await using (WorldDbContext db = await databaseService.GetDbContextAsync())
         {
-            PlayerSession session = await db.PlayerSessions
-                                            .Include(s => s.Player)
-                                            .Where(s => s.Id == sessionId)
-                                            .FirstOrDefaultAsync();
+            Session session = await db.Sessions
+                                      .Include(s => s.Player)
+                                      .Where(s => s.Id == sessionId)
+                                      .FirstOrDefaultAsync();
             if (session == null)
             {
                 return;
@@ -146,7 +155,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     ///     Lets other APIs migrate session data if necessary (e.g. change database or notify other players of necessary
     ///     changes).
     /// </summary>
-    private async Task RunSessionCleanersAsync(PlayerSession session)
+    private async Task RunSessionCleanersAsync(Session session)
     {
         sessionCleaners ??= new OrderedDictionary<int, ISessionCleaner>(sessionCleanersProvider().Select(c => new KeyValuePair<int, ISessionCleaner>(c.SessionCleanPriority, c)));
         foreach (ISessionCleaner cleaner in sessionCleaners.Values)

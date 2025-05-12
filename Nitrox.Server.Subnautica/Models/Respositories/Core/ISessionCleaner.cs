@@ -12,5 +12,5 @@ public interface ISessionCleaner
     /// </summary>
     public int SessionCleanPriority => 0;
 
-    Task CleanSessionAsync(PlayerSession disconnectedSession);
+    Task CleanSessionAsync(Session disconnectedSession);
 }

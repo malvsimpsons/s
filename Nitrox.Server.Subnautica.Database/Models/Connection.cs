@@ -25,7 +25,7 @@ public record Connection
     public ushort Port { get; set; }
 
     /// <summary>
-    ///     The real-world time when the session was made.
+    ///     The real-world time when this record was made.
     /// </summary>
     [Required]
     public DateTimeOffset Created { get; set; } = DateTimeOffset.Now;

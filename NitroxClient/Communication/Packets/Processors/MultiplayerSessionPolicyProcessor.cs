@@ -14,7 +14,7 @@ namespace NitroxClient.Communication.Packets.Processors
 
         public Task Process(IPacketProcessContext context, MultiplayerSessionPolicy packet)
         {
-            Log.Info("Processing session policy information.");
+            Log.Info($"Processing session policy {packet}");
             multiplayerSession.ProcessSessionPolicy(packet);
 
             return Task.CompletedTask;
