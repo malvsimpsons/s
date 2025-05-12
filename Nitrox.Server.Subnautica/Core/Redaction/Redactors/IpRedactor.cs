@@ -11,33 +11,29 @@ internal sealed class IpRedactor : IRedactor
 
     public RedactResult Redact(ReadOnlySpan<char> key, ReadOnlySpan<char> value)
     {
-        IPAddress ip;
-        ushort port = 0;
-        if (value.IndexOf(':') is var separator and >= 0)
+        if (!IPEndPoint.TryParse(value, out IPEndPoint endpoint))
         {
-            IPAddress.TryParse(value[..separator], out ip);
-            ushort.TryParse(value[(separator + 1)..], out port);
+            if (IPAddress.TryParse(value, out IPAddress address))
+            {
+                endpoint = new IPEndPoint(address, 0);
+            }
         }
-        else
+        if (endpoint == null)
         {
-            IPAddress.TryParse(value, out ip);
+            return RedactResult.Fail();
         }
 
-        if (ip != null)
+        if (!endpoint.Address.IsLocalhost() && !endpoint.Address.IsPrivate())
         {
-            if (!ip.IsPrivate())
-            {
-                Span<byte> ipBytes = ip.GetAddressBytes().AsSpan();
-                ipBytes.Slice(int.Max(1, ipBytes.Length / 4)).Fill(0);
-                ip = new IPAddress(ipBytes);
-            }
-
-            if (port > 0)
-            {
-                return RedactResult.Ok($"{ip}:{port}");
-            }
-            return RedactResult.Ok(ip.ToString());
+            Span<byte> ipBytes = endpoint.Address.GetAddressBytes().AsSpan();
+            ipBytes.Slice(int.Max(1, ipBytes.Length / 4)).Fill(0);
+            endpoint.Address = new IPAddress(ipBytes);
         }
-        return RedactResult.Fail();
+
+        if (endpoint.Port > 0)
+        {
+            return RedactResult.Ok($"{endpoint.Address}:{endpoint.Port}");
+        }
+        return RedactResult.Ok(endpoint.Address.ToString());
     }
 }
