@@ -26,18 +26,18 @@ public sealed class PacketProcessorsInvoker
             throw new ArgumentOutOfRangeException(nameof(packetProcessors));
         }
 
-        IEnumerable<Entry> entries = packetProcessors.SelectMany(pInstance => pInstance.GetType()
+        var entries = packetProcessors.SelectMany(pInstance => pInstance.GetType()
                                                                                       .GetInterfaces()
                                                                                       .Where(i => typeof(IPacketProcessor).IsAssignableFrom(i))
                                                                                       .Select(i => new
                                                                                       {
-                                                                                          Type = i,
-                                                                                          PacketType = i.GetGenericArguments().FirstOrDefault(t => typeof(Packet).IsAssignableFrom(t))
+                                                                                          InterfaceType = i,
+                                                                                          PacketType = i.GetGenericArguments().FirstOrDefault(t => typeof(Packet).IsAssignableFrom(t)),
+                                                                                          Processor = pInstance
                                                                                       })
-                                                                                      .Where(p => p.PacketType != null)
-                                                                                      .Select(p => new Entry(pInstance, p.Type, p.PacketType)));
+                                                                                      .Where(p => p.PacketType != null));
         Dictionary<Type, Entry> lookup = [];
-        foreach (Entry entry in entries)
+        foreach (var entry in entries)
         {
             if (lookup.TryGetValue(entry.PacketType, out Entry value))
             {
@@ -50,7 +50,8 @@ public sealed class PacketProcessorsInvoker
                     continue;
                 }
             }
-            lookup[entry.PacketType] = entry;
+
+            lookup[entry.PacketType] = new Entry(entry.Processor, entry.InterfaceType, entry.PacketType);
         }
 #if NET5_0_OR_GREATER
         packetTypeToProcessorEntry = lookup.ToFrozenDictionary();
@@ -59,9 +60,8 @@ public sealed class PacketProcessorsInvoker
 #endif
     }
 
-    public Entry GetProcessor(Packet packet)
+    public Entry GetProcessor(Type packetType)
     {
-        Type packetType = packet.GetType();
         if (packetTypeToProcessorEntry.TryGetValue(packetType, out Entry processor))
         {
             return processor;
@@ -113,7 +113,9 @@ public sealed class PacketProcessorsInvoker
             }
             ParameterInfo[] parameters = method.GetParameters();
             Type funcType = typeof(Func<,,>).MakeGenericType(parameters[0].ParameterType, parameters[1].ParameterType, method.ReturnType);
-            invoker = Unsafe.As<Func<IPacketProcessContext, Packet, Task>>(method.CreateDelegate(funcType, processor));
+            Delegate processorDelegate = method.CreateDelegate(funcType, processor);
+            RuntimeHelpers.PrepareDelegate(processorDelegate);
+            invoker = Unsafe.As<Func<IPacketProcessContext, Packet, Task>>(processorDelegate);
         }
 
         public Task Execute(IPacketProcessContext context, Packet packet) => invoker(context, packet);

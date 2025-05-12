@@ -128,7 +128,7 @@ namespace NitroxClient.MonoBehaviours
             {
                 try
                 {
-                    PacketProcessorsInvoker.Entry processor = registry.GetProcessor(packet);
+                    PacketProcessorsInvoker.Entry processor = registry.GetProcessor(packet.GetType());
                     if (processor == null)
                     {
                         throw new Exception($"Failed to find packet processor for packet {packet}");
