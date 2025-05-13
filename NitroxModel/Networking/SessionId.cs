@@ -5,7 +5,7 @@ namespace NitroxModel.Networking;
 /// </summary>
 /// <remarks>
 ///     It's important that, once a session id is assigned by the server, no other connection can impersonate by using the same id.
-///     Force a 10 minute "hands-off" time when this session id is "available" again.
+///     Force a 10 minute "hands-off" time before which this session id can be reused.
 /// </remarks>
 public readonly record struct SessionId
 {

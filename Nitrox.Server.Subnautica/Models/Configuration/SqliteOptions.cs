@@ -21,7 +21,7 @@ internal sealed partial class SqliteOptions
 
     [Required]
     [ConfigurationKeyName("page_size")]
-    public int PageSize { get; set; } = -10000;
+    public int PageSize { get; set; } = -32768;
 
     /// <inheritdoc cref="Sync" />
     [Required]
@@ -36,7 +36,14 @@ internal sealed partial class SqliteOptions
     /// <inheritdoc cref="JournalingMode" />
     [Required]
     [ConfigurationKeyName("journal_mode")]
-    public JournalingMode JournalMode { get; set; } = JournalingMode.WAL;
+    public JournalingMode JournalMode { get; set; } = JournalingMode.MEMORY;
+
+    /// <summary>
+    ///     <a href="https://sqlite.org/pragma.html#pragma_mmap_size">Sqlite PRAGMA <c>mmap_size</c></a>
+    /// </summary>
+    [Required]
+    [ConfigurationKeyName("mmap_size")]
+    public long MmapSize { get; set; }
 
     /// <summary>
     ///     <a href="https://sqlite.org/pragma.html#pragma_journal_mode">Sqlite PRAGMA <c>journal_mode</c></a>

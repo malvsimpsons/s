@@ -86,17 +86,7 @@ internal static partial class ServiceCollectionExtensions
                     };
                 });
         services.AddOptionsWithValidateOnStart<SqliteOptions, SqliteOptions.Validator>()
-                .BindConfiguration("Sqlite")
-                .Configure((SqliteOptions options, IHostEnvironment environment) =>
-                {
-                    // In development mode we might want to inspect the database while it's running - not just through this server but also via IDE.
-                    // For this, we need extra stability against corruption by SQLite. These settings accomplish that.
-                    if (environment.IsDevelopment())
-                    {
-                        options.Synchronous = SqliteOptions.Sync.NORMAL;
-                        options.LockingMode = SqliteOptions.LockMode.NORMAL;
-                    }
-                });
+                .BindConfiguration("Sqlite");
         return services;
     }
 
@@ -171,8 +161,7 @@ internal static partial class ServiceCollectionExtensions
                                options.EnableSensitiveDataLogging();
                            }
 
-                           SqliteConnectionStringBuilder sqlConnectionBuilder = new() { DataSource = Path.Combine(startOptions.GetServerSavePath(), "world.db") };
-                           options.UseSqlite(sqlConnectionBuilder.ToString());
+                           options.UseSqlite($"DataSource={Path.Combine(startOptions.GetServerSavePath(), "world.db")}");
                        })
                        .AddHostedSingletonService<DatabaseService>()
                        .AddSingletonLazyArrayProvider<ISessionCleaner>()

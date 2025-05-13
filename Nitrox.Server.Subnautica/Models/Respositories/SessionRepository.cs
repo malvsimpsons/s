@@ -21,7 +21,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
 #if DEBUG
         Stopwatch sw = Stopwatch.StartNew();
 #endif
-        Session session = await db.GetOrCreateSession(address, port);
+        Session session = db.GetOrCreateSession(address, port);
 #if DEBUG
         sw.Stop();
         logger.ZLogDebug($"{nameof(SessionExtensions.GetOrCreateSession)} took: {sw.Elapsed.TotalMilliseconds}ms");
@@ -34,17 +34,6 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
         return session;
     }
 
-    public async Task<bool> SetSessionInactive(SessionId sessionId)
-    {
-        await using WorldDbContext db = await databaseService.GetDbContextAsync();
-        Session session = await db.Sessions
-                                  .AsTracking()
-                                  .Include(s => s.Connection)
-                                  .FirstOrDefaultAsync(s => s.Id == sessionId);
-        db.Connections.Remove(session.Connection);
-        return await db.SaveChangesAsync() > 0;
-    }
-
     /// <summary>
     ///     Gets the amount of connected sessions.
     /// </summary>
@@ -52,7 +41,6 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
         return await db.Sessions
-                       .Include(s => s.Connection)
                        .Where(s => s.Connection != null)
                        .CountAsync();
     }
@@ -62,22 +50,30 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
         await using (WorldDbContext db = await databaseService.GetDbContextAsync())
         {
             Session session = await db.Sessions
+                                      .AsTracking()
                                       .Include(s => s.Player)
-                                      .Where(s => s.Id == sessionId)
+                                      .Include(session => session.Connection)
+                                      .Where(s => s.Id == (ushort)sessionId)
                                       .FirstOrDefaultAsync();
             if (session == null)
             {
                 return;
             }
-            if (!await SetSessionInactive(session.Id))
+            db.Connections.Remove(session.Connection);
+            session.Connection = null;
+            if (await db.SaveChangesAsync() < 1)
             {
                 logger.ZLogWarning($"Failed to set session #{session.Id:@SessionId} inactive");
                 return;
             }
-            session.Connection = null;
             await RunSessionCleanersAsync(session);
 
             // Now delete the session and its data (the latter happens through FOREIGN KEY CASCADE DELETE on session id)
+            db.TimeLockedTableIds.Add(new TimeLockedTableIds
+            {
+                Id = sessionId,
+                TableName = nameof(db.Sessions)
+            });
             db.Remove(session);
             if (await db.SaveChangesAsync() <= 0)
             {

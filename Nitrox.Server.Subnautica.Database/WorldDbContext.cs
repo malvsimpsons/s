@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Nitrox.Server.Subnautica.Database.Converters;
+﻿using Nitrox.Server.Subnautica.Database.Converters;
 using Nitrox.Server.Subnautica.Database.Models;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.Unity;
@@ -15,6 +14,7 @@ public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContex
     public DbSet<Session> Sessions { get; set; }
     public DbSet<SurvivalContext> PlayerSurvivalStats { get; set; }
     public DbSet<StoryGoal> StoryGoals { get; set; }
+    public DbSet<TimeLockedTableIds> TimeLockedTableIds { get; set; }
 
     /// <summary>
     ///     Batch cells that have been parsed.
@@ -23,6 +23,17 @@ public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContex
 
     public WorldDbContext() : this(new DbContextOptions<WorldDbContext>())
     {
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TimeLockedTableIds>()
+                    .Property(e => e.TimeTillUnlock)
+                    .HasDefaultValueSql("datetime('now', 'subsecond', '10 minutes')"); // Locks IDs by 10 minutes.
+
+        modelBuilder.Entity<Connection>()
+                    .Property(e => e.Created)
+                    .HasDefaultValueSql("datetime('now', 'subsecond')");
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)

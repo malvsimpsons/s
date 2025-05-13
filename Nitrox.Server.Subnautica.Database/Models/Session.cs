@@ -4,13 +4,11 @@ using NitroxModel.Networking;
 
 namespace Nitrox.Server.Subnautica.Database.Models;
 
-// TODO: TRUNCATE TABLE ON SERVER STARTUP
-
 /// <summary>
 ///     The active sessions table. Deleting a session will also purge all session data (FOREIGN KEY CASCADE DELETE).
 /// </summary>
 /// <remarks>
-///     On startup, this table is truncated.
+///     This table should be cleared on server shutdown as all clients will get disconnected and their sessions cleaned.
 /// </remarks>
 [Table("Sessions")]
 [Index($"{nameof(Connection)}Id", IsUnique = true)]

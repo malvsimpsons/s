@@ -11,6 +11,7 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 public record Connection
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
     /// <summary>
@@ -29,5 +30,5 @@ public record Connection
     ///     The real-world time when this record was made.
     /// </summary>
     [Required]
-    public DateTimeOffset Created { get; set; } = DateTimeOffset.Now;
+    public DateTimeOffset Created { get; set; }
 }
