@@ -220,6 +220,15 @@ public static class Extensions
         return IsAssignableToGenericType(givenBaseType, genericType);
     }
 
+    public static string ReplaceInvalidFileNameCharacters(this string fileName)
+    {
+        foreach (char invalidFileNameChar in Path.GetInvalidFileNameChars())
+        {
+            fileName = fileName.Replace(invalidFileNameChar, ' ');
+        }
+        return fileName.Trim();
+    }
+
     public static bool IsHardcore(this SubnauticaServerConfig config) => config.GameMode == SubnauticaGameMode.HARDCORE;
     public static bool IsPasswordRequired(this SubnauticaServerConfig config) => config.ServerPassword != "";
 

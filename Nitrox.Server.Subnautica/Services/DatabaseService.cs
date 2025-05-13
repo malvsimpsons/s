@@ -1,8 +1,10 @@
 using System;
 using System.Data.Common;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -15,12 +17,13 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Initializes the database and provides access to it.
 /// </summary>
-internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<SqliteOptions> optionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger) : IHostedLifecycleService
+internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<SqliteOptions> optionsProvider, IOptions<ServerStartOptions> startOptionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger) : IHostedLifecycleService
 {
     private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
     private readonly IHostEnvironment hostEnvironment = hostEnvironment;
     private readonly ILogger<DatabaseService> logger = logger;
     private readonly IOptions<SqliteOptions> optionsProvider = optionsProvider;
+    private readonly IOptions<ServerStartOptions> startOptionsProvider = startOptionsProvider;
 
     public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
@@ -62,6 +65,43 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
     public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public async Task<WorldDbContext> GetDbContextAsync() => await dbContextFactory.CreateDbContextAsync();
+
+    public async Task<bool> BackupAsync(string fileName)
+    {
+        Stopwatch sw = Stopwatch.StartNew();
+        try
+        {
+            fileName = fileName.ReplaceInvalidFileNameCharacters();
+            if (Path.GetExtension(fileName).Length > 4)
+            {
+                fileName = fileName.Replace('.', '\'');
+            }
+            fileName = Path.ChangeExtension(fileName, ".db");
+
+            Directory.CreateDirectory(startOptionsProvider.Value.GetServerSaveBackupsPath());
+
+            await using WorldDbContext db = await GetDbContextAsync();
+            if (db.Database.GetDbConnection() is SqliteConnection sqlite)
+            {
+                await sqlite.OpenAsync();
+                SqliteConnectionStringBuilder connectionBuilder = new() { DataSource = Path.Combine(startOptionsProvider.Value.GetServerSaveBackupsPath(), fileName) };
+                await using SqliteConnection destination = new(connectionBuilder.ToString());
+                sqlite.BackupDatabase(destination);
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.ZLogError(ex, $"Error while trying to backup the database");
+        }
+        finally
+        {
+            sw.Stop();
+            logger.ZLogInformation($"Saved backup as \"{fileName}\" which took {Math.Round(sw.Elapsed.TotalMilliseconds, 3)}ms");
+        }
+
+        return false;
+    }
 
     private async Task ExecuteCommand(WorldDbContext db, string command)
     {

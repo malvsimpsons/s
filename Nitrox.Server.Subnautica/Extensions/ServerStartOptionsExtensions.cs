@@ -65,6 +65,8 @@ public static class ServerStartOptionsExtensions
 
     public static string GetServerSavePath(this ServerStartOptions options) => Path.Combine(KeyValueStore.Instance.GetServerSavesPath(), options.SaveName);
 
+    public static string GetServerSaveBackupsPath(this ServerStartOptions options) => Path.Combine(options.GetServerSavePath(), "Backups");
+
     public static string GetServerCachePath(this ServerStartOptions options) => Path.Combine(options.NitroxAppDataPath, "Cache");
 
     public static string GetServerLogsPath(this ServerStartOptions options) => Path.Combine(options.NitroxAppDataPath, "Logs");

@@ -1,22 +1,22 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
+using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
-// TODO: This command might not be necessary when using SQLite database as it'll save itself.
 [RequiresPermission(Perms.MODERATOR)]
-internal class SaveCommand : ICommandHandler
+internal class SaveCommand(DatabaseService databaseService) : ICommandHandler
 {
+    private readonly DatabaseService databaseService = databaseService;
+
     [Description("Saves the world")]
-    public Task Execute(ICommandContext context)
+    public async Task Execute(ICommandContext context)
     {
-        context.MessageAllAsync("World is saving...");
-
-        // TODO: Run save action on server (run via command?)
-        // persistenceService.SaveAsync() (allow async command execute)
-        // NitroxServer.Server.Instance.Save();
-
-        return Task.CompletedTask;
+        await context.MessageAllAsync("World is saving...");
+        // TODO: Backup config file
+        // TODO: Change this to use options (e.g. MaxBackups)
+        await databaseService.BackupAsync(DateTimeOffset.Now.ToString("O").Replace("T", " "));
     }
 }
