@@ -18,14 +18,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     public async Task<Session> GetOrCreateSessionAsync(string address, ushort port)
     {
         await using WorldDbContext db = await databaseService.GetDbContextAsync();
-#if DEBUG
-        Stopwatch sw = Stopwatch.StartNew();
-#endif
         Session session = db.GetOrCreateSession(address, port);
-#if DEBUG
-        sw.Stop();
-        logger.ZLogDebug($"{nameof(SessionExtensions.GetOrCreateSession)} took: {sw.Elapsed.TotalMilliseconds}ms");
-#endif
         if (session == null)
         {
             logger.ZLogError($"Failed to create session for {address.ToSensitive():@Address}:{port:@Port}");
