@@ -120,7 +120,6 @@ internal static partial class ServiceCollectionExtensions
         services
             .AddHostedSingletonService<LiteNetLibService>()
             .AddSingleton<IServerPacketSender>(provider => provider.GetRequiredService<LiteNetLibService>())
-            .AddSingleton<ISessionCleaner>(provider => provider.GetRequiredService<LiteNetLibService>())
             .AddHostedSingletonService<PacketRegistryService>()
             .AddHostedSingletonService<PacketSerializationService>()
             .AddSingleton<DefaultPacketProcessor>()
@@ -165,7 +164,6 @@ internal static partial class ServiceCollectionExtensions
                            options.UseSqlite($"DataSource={Path.Combine(startOptions.GetServerSavePath(), "world.db")}");
                        })
                        .AddHostedSingletonService<DatabaseService>()
-                       .AddSingletonLazyArrayProvider<ISessionCleaner>()
                        .AddSingleton<SessionRepository>()
                        .AddSingleton<PlayerRepository>();
     }
@@ -179,7 +177,6 @@ internal static partial class ServiceCollectionExtensions
             .AddSingleton<IEntityBootstrapperManager, SubnauticaEntityBootstrapperManager>()
             .AddSingleton<SimulationOwnershipData>()
             .AddSingleton<EntitySimulation>()
-            .AddSingleton<ISessionCleaner>(provider => provider.GetRequiredService<EntitySimulation>())
             .AddSingleton<Models.GameLogic.EntityRegistry>()
             .AddSingleton<BatchEntitySpawnerService>()
             .AddSingleton<EntitySpawnPointFactory, SubnauticaEntitySpawnPointFactory>()
@@ -202,8 +199,15 @@ internal static partial class ServiceCollectionExtensions
         services.AddHostedSingletonService<HibernationService>()
                 .AddHibernators();
 
+    public static IServiceCollection AddSessionCleaners(this IServiceCollection services) =>
+        services.AddIndividualSessionCleaners()
+                .AddSingletonLazyArrayProvider<ISessionCleaner>();
+
     [GenerateServiceRegistrations(AssignableTo = typeof(IAdminFeature<>), CustomHandler = nameof(AddImplementedAdminFeatures))]
     internal static partial IServiceCollection AddAdminFeatures(this IServiceCollection services);
+
+    [GenerateServiceRegistrations(AssignableTo = typeof(ISessionCleaner), CustomHandler = nameof(AddSessionCleaner))]
+    private static partial IServiceCollection AddIndividualSessionCleaners(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IRedactor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddRedactors(this IServiceCollection services);
@@ -222,6 +226,8 @@ internal static partial class ServiceCollectionExtensions
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IPacketProcessor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddPacketProcessors(this IServiceCollection services);
+
+    private static void AddSessionCleaner<T>(this IServiceCollection services) where T : class, ISessionCleaner => services.AddSingleton<ISessionCleaner>(provider => provider.GetRequiredService<T>());
 
     private static void AddImplementedAdminFeatures<T>(this IServiceCollection services) where T : class, IAdminFeature
     {

@@ -108,6 +108,7 @@ public class Program
                .AddSubnauticaResources()
                .AddHibernation()
                .AddAdminFeatures()
+               .AddSessionCleaners()
                .AddServerStatusService(serverStartStopWatch)
                .AddHostedSingletonService<RestartService>()
                .AddHostedSingletonService<PortForwardService>()
