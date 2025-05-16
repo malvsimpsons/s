@@ -48,7 +48,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             {
                 throw new Exception("Failed to init database");
             }
-        }, cancellationToken);
+        }, cancellationToken).ContinueWithHandleError(exception => logger.ZLogCritical(exception, $"Database initialization error"));
     }
 
     public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
