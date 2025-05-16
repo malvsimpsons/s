@@ -35,15 +35,17 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     private readonly ILogger<LiteNetLibService> logger;
     private readonly IOptions<SubnauticaServerOptions> optionsProvider;
     private readonly PacketRegistryService packetRegistryService;
+    private readonly PacketSerializationService packetSerializationService;
     private readonly ConcurrentDictionary<SessionId, NetPeer> peersBySessionId = [];
     private readonly NetManager server;
     private readonly SessionRepository sessionRepository;
     private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
     public int SessionCleanPriority => int.MinValue;
 
-    public LiteNetLibService(PacketRegistryService packetRegistryService, SessionRepository sessionRepository, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
+    public LiteNetLibService(PacketRegistryService packetRegistryService, PacketSerializationService packetSerializationService, SessionRepository sessionRepository, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
     {
         this.packetRegistryService = packetRegistryService;
+        this.packetSerializationService = packetSerializationService;
         this.optionsProvider = optionsProvider;
         this.hostEnvironment = hostEnvironment;
         this.sessionRepository = sessionRepository;
@@ -124,8 +126,6 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Packet.InitSerializer();
-
         listener.PeerConnectedEvent += PeerConnected;
         listener.PeerDisconnectedEvent += (peer, _) => ClientDisconnected(peer);
         listener.NetworkReceiveEvent += NetworkDataReceived;
@@ -311,6 +311,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         stream ??= new MemoryStream(ushort.MaxValue);
 
         int startPos = (int)stream.Position;
+        packetSerializationService.SerializeInto(packet, stream);
         packet.SerializeInto(stream);
         int bytesWritten = (int)(stream.Position - startPos);
         Span<byte> packetData = stream.GetBuffer().AsSpan().Slice(startPos, bytesWritten);

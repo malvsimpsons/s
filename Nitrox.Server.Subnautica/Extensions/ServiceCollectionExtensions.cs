@@ -122,6 +122,7 @@ internal static partial class ServiceCollectionExtensions
             .AddSingleton<IServerPacketSender>(provider => provider.GetRequiredService<LiteNetLibService>())
             .AddSingleton<ISessionCleaner>(provider => provider.GetRequiredService<LiteNetLibService>())
             .AddHostedSingletonService<PacketRegistryService>()
+            .AddHostedSingletonService<PacketSerializationService>()
             .AddSingleton<DefaultPacketProcessor>()
             .AddPacketProcessors()
             .AddSingletonLazyArrayProvider<IPacketProcessor>();
