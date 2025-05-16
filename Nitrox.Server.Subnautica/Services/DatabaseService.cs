@@ -17,9 +17,11 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Initializes the database and provides access to it.
 /// </summary>
-internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<SqliteOptions> optionsProvider, IOptions<ServerStartOptions> startOptionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger) : IHostedLifecycleService
+internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<SqliteOptions> optionsProvider, IOptions<ServerStartOptions> startOptionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger)
+    : IHostedLifecycleService
 {
     private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
+    private readonly TaskCompletionSource dbInit = new();
     private readonly IHostEnvironment hostEnvironment = hostEnvironment;
     private readonly ILogger<DatabaseService> logger = logger;
     private readonly IOptions<SqliteOptions> optionsProvider = optionsProvider;
@@ -31,31 +33,22 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
 
     public async Task StartingAsync(CancellationToken cancellationToken)
     {
-        // Ensure database is up-to-date.
-        await using WorldDbContext db = await GetDbContextAsync();
-        if (hostEnvironment.IsDevelopment())
+        _ = Task.Run(async () =>
         {
             try
             {
-                await db.Database.EnsureDeletedAsync(cancellationToken);
-                await db.Database.EnsureCreatedAsync(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
+                await InitDatabase(cancellationToken);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Something is blocking the SQLite database. Check that you do not have it open in your IDE or other database viewer.");
+                dbInit.TrySetException(ex);
                 throw;
             }
-        }
-        else
-        {
-            await db.Database.MigrateAsync(cancellationToken);
-        }
-
-        await ExecuteOptionsAsPragma(db, optionsProvider.Value);
+            if (!dbInit.TrySetResult())
+            {
+                throw new Exception("Failed to init database");
+            }
+        }, cancellationToken);
     }
 
     public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -64,7 +57,11 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
 
     public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public async Task<WorldDbContext> GetDbContextAsync() => await dbContextFactory.CreateDbContextAsync();
+    public async Task<WorldDbContext> GetDbContextAsync()
+    {
+        await dbInit.Task; // Ensures database is initialized before other code can access it via context.
+        return await dbContextFactory.CreateDbContextAsync();
+    }
 
     public async Task<bool> BackupAsync(string fileName)
     {
@@ -101,6 +98,35 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         }
 
         return false;
+    }
+
+    private async Task InitDatabase(CancellationToken cancellationToken = default)
+    {
+        // Ensure database is up-to-date.
+        await using WorldDbContext db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        if (hostEnvironment.IsDevelopment())
+        {
+            try
+            {
+                await db.Database.EnsureDeletedAsync(cancellationToken);
+                await db.Database.EnsureCreatedAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Something is blocking the SQLite database. Check that you do not have it open in your IDE or other database viewer.");
+                throw;
+            }
+        }
+        else
+        {
+            await db.Database.MigrateAsync(cancellationToken);
+        }
+
+        await ExecuteOptionsAsPragma(db, optionsProvider.Value);
     }
 
     private async Task ExecuteCommand(WorldDbContext db, string command)
