@@ -31,7 +31,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public async Task StartingAsync(CancellationToken cancellationToken)
+    public Task StartingAsync(CancellationToken cancellationToken)
     {
         _ = Task.Run(async () =>
         {
@@ -49,6 +49,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
                 throw new Exception("Failed to init database");
             }
         }, cancellationToken).ContinueWithHandleError(exception => logger.ZLogCritical(exception, $"Database initialization error"));
+        return Task.CompletedTask;
     }
 
     public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
