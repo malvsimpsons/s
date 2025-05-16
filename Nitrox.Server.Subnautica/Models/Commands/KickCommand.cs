@@ -1,15 +1,17 @@
 using System;
 using System.ComponentModel;
+using Nitrox.Server.Subnautica.Models.Administration;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
-using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Models.Commands;
 
 [RequiresPermission(Perms.MODERATOR)]
-internal sealed class KickCommand(LiteNetLibService liteNetLib) : ICommandHandler<ConnectedPlayerDto, string>
+internal sealed class KickCommand(IKickPlayer playerKicker) : ICommandHandler<ConnectedPlayerDto, string>
 {
+    private readonly IKickPlayer playerKicker = playerKicker;
+
     [Description("Kicks a player from the server")]
     public async Task Execute(ICommandContext context, ConnectedPlayerDto playerToKick, string reason = "")
     {
@@ -27,7 +29,7 @@ internal sealed class KickCommand(LiteNetLibService liteNetLib) : ICommandHandle
                 break;
             case CommandOrigin.PLAYER:
             case CommandOrigin.SERVER:
-                if (!await liteNetLib.KickAsync(playerToKick.SessionId, reason))
+                if (!await playerKicker.KickPlayer(playerToKick.SessionId, reason))
                 {
                     await context.ReplyAsync($"Failed to kick '{playerToKick.Name}'");
                 }

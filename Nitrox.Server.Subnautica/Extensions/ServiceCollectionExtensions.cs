@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using AssetsTools.NET.Extra;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -13,6 +12,7 @@ using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Database;
+using Nitrox.Server.Subnautica.Models.Administration.Core;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
@@ -202,16 +202,19 @@ internal static partial class ServiceCollectionExtensions
         services.AddHostedSingletonService<HibernationService>()
                 .AddHibernators();
 
+    [GenerateServiceRegistrations(AssignableTo = typeof(IAdminFeature<>), CustomHandler = nameof(AddImplementedAdminFeatures))]
+    internal static partial IServiceCollection AddAdminFeatures(this IServiceCollection services);
+
     [GenerateServiceRegistrations(AssignableTo = typeof(IRedactor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddRedactors(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IGameResource), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
     private static partial IServiceCollection AddGameResources(this IServiceCollection services);
 
-    [GenerateServiceRegistrations(AssignableTo = typeof(IHibernate), Lifetime = ServiceLifetime.Singleton)]
+    [GenerateServiceRegistrations(AssignableTo = typeof(IHibernate), CustomHandler = nameof(AddHibernator))]
     private static partial IServiceCollection AddHibernators(this IServiceCollection services);
 
-    [GenerateServiceRegistrations(AssignableTo = typeof(ICommandHandlerBase), Lifetime = ServiceLifetime.Singleton, CustomHandler = nameof(AddCommandHandler))]
+    [GenerateServiceRegistrations(AssignableTo = typeof(ICommandHandlerBase), CustomHandler = nameof(AddCommandHandler))]
     private static partial IServiceCollection AddCommandHandlers(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IArgConverter), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
@@ -219,6 +222,20 @@ internal static partial class ServiceCollectionExtensions
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IPacketProcessor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddPacketProcessors(this IServiceCollection services);
+
+    private static void AddImplementedAdminFeatures<T>(this IServiceCollection services) where T : class, IAdminFeature
+    {
+        foreach (Type type in typeof(T).GetInterfaces()
+                                       .Where(i => typeof(IAdminFeature).IsAssignableFrom(i))
+                                       .Select(i => i.GetGenericArguments())
+                                       .Where(types => types.Length == 1)
+                                       .Select(types => types[0]))
+        {
+            services.AddSingleton(type, provider => provider.GetRequiredService<T>());
+        }
+    }
+
+    private static void AddHibernator<T>(this IServiceCollection services) where T : class, IHibernate => services.AddSingleton<IHibernate>(provider => provider.GetRequiredService<T>());
 
     /// <summary>
     ///     Registers a single command and all of its handlers as can be known by the implemented interfaces.

@@ -12,6 +12,7 @@ using LiteNetLib.Utils;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database.Models;
+using Nitrox.Server.Subnautica.Models.Administration;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
@@ -27,7 +28,7 @@ namespace Nitrox.Server.Subnautica.Services;
 ///     Opens the LiteNetLib channel and starts sending incoming messages to <see cref="packetRegistryService" /> for
 ///     processing.
 /// </summary>
-internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISessionCleaner
+internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISessionCleaner, IKickPlayer
 {
     private readonly NetDataWriter dataWriter = new();
     private readonly IHostEnvironment hostEnvironment;
@@ -54,7 +55,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         server = new NetManager(listener);
     }
 
-    public async Task<bool> KickAsync(SessionId sessionId, string reason)
+    public async Task<bool> KickPlayer(SessionId sessionId, string reason = "")
     {
         if (!peersBySessionId.TryGetValue(sessionId, out NetPeer peer))
         {

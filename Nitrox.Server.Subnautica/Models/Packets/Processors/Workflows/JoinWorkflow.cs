@@ -54,7 +54,7 @@ internal sealed class JoinWorkflow(SessionRepository sessionRepository, IOptions
             return;
         }
 
-        // TODO: Reject if player data is in use.
+        // TODO: Reject if requested player data is in use.
         // if (PlayerCurrentlyJoining)
         // {
         //     // JoinQueue.Enqueue(new KeyValuePair<INitroxConnection, MultiplayerSessionReservationRequest>(
