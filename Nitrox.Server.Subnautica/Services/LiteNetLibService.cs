@@ -312,7 +312,6 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
 
         int startPos = (int)stream.Position;
         packetSerializationService.SerializeInto(packet, stream);
-        packet.SerializeInto(stream);
         int bytesWritten = (int)(stream.Position - startPos);
         Span<byte> packetData = stream.GetBuffer().AsSpan().Slice(startPos, bytesWritten);
 
