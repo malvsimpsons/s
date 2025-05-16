@@ -41,9 +41,8 @@ internal sealed partial class SqliteOptions
     /// <summary>
     ///     <a href="https://sqlite.org/pragma.html#pragma_mmap_size">Sqlite PRAGMA <c>mmap_size</c></a>
     /// </summary>
-    [Required]
     [ConfigurationKeyName("mmap_size")]
-    public long MmapSize { get; set; }
+    public long? MmapSize { get; set; }
 
     /// <summary>
     ///     <a href="https://sqlite.org/pragma.html#pragma_journal_mode">Sqlite PRAGMA <c>journal_mode</c></a>

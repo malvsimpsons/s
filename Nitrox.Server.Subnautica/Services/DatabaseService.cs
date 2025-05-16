@@ -161,7 +161,6 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             string pragmaValue = property.GetValue(options)?.ToString() ?? "";
             if (string.IsNullOrWhiteSpace(pragmaValue))
             {
-                logger.ZLogWarning($"Pragma {pragmaKey:@Key} has no value");
                 continue;
             }
 
