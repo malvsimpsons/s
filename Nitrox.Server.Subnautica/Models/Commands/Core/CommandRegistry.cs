@@ -19,7 +19,7 @@ internal sealed class CommandRegistry
     /// <summary>
     ///     Lookup for command name -> list of known handlers. Each with different arg types or count.
     /// </summary>
-    private Dictionary<string, List<CommandHandlerEntry>> HandlerLookup { get; } = [];
+    private Dictionary<string, List<CommandHandlerEntry>> HandlerLookup { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     private Dictionary<string, List<CommandHandlerEntry>>.AlternateLookup<ReadOnlySpan<char>> SpanHandlerLookup { get; }
 
@@ -118,42 +118,25 @@ internal sealed class CommandRegistry
 
     public bool IsValidHandlerForContext(CommandHandlerEntry handler, ICommandContext context) => handler.AcceptedOrigin.HasFlag(context.Origin) && handler.MinimumPermissions <= context.Permissions;
 
-    /// <summary>
-    ///     Returns first successful result of available converters that can convert to target type.
-    /// </summary>
-    public ConvertResult TryConvertToType(ReadOnlySpan<char> value, Type targetType)
+    public async ValueTask<List<ConvertResult>> TryConvertToType(string value, Type targetType)
     {
-        object parsed = TryParseToType(value, targetType);
-        if (parsed == null)
+        List<ConvertResult> results = [];
+        if (ArgConverterLookup.TryGetValue(targetType, out List<ArgConverterInfo> list))
         {
-            ConvertResult convertAttemptResult = default;
-            if (ArgConverterLookup.TryGetValue(targetType, out List<ArgConverterInfo> list))
+            foreach (ArgConverterInfo converterInfo in list)
             {
-                foreach (ArgConverterInfo converterInfo in list)
+                ConvertResult result = await converterInfo.Converter.ConvertAsync(TryParseToType(value, converterInfo.From));
+                if (result.Success)
                 {
-                    // TODO: VERIFY GETAWAITER() WORKS???!?!?!
-                    ConvertResult result = converterInfo.Converter.ConvertAsync(TryParseToType(value, converterInfo.From)).GetAwaiter().GetResult();
-                    if (result.Success)
-                    {
-                        return result;
-                    }
-                    convertAttemptResult = result;
+                    return [result];
                 }
-            }
-            if (convertAttemptResult is { Success: false, Value: string })
-            {
-                return convertAttemptResult;
+                results.Add(result);
             }
         }
-
-        return new ConvertResult
-        {
-            Success = parsed != null,
-            Value = parsed
-        };
+        return results;
     }
 
-    private object TryParseToType(ReadOnlySpan<char> value, Type type)
+    public object TryParseToType(ReadOnlySpan<char> value, Type type)
     {
         try
         {

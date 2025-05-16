@@ -11,13 +11,13 @@ internal class PlayerNameToPlayerArgConverter(PlayerRepository playerRepository)
 {
     private readonly PlayerRepository playerRepository = playerRepository;
 
-    public async Task<ConvertResult> ConvertAsync(string playerId)
+    public async Task<ConvertResult> ConvertAsync(string playerName)
     {
-        ConnectedPlayerDto[] player = await playerRepository.GetConnectedPlayersByNameAsync(playerId);
-        if (player == null)
+        ConnectedPlayerDto[] players = await playerRepository.GetConnectedPlayersByNameAsync(playerName);
+        if (players == null || players.Length < 1)
         {
-            return ConvertResult.Fail($"No player found by name '{playerId}'");
+            return ConvertResult.Fail($"No player found by name '{playerName}'");
         }
-        return ConvertResult.Ok(player);
+        return ConvertResult.Ok(players[0]);
     }
 }

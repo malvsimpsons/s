@@ -1,9 +1,11 @@
 extern alias JB;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Hosting;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
@@ -18,10 +20,10 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
     private const int MAX_ARGS = 8;
     private readonly ILogger<CommandService> logger = logger;
     private readonly ILoggerFactory loggerFactory = loggerFactory;
-    private readonly Channel<Task> runningCommands = Channel.CreateUnbounded<Task>();
-    private Task commandWaiterTask;
 
     private readonly CommandRegistry registry = registry;
+    private readonly Channel<Task> runningCommands = Channel.CreateUnbounded<Task>();
+    private Task commandWaiterTask;
 
     [GeneratedRegex(@"""(?:[^""\\]|\\.)*""|\S+", RegexOptions.NonBacktracking | RegexOptions.ExplicitCapture)]
     private static partial Regex ArgumentsRegex { get; }
@@ -39,14 +41,13 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
             return;
         }
 
-        // TODO: In .NET 10 use new dictionary ignore-case lookup.
+        // Extract command name from command input.
         int endOfNameIndex = inputText.IndexOf(' ');
         if (endOfNameIndex == -1)
         {
             endOfNameIndex = inputText.Length;
         }
-        Span<char> commandName = endOfNameIndex < 32 ? stackalloc char[endOfNameIndex] : new char[endOfNameIndex];
-        inputText[.. endOfNameIndex].ToLowerInvariant(commandName);
+        ReadOnlySpan<char> commandName = inputText[.. endOfNameIndex];
 
         if (!registry.TryGetHandlersByCommandName(context, commandName, out List<CommandHandlerEntry> handlers))
         {
@@ -75,6 +76,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
         Span<object> args = new(new object[MAX_ARGS]) { [0] = context };
         CommandHandlerEntry handler = null;
         bool inputHasCorrectParameterCount = false;
+        List<CommandHandlerEntry> almostMatchingHandlers = null;
         foreach (CommandHandlerEntry currentHandler in handlers)
         {
             if (currentHandler.Parameters.Length != rangeIndex)
@@ -90,9 +92,12 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
                     ['"', .., '"'] s => s[1..^1],
                     var s => s
                 };
-                ConvertResult argConversion = registry.TryConvertToType(part, currentHandler.ParameterTypes[i]);
-                if (!argConversion.Success)
+                object parsedValue = registry.TryParseToType(part, currentHandler.ParameterTypes[i]);
+                if (parsedValue == null)
                 {
+                    almostMatchingHandlers ??= [];
+                    almostMatchingHandlers.Add(currentHandler);
+
                     // Unset args array except for first arg which is the context.
                     for (int j = i + 1; j >= 0; j--)
                     {
@@ -100,7 +105,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
                     }
                     goto nextHandler;
                 }
-                args[i + 1] = argConversion.Value;
+                args[i + 1] = parsedValue;
             }
             handler = currentHandler;
             break;
@@ -115,7 +120,12 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
         }
         if (handler == null)
         {
-            logger.LogInformation("Command {CommandName} failed", commandName.ToString());
+            if (almostMatchingHandlers.Count == 0)
+            {
+                logger.LogInformation("Command {CommandName} failed", commandName.ToString());
+                return;
+            }
+            QueueTryRunFirstArgConvertedHandler(almostMatchingHandlers, commandArgs.ToString(), ranges);
             return;
         }
 
@@ -126,18 +136,6 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
     {
         commandWaiterTask = Task.Factory.StartNew(() => EnsureCommandsAreProcessedAsync(cancellationToken), cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         return Task.CompletedTask;
-    }
-
-    private async Task EnsureCommandsAreProcessedAsync(CancellationToken cancellationToken = default)
-    {
-        await foreach (Task task in runningCommands.Reader.ReadAllAsync(cancellationToken))
-        {
-            if (task == null)
-            {
-                continue;
-            }
-            await task;
-        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
@@ -158,6 +156,102 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
     public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private async Task EnsureCommandsAreProcessedAsync(CancellationToken cancellationToken = default)
+    {
+        await foreach (Task task in runningCommands.Reader.ReadAllAsync(cancellationToken))
+        {
+            if (task == null)
+            {
+                continue;
+            }
+            await task;
+        }
+    }
+
+    private void QueueTryRunFirstArgConvertedHandler(List<CommandHandlerEntry> looselyCompatibleHandlers, string argsInput, ReadOnlySpan<Range> argRanges)
+    {
+        List<string> args = [];
+        foreach (Range range in argRanges)
+        {
+            if (range is { Start.Value: 0, End.Value: 0 })
+            {
+                continue;
+            }
+            args.Add(argsInput[range]);
+        }
+
+        Task tryRunHandlerTask = Task.Run(async () =>
+        {
+            List<(CommandHandlerEntry handler, ConvertResult[][] conversions)> failedHandlers = [];
+            foreach (CommandHandlerEntry handler in looselyCompatibleHandlers)
+            {
+                ConvertResult[][] values = await TryConvertStringParamsToObjectParams(registry, args, handler.ParameterTypes);
+                if (values.Any(v => v.LastOrDefault().Success != true))
+                {
+                    failedHandlers.Add((handler, values));
+                    continue;
+                }
+
+                RunHandler(handler, values.Select(v => v.LastOrDefault().Value).ToArray(), argsInput);
+                return;
+            }
+
+            logger.ZLogInformation($"Command {$"{looselyCompatibleHandlers[0].Name} {argsInput}":@Command} failed to match to any command handlers.{Environment.NewLine}{GetErrorMessagesFromFailedHandlers(failedHandlers)}");
+        }).ContinueWithHandleError(exception => logger.ZLogError(exception, $"Error while parsing '{argsInput}' to a command handler"));
+        runningCommands.Writer.TryWrite(tryRunHandlerTask);
+
+        static async Task<ConvertResult[][]> TryConvertStringParamsToObjectParams(CommandRegistry registry, List<string> args, Type[] parameterTypes)
+        {
+            List<ConvertResult[]> result = null;
+            for (int i = 0; i < parameterTypes.Length; i++)
+            {
+                ConvertResult[] conversions;
+                if (registry.TryParseToType(args[i], parameterTypes[i]) is { } parsedValue)
+                {
+                    conversions = [ConvertResult.Ok(parsedValue)];
+                }
+                else
+                {
+                    conversions = [ConvertResult.Fail($"Failed to parse {args[i]} to a {parameterTypes[i].Name}")];
+                }
+                if (conversions is [] || !conversions[0].Success)
+                {
+                    conversions = [..conversions, ..await registry.TryConvertToType(args[i], parameterTypes[i])];
+                }
+
+                result ??= [];
+                result.Add(conversions);
+            }
+            return result?.ToArray() ?? [];
+        }
+
+        static string GetErrorMessagesFromFailedHandlers(List<(CommandHandlerEntry handler, ConvertResult[][] conversions)> failedHandlers)
+        {
+            IndentedStringBuilder sb = new();
+            foreach ((CommandHandlerEntry handler, ConvertResult[][] conversions) handlerResult in failedHandlers)
+            {
+                for (int argIndex = 0; argIndex < handlerResult.conversions.Length; argIndex++)
+                {
+                    sb.Append("Arg ")
+                      .Append(argIndex.ToString())
+                      .AppendLine(": ");
+                    sb.IncrementIndent();
+                    string[] messages = handlerResult.conversions[argIndex].Where(c => c is { Success: false, Value: string }).Select(c => c.Value).OfType<string>().ToArray();
+                    for (int i = 0; i < messages.Length; i++)
+                    {
+                        sb.Append("- ").Append(messages[i]);
+                        if (i != messages.Length - 1)
+                        {
+                            sb.AppendLine();
+                        }
+                    }
+                    sb.DecrementIndent();
+                }
+            }
+            return sb.ToString();
+        }
+    }
 
     private void RunHandler(CommandHandlerEntry handler, Span<object> args, string inputText)
     {

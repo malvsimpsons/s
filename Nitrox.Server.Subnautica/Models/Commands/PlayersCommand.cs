@@ -21,6 +21,11 @@ internal class PlayersCommand(IOptions<SubnauticaServerOptions> serverOptionsPro
         SubnauticaServerOptions options = serverOptionsProvider.Value;
 
         ConnectedPlayerDto[] players = await playerRepository.GetConnectedPlayersAsync();
+        if (players.Length < 1)
+        {
+            await context.ReplyAsync("There are no players");
+            return;
+        }
         string playerNamesWithIds = string.Join(", ", players.OrderBy(p => p.Name).Select(p => $"{p.Name} (#{p.Id})"));
         await context.ReplyAsync($"List of players ({players.Length}/{options.MaxConnections}):{Environment.NewLine}{playerNamesWithIds}");
     }
