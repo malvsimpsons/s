@@ -41,12 +41,14 @@ internal sealed class CommandRegistry
                                                 {
                                                     // Split handlers with optional parameters into separate handlers.
                                                     List<CommandHandlerEntry> result = [h];
+                                                    List<object> defaultValues = [];
                                                     for (int i = h.Parameters.Length - 1; i >= 0; i--)
                                                     {
                                                         ParameterInfo current = h.Parameters[i];
                                                         if (current.IsOptional)
                                                         {
-                                                            result.Add(new CommandHandlerEntry(h, h.Parameters.Take(i).ToArray()));
+                                                            defaultValues.Insert(0, current.DefaultValue);
+                                                            result.Add(new CommandHandlerEntry(h, h.Parameters.Take(i).ToArray(), [..defaultValues]));
                                                         }
                                                     }
                                                     return result;

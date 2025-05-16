@@ -13,7 +13,7 @@ public class FastCommand(SessionSettings sessionSettings) : ICommandHandler<Fast
 
     [Description("Enables/disables a fast cheat command, whether it be \"hatch\" or \"grow\"")]
     public async Task Execute(ICommandContext context,
-                              [Description("The name of the fast cheat to change: \"hatch\" or \"grow\"")]
+                              [Description("The name of the fast cheat")]
                               FastCheatChanged.FastCheat cheat,
                               [Description("Whether the cheat will be enabled or disabled. Default count as a toggle")]
                               bool toggle)

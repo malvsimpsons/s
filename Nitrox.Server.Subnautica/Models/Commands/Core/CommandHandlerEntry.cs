@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using NitroxModel.DataStructures.GameLogic;
+using NitroxModel.Dto;
 
 namespace Nitrox.Server.Subnautica.Models.Commands.Core;
 
@@ -24,6 +25,8 @@ public record CommandHandlerEntry
 
     /// <inheritdoc cref="RequiresPermissionAttribute.MinimumPermission" />
     public Perms MinimumPermissions { get; init; }
+
+    private object[] defaultValues = [];
 
     public CommandHandlerEntry(ICommandHandlerBase owner, Type handlerType)
     {
@@ -52,7 +55,7 @@ public record CommandHandlerEntry
         RuntimeHelpers.PrepareMethod(executeMethod.MethodHandle);
     }
 
-    public CommandHandlerEntry(CommandHandlerEntry derivedHandler, ParameterInfo[] parameters)
+    public CommandHandlerEntry(CommandHandlerEntry derivedHandler, ParameterInfo[] parameters, ReadOnlySpan<object> defaultValues)
     {
         Owner = derivedHandler.Owner;
         Name = derivedHandler.Name;
@@ -60,11 +63,22 @@ public record CommandHandlerEntry
         ExecuteMethod = derivedHandler.ExecuteMethod;
         Parameters = parameters;
         ParameterTypes = Parameters.Select(p => p.ParameterType).ToArray();
+        Aliases = derivedHandler.Aliases;
+        AcceptedOrigin = derivedHandler.AcceptedOrigin;
+        MinimumPermissions = derivedHandler.MinimumPermissions;
+        this.defaultValues = [..defaultValues];
 
         execute = derivedHandler.execute;
     }
 
-    public Task InvokeAsync(params Span<object> args) => (Task)execute.Invoke(Owner, args);
+    public Task InvokeAsync(params Span<object> args)
+    {
+        if (defaultValues.Length > 0)
+        {
+            return (Task)execute.Invoke(Owner, [..args, ..defaultValues]);
+        }
+        return (Task)execute.Invoke(Owner, args);
+    }
 
     public override string ToString() => ToDisplayString(true);
 
@@ -95,7 +109,8 @@ public record CommandHandlerEntry
             static string GetParameterInfo(ParameterInfo parameter)
             {
                 string surrounding = parameter.IsOptional ? "[]" : "<>";
-                return $"{surrounding[0]}{parameter.Name}:{GetNiceTypeName(parameter.ParameterType)}{surrounding[1]}";
+                string description = parameter.GetCustomAttribute<DescriptionAttribute>()?.Description ?? parameter.Name;
+                return $"{surrounding[0]}{GetNiceTypeName(parameter.ParameterType)}:{description}{surrounding[1]}";
             }
 
             static string GetNiceTypeName(Type type)
@@ -112,6 +127,10 @@ public record CommandHandlerEntry
                 {
                     return "string";
                 }
+                if (type == typeof(bool))
+                {
+                    return "bool";
+                }
                 if (type == typeof(float))
                 {
                     return "float";
@@ -119,6 +138,10 @@ public record CommandHandlerEntry
                 if (type == typeof(object))
                 {
                     return "object";
+                }
+                if (type == typeof(ConnectedPlayerDto))
+                {
+                    return "playerIdOrName";
                 }
                 return type.Name;
             }
