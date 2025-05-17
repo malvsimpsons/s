@@ -12,6 +12,6 @@ public static class DbContextBuilderExtensions
         {
             infraOptions.AddOrUpdateExtension(new NitroxDbContextOptionsExtension());
         }
-        options.AddInterceptors(new AddSqliteFunctionsInterceptor());
+        options.AddInterceptors(new DisableInternalEntityFrameworkPragmaInterceptor(), new AddSqliteFunctionsInterceptor());
     }
 }
