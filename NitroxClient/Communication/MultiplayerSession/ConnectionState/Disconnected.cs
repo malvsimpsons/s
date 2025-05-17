@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using NitroxClient.Communication.Abstract;
 using NitroxClient.Communication.Exceptions;
 using NitroxModel.Helper;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
 
 namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
 {
@@ -65,10 +65,10 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
         {
             string policyRequestCorrelationId = Guid.NewGuid().ToString();
 
-            MultiplayerSessionPolicyRequest requestPacket = new MultiplayerSessionPolicyRequest(policyRequestCorrelationId);
+            SessionPolicyRequest requestPacket = new(policyRequestCorrelationId);
             client.Send(requestPacket);
 
-            EstablishingSessionPolicy nextState = new EstablishingSessionPolicy(policyRequestCorrelationId);
+            EstablishingSessionPolicy nextState = new(policyRequestCorrelationId);
             sessionConnectionContext.UpdateConnectionState(nextState);
         }
 

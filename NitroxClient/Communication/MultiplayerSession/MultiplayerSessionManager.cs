@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Threading.Tasks;
 using NitroxClient.Communication.Abstract;
 using NitroxClient.Communication.MultiplayerSession.ConnectionState;
 using NitroxClient.GameLogic;
+using NitroxModel.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.Helper;
-using NitroxModel.MultiplayerSession;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Session;
 using NitroxModel.Serialization;
 
 namespace NitroxClient.Communication.MultiplayerSession
@@ -14,6 +14,7 @@ namespace NitroxClient.Communication.MultiplayerSession
     public class MultiplayerSessionManager : IMultiplayerSession, IMultiplayerSessionConnectionContext
     {
         private static readonly Task initSerializerTask;
+        private IMultiplayerSessionConnectionState currentState;
 
         static MultiplayerSessionManager()
         {
@@ -26,8 +27,18 @@ namespace NitroxClient.Communication.MultiplayerSession
         public MultiplayerSessionPolicy SessionPolicy { get; private set; }
         public PlayerSettings PlayerSettings { get; private set; }
         public AuthenticationContext AuthenticationContext { get; private set; }
-        public IMultiplayerSessionConnectionState CurrentState { get; private set; }
-        public MultiplayerSessionReservation Reservation { get; private set; }
+
+        public IMultiplayerSessionConnectionState CurrentState
+        {
+            get => currentState;
+            private set
+            {
+                Log.Debug($"Session changed from {currentState?.GetType().Name ?? "NULL"} to {value?.GetType().Name ?? "NULL"}");
+                currentState = value;
+            }
+        }
+
+        public SessionReservation Reservation { get; private set; }
 
         public MultiplayerSessionManager(IClient client)
         {
@@ -95,9 +106,9 @@ namespace NitroxClient.Communication.MultiplayerSession
             CurrentState.NegotiateReservationAsync(this);
         }
 
-        public void ProcessReservationResponsePacket(MultiplayerSessionReservation reservation)
+        public void ProcessReservationResponsePacket(SessionReservation reservation)
         {
-            if (reservation.ReservationState == MultiplayerSessionReservationState.ENQUEUED_IN_JOIN_QUEUE)
+            if (reservation.ReservationState == SessionReservationState.ENQUEUED_IN_JOIN_QUEUE)
             {
                 Log.Info("Waiting in join queue…");
                 Log.InGame(Language.main.Get("Nitrox_Waiting"));
@@ -135,10 +146,7 @@ namespace NitroxClient.Communication.MultiplayerSession
         {
             Validate.NotNull(sessionConnectionState);
 
-            string fromStage = CurrentState == null ? "null" : CurrentState.CurrentStage.ToString();
             string username = AuthenticationContext == null ? "" : AuthenticationContext.Username;
-            Log.Debug($"Updating session stage from '{fromStage}' to '{sessionConnectionState.CurrentStage}' for '{username}'");
-
             CurrentState = sessionConnectionState;
 
             // Last connection state changed will not have any handlers

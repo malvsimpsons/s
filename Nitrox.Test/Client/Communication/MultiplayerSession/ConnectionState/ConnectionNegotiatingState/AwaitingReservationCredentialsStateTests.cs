@@ -1,10 +1,7 @@
-﻿using System;
-using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Nitrox.Test.Client.Communication.MultiplayerSession;
+﻿using Nitrox.Test.Client.Communication.MultiplayerSession;
 using NitroxClient.Communication.Abstract;
-using NitroxModel.MultiplayerSession;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Session;
 using NSubstitute;
 
 namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
@@ -30,7 +27,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
             connectionState.NegotiateReservationAsync(connectionContext);
 
             // Assert
-            serverClient.Received().Send(Arg.Any<MultiplayerSessionReservationRequest>());
+            serverClient.Received().Send(Arg.Any<SessionReservationRequest>());
         }
 
         [TestMethod]

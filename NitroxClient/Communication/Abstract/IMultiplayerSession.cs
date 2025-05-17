@@ -1,6 +1,5 @@
-﻿using System.Threading.Tasks;
-using NitroxModel.MultiplayerSession;
-using NitroxModel.Packets;
+﻿using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Session;
 
 namespace NitroxClient.Communication.Abstract
 {
@@ -14,7 +13,7 @@ namespace NitroxClient.Communication.Abstract
         Task ConnectAsync(string ipAddress, int port);
         void ProcessSessionPolicy(MultiplayerSessionPolicy policy);
         void RequestSessionReservation(PlayerSettings playerSettings, AuthenticationContext authenticationContext);
-        void ProcessReservationResponsePacket(MultiplayerSessionReservation reservation);
+        void ProcessReservationResponsePacket(SessionReservation reservation);
         void JoinSession();
         void Disconnect();
     }

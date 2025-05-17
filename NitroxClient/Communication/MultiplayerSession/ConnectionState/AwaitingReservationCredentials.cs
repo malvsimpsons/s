@@ -2,8 +2,8 @@
 using System.Threading.Tasks;
 using NitroxClient.Communication.Abstract;
 using NitroxModel.Helper;
-using NitroxModel.MultiplayerSession;
-using NitroxModel.Packets;
+using NitroxModel.Networking.Packets;
+using NitroxModel.Networking.Session;
 
 namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
 {
@@ -35,7 +35,7 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
             PlayerSettings playerSettings = sessionConnectionContext.PlayerSettings;
             AuthenticationContext authenticationContext = sessionConnectionContext.AuthenticationContext;
 
-            MultiplayerSessionReservationRequest requestPacket = new(reservationCorrelationId, playerSettings, authenticationContext);
+            SessionReservationRequest requestPacket = new(reservationCorrelationId, playerSettings, authenticationContext);
             client.Send(requestPacket);
         }
 
