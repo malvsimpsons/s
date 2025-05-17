@@ -10,11 +10,10 @@ public class AddSqliteFunctionsInterceptor : IDbConnectionInterceptor
 
     public void ConnectionOpened(DbConnection baseConnection, ConnectionEndEventData eventData)
     {
-        if (baseConnection == lastConnection)
+        if (Interlocked.CompareExchange(ref lastConnection, baseConnection, lastConnection) == baseConnection)
         {
             return;
         }
-        lastConnection = baseConnection;
         if (baseConnection is not SqliteConnection connection)
         {
             return;

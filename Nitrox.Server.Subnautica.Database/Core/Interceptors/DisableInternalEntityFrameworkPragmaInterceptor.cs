@@ -10,7 +10,7 @@ public class DisableInternalEntityFrameworkPragmaInterceptor : IDbCommandInterce
 
     public InterceptionResult<DbCommand> CommandCreating(CommandCorrelatedEventData eventData, InterceptionResult<DbCommand> result)
     {
-        if (done)
+        if (Interlocked.CompareExchange(ref done, false, false))
         {
             return result;
         }
@@ -18,7 +18,7 @@ public class DisableInternalEntityFrameworkPragmaInterceptor : IDbCommandInterce
         {
             return InterceptionResult<DbCommand>.SuppressWithResult(PragmaIgnoreDbCommand.Instance);
         }
-        done = true;
+        Interlocked.Exchange(ref done, true);
         return result;
     }
 
