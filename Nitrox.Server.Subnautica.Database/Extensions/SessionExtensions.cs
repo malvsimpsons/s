@@ -36,7 +36,7 @@ public static class SessionExtensions
                     )
                     SELECT IFNULL(MIN(Id), (SELECT COUNT(*) + 1 FROM LockedSessionIds)) as Id
                     FROM LockedSessionIds
-                    WHERE TimeTillUnlock <= datetime('now', 'subsec')
+                    WHERE TimeTillUnlock <= uptime()
                     ORDER BY Id, TimeTillUnlock
                     LIMIT 1
                 ),

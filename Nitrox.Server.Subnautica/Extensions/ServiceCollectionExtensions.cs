@@ -160,7 +160,7 @@ internal static partial class ServiceCollectionExtensions
                            {
                                options.EnableSensitiveDataLogging();
                            }
-
+                           options.UseNitroxExtensions();
                            options.UseSqlite($"DataSource={Path.Combine(startOptions.GetServerSavePath(), "world.db")}");
                        })
                        .AddHostedSingletonService<DatabaseService>()

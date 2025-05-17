@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -30,5 +31,6 @@ public record Connection
     ///     The real-world time when this record was made.
     /// </summary>
     [Required]
+    [DefaultValue("datetime('now', 'subsecond')")]
     public DateTimeOffset Created { get; set; }
 }

@@ -6,7 +6,7 @@ using NitroxModel.Networking;
 
 namespace Nitrox.Server.Subnautica.Database;
 
-public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContext(options)
+public sealed class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContext(options)
 {
     public DbSet<Player> Players { get; set; }
     public DbSet<PlayContext> PlayContexts { get; set; }
@@ -25,21 +25,9 @@ public class WorldDbContext(DbContextOptions<WorldDbContext> options) : DbContex
     {
     }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<TimeLockedTableIds>()
-                    .Property(e => e.TimeTillUnlock)
-                    .HasDefaultValueSql("datetime('now', 'subsecond', '10 minutes')"); // Locks IDs by 10 minutes.
-
-        modelBuilder.Entity<Connection>()
-                    .Property(e => e.Created)
-                    .HasDefaultValueSql("datetime('now', 'subsecond')");
-    }
-
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
         EnableEfMigrations(builder);
-
         base.OnConfiguring(builder);
 
         static void EnableEfMigrations(DbContextOptionsBuilder builder)
