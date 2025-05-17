@@ -115,15 +115,14 @@ internal sealed class PrefabPlaceholderGroupsResource(SubnauticaAssetsManager as
         {
             prefabPlaceholdersGroupPaths = cache.Value.PrefabPlaceholdersGroupPaths;
             RandomPossibilitiesByClassId = cache.Value.RandomPossibilitiesByClassId;
-            logger.LogDebug("Successfully loaded cache with {PrefabPlaceholdersCount} prefab placeholder groups and {RandomPossibilitiesCount} random spawn behaviours.", prefabPlaceholdersGroupPaths.Count, RandomPossibilitiesByClassId.Count);
+            logger.ZLogDebug($"Successfully loaded cache with {prefabPlaceholdersGroupPaths.Count:@PrefabPlaceholdersCount} prefab placeholder groups and {RandomPossibilitiesByClassId.Count:@RandomPossibilitiesCount} random spawn behaviours.");
         }
         // Fallback solution
         if (prefabPlaceholdersGroupPaths == null)
         {
             prefabPlaceholdersGroupPaths = new(GetPrefabPlaceholderGroupAssetsByGroupClassId(assetsManager, GetAllPrefabPlaceholdersGroupsFast(assetsManager)));
             Cache.Serialize(serializer, new Cache(prefabPlaceholdersGroupPaths, RandomPossibilitiesByClassId), cacheFilePath);
-            logger.LogDebug("Successfully built cache with {PrefabPlaceholdersCount} prefab placeholder groups and {RandomPossibilitiesCount} random spawn behaviours. Future server starts will take less time.", prefabPlaceholdersGroupPaths.Count,
-                            RandomPossibilitiesByClassId.Count);
+            logger.ZLogDebug($"Successfully built cache with {prefabPlaceholdersGroupPaths.Count:@PrefabPlaceholdersCount} prefab placeholder groups and {RandomPossibilitiesByClassId.Count:@RandomPossibilitiesCount} random spawn behaviours. Future server starts will take less time.");
         }
         Validate.IsTrue(prefabPlaceholdersGroupPaths.Count > 0);
         Validate.IsTrue(RandomPossibilitiesByClassId.Count > 0);

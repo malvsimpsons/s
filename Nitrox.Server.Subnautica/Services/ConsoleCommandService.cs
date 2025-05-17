@@ -212,7 +212,7 @@ internal sealed class ConsoleCommandService(CommandService commandService, Playe
             {
                 if (t.IsFaulted)
                 {
-                    logger.LogError(t.Exception, "Failed to handle console input");
+                    logger.ZLogError(t.Exception, $"Failed to handle console input");
                 }
             }, ct);
         }

@@ -21,7 +21,7 @@ internal sealed class ServerCommandProcessor(ICommandSubmit commandSubmit, Playe
         {
             return;
         }
-        logger.LogInformation("{PlayerName} issued command: /{Command}", player.Name, packet.Cmd);
+        logger.ZLogInformation($"{player.Name:@PlayerName} issued command: /{packet.Cmd:@Command}");
         commandSubmit.ExecuteCommand(packet.Cmd, new PlayerToServerCommandContext(packetSender, player));
     }
 }

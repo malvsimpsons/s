@@ -66,7 +66,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
             ValueMatch match = argsEnumerator.Current;
             if (rangeIndex >= MAX_ARGS)
             {
-                logger.LogError("Too many arguments passed to command {CommandName}", commandName.ToString());
+                logger.ZLogError($"Too many arguments passed to command {commandName.ToString():@CommandName}");
                 return;
             }
             ranges[rangeIndex++] = new Range(match.Index, match.Index + match.Length);
@@ -114,7 +114,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
         }
         if (!inputHasCorrectParameterCount)
         {
-            logger.LogInformation("Command {CommandName} does not support the provided arguments. See below for more information.", commandName.ToString());
+            logger.ZLogInformation($"Command {commandName.ToString():@CommandName} does not support the provided arguments. See below for more information.");
             ExecuteCommand($"help {commandName}", context);
             return;
         }
@@ -122,7 +122,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
         {
             if (almostMatchingHandlers.Count == 0)
             {
-                logger.LogInformation("Command {CommandName} failed", commandName.ToString());
+                logger.ZLogInformation($"Command {commandName.ToString():@CommandName} failed");
                 return;
             }
             QueueTryRunFirstArgConvertedHandler(almostMatchingHandlers, commandArgs.ToString(), ranges);
@@ -140,16 +140,16 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        logger.LogDebug("Waiting for commands to finish processing...");
+        logger.ZLogDebug($"Waiting for commands to finish processing...");
         await commandWaiterTask;
-        logger.LogDebug("Done waiting for commands");
+        logger.ZLogDebug($"Done waiting for commands");
     }
 
     public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public Task StartedAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("To get help for commands, run help in console or /help in chatbox");
+        logger.ZLogInformation($"To get help for commands, run help in console or /help in chatbox");
         return Task.CompletedTask;
     }
 
@@ -264,7 +264,7 @@ internal sealed partial class CommandService(CommandRegistry registry, ILogger<C
         {
             if (!runningCommands.Writer.TryWrite(handler.InvokeAsync(args)))
             {
-                logger.LogError("Failed to track command task");
+                logger.ZLogError($"Failed to track command task");
             }
         }
         catch (Exception ex)

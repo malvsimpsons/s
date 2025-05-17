@@ -23,7 +23,7 @@ internal sealed class FmodService(GameInfo gameInfo, IOptions<ServerStartOptions
         string csvContent = await File.ReadAllTextAsync(filePath, cancellationToken);
         if (string.IsNullOrWhiteSpace(csvContent))
         {
-            logger.LogError("Sound whitelist at '{FilePath}' is null or whitespace", filePath);
+            logger.ZLogError($"Sound whitelist at '{filePath:@FilePath}' is null or whitespace");
             return;
         }
         fmodWhitelist = FmodWhitelist.FromCsv(csvContent);

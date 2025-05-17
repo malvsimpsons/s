@@ -86,7 +86,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
             {
                 logger.ZLogInformation($"enabled");
             }
-            logger.LogDebug("broadcasting on port {Port}", selectedPort);
+            logger.ZLogDebug($"broadcasting on port {selectedPort:@Port}");
         }
         else
         {
@@ -123,7 +123,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
         }
         if (selectedPort == 0)
         {
-            logger.LogError("None of the broadcast ports are available");
+            logger.ZLogError($"None of the broadcast ports are available");
             return false;
         }
         return true;
@@ -142,7 +142,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
         }
 
         ushort port = optionsProvider.CurrentValue.ServerPort;
-        logger.LogDebug("Broadcasting server port {Port} over LAN...", port);
+        logger.ZLogDebug($"Broadcasting server port {port:@Port} over LAN...");
         NetDataWriter writer = new();
         writer.Put(LANDiscoveryConstants.BROADCAST_RESPONSE_STRING);
         writer.Put(port);

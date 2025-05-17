@@ -118,7 +118,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Something is blocking the SQLite database. Check that you do not have it open in your IDE or other database viewer.");
+                logger.ZLogError(ex, $"Something is blocking the SQLite database. Check that you do not have it open in your IDE or other database viewer.");
                 throw;
             }
         }
@@ -134,7 +134,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
     {
         try
         {
-            logger.LogDebug("Executing database command \"{Command}\"", command);
+            logger.ZLogDebug($"Executing database command \"{command:@Command}\"");
             await using DbConnection connection = db.Database.GetDbConnection();
             await connection.OpenAsync();
             await using DbCommand commandObj = connection.CreateCommand();
@@ -144,7 +144,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         }
         catch (Exception ex)
         {
-            logger.LogWarning("Unable to execute command {Command}: {Error}", command, ex.Message);
+            logger.ZLogWarning(ex, $"Unable to execute command {command:@Command}");
         }
     }
 

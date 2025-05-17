@@ -21,7 +21,7 @@ internal sealed class VehicleMovementsPacketProcessor(EntityRegistry entityRegis
             if (simulationOwnershipData.GetPlayerForLock(movementData.Id) != context.Sender.PlayerId)
             {
                 // TODO: Warn once
-                logger.LogWarning("Player {PlayerId} tried updating {Id}'s position but they don't have the lock on it", context.Sender, movementData.Id);
+                logger.ZLogWarning($"Player {context.Sender.SessionId:@SessionId} tried updating {movementData.Id:@NitroxId}'s position but they don't have the lock on it");
                 // TODO: In the future, add "packet.Data.RemoveAt(i);" and "continue;" to prevent those abnormal situations
             }
 

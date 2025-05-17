@@ -68,7 +68,7 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
         {
             IDisposable optionsMonitorDisposable = optionsProvider.OnChange(options =>
             {
-                logger.LogTrace("Adjusting for options change...");
+                logger.ZLogTrace($"Adjusting for options change...");
                 if (options.PortForward)
                 {
                     // Remove ports opened prior. TODO: Delay closing port if player connections are still active?
@@ -108,7 +108,7 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
     {
         if (await NatHelper.GetPortMappingAsync(port, Protocol.Udp, cancellationToken) != null)
         {
-            logger.LogInformation("Port {Port} UDP is already port forwarded", port);
+            logger.ZLogInformation($"Port {port:@Port} UDP is already port forwarded");
             return;
         }
 
@@ -118,13 +118,13 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
             switch (mappingResult)
             {
                 case NatHelper.ResultCodes.SUCCESS:
-                    logger.LogInformation("Server port {Port} UDP has been automatically opened on your router (port is closed when server closes)", port);
+                    logger.ZLogInformation($"Server port {port:@Port} UDP has been automatically opened on your router (port is closed when server closes)");
                     break;
                 case NatHelper.ResultCodes.CONFLICT_IN_MAPPING_ENTRY:
-                    logger.LogWarning("Port forward for {Port} UDP failed. It appears to already be port forwarded or it conflicts with another port forward rule.", port);
+                    logger.ZLogWarning($"Port forward for {port:@Port} UDP failed. It appears to already be port forwarded or it conflicts with another port forward rule.");
                     break;
                 case NatHelper.ResultCodes.UNKNOWN_ERROR:
-                    logger.LogWarning("Failed to port forward {Port} UDP through UPnP. If using Hamachi or you've manually port-forwarded, please disregard this warning. To disable this feature you can go into the server settings.", port);
+                    logger.ZLogWarning($"Failed to port forward {port:@Port} UDP through UPnP. If using Hamachi or you've manually port-forwarded, please disregard this warning. To disable this feature you can go into the server settings.");
                     break;
             }
         }
@@ -134,11 +134,11 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
     {
         if (await NatHelper.DeletePortMappingAsync(port, Protocol.Udp, cancellationToken))
         {
-            logger.LogInformation("Removed port forward rule {Port} UDP", port);
+            logger.ZLogInformation($"Removed port forward rule {port:@Port} UDP");
         }
         else
         {
-            logger.LogInformation("Failed to remove port forward rule {Port} UDP", port);
+            logger.ZLogInformation($"Failed to remove port forward rule {port:@Port} UDP");
         }
     }
 

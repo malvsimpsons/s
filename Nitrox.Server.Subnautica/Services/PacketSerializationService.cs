@@ -62,7 +62,7 @@ public sealed class PacketSerializationService : BackgroundService
             {
                 throw new Exception("Failed to set init result");
             }
-        }, stoppingToken).ContinueWithHandleError(exception => logger.LogCritical(exception, "Failed to initialize packet serializer"));
+        }, stoppingToken).ContinueWithHandleError(exception => logger.ZLogCritical(exception, $"Failed to initialize packet serializer"));
     }
 
     private class UnloadedSerializer(TaskCompletionSource init, Action<IPacketSerializer> replacer) : IPacketSerializer
