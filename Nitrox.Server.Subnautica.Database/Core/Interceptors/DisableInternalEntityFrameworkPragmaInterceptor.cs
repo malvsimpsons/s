@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Nitrox.Server.Subnautica.Database.Core.Interceptors;
 
-public class DisableInternalEntityFrameworkPragmaInterceptor : IDbCommandInterceptor
+internal sealed class DisableInternalEntityFrameworkPragmaInterceptor : IDbCommandInterceptor
 {
     private bool done;
 
