@@ -34,7 +34,19 @@ public static class SessionExtensions
                         FROM _timeLockedTableIds
                         WHERE TableName = 'Sessions'
                     )
-                    SELECT IFNULL(MIN(Id), (SELECT MAX(Id) + (SELECT COUNT(*) FROM Sessions) + 1 FROM LockedSessionIds)) as Id
+                    SELECT
+                        IFNULL(
+                            MIN(Id),
+                            (
+                                SELECT IFNULL(MAX(Id), 0) + 1
+                                FROM
+                                (
+                                    SELECT MAX(Id) as Id FROM LockedSessionIds
+                                    UNION
+                                    SELECT MAX(Id) as Id FROM Sessions
+                                )
+                            )
+                        ) as Id
                     FROM LockedSessionIds
                     WHERE TimeTillUnlock <= uptime()
                     ORDER BY Id, TimeTillUnlock

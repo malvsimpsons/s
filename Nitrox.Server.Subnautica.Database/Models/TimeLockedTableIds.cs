@@ -13,6 +13,7 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 /// </remarks>
 [Table("_timeLockedTableIds")]
 [Index(nameof(Id), nameof(TableName), IsUnique = true)]
+[Index(nameof(TableName))]
 [TruncateOnStartup]
 public class TimeLockedTableIds
 {
