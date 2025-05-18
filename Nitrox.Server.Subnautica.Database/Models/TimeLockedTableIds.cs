@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
+using Nitrox.Server.Subnautica.Database.Core.Attributes;
 
 namespace Nitrox.Server.Subnautica.Database.Models;
 
@@ -12,6 +13,7 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 /// </remarks>
 [Table("_timeLockedTableIds")]
 [Index(nameof(Id), nameof(TableName), IsUnique = true)]
+[TruncateOnStartup]
 public class TimeLockedTableIds
 {
     /// <summary>

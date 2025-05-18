@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 
-namespace Nitrox.Server.Subnautica.Database.Core;
+namespace Nitrox.Server.Subnautica.Database.Core.Conventions;
 
 internal sealed class DefaultValueAttributeConvention(ProviderConventionSetBuilderDependencies dependencies) : PropertyAttributeConventionBase<DefaultValueAttribute>(dependencies)
 {

@@ -13,6 +13,7 @@ namespace Nitrox.Server.Subnautica.Database.Models;
 [Table("Sessions")]
 [Index($"{nameof(Connection)}Id", IsUnique = true)]
 [Index($"{nameof(Player)}Id", IsUnique = true)]
+// TODO: On startup, run session cleaners in case server previously crashed.
 public record Session
 {
     [Key]

@@ -68,7 +68,7 @@ internal class PortForwardService(IOptionsMonitor<SubnauticaServerOptions> optio
         {
             IDisposable optionsMonitorDisposable = optionsProvider.OnChange(options =>
             {
-                logger.ZLogTrace($"Adjusting for options change...");
+                logger.ZLogTrace($"Adjusting to configuration...");
                 if (options.PortForward)
                 {
                     // Remove ports opened prior. TODO: Delay closing port if player connections are still active?

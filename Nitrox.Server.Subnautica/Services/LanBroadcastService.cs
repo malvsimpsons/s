@@ -73,7 +73,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
     {
         if (runAsUser)
         {
-            logger.ZLogDebug($"Adjusting to option changes...");
+            logger.ZLogDebug($"Adjusting to configuration...");
         }
         if (options.LanDiscovery)
         {
