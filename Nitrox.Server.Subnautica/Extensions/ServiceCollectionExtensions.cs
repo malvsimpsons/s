@@ -201,7 +201,8 @@ internal static partial class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddHibernation(this IServiceCollection services) =>
         services.AddHostedSingletonService<HibernationService>()
-                .AddHibernators();
+                .AddHibernators()
+                .AddSingletonLazyArrayProvider<IHibernate>();
 
     public static IServiceCollection AddSessionCleaners(this IServiceCollection services) =>
         services.AddIndividualSessionCleaners()

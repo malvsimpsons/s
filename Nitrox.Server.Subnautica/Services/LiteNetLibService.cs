@@ -40,16 +40,18 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     private readonly ConcurrentDictionary<SessionId, NetPeer> peersBySessionId = [];
     private readonly NetManager server;
     private readonly SessionRepository sessionRepository;
+    private readonly HibernationService hibernationService;
     private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
-    public int SessionCleanPriority => int.MinValue;
+    public int SessionCleanPriority => -100;
 
-    public LiteNetLibService(PacketRegistryService packetRegistryService, PacketSerializationService packetSerializationService, SessionRepository sessionRepository, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
+    public LiteNetLibService(PacketRegistryService packetRegistryService, PacketSerializationService packetSerializationService, SessionRepository sessionRepository, HibernationService hibernationService, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
     {
         this.packetRegistryService = packetRegistryService;
         this.packetSerializationService = packetSerializationService;
         this.optionsProvider = optionsProvider;
         this.hostEnvironment = hostEnvironment;
         this.sessionRepository = sessionRepository;
+        this.hibernationService = hibernationService;
         this.logger = logger;
         listener = new EventBasedNetListener();
         server = new NetManager(listener);
@@ -180,12 +182,12 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
             return;
         }
 
-        if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request, peersBySessionId)))
+        if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request, peersBySessionId, hibernationService)))
         {
             logger.ZLogWarning($"Failed to queue client connect request task for {request.RemoteEndPoint.ToSensitive():@EndPoint}");
         }
 
-        static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request, ConcurrentDictionary<SessionId, NetPeer> peersBySessionId)
+        static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request, ConcurrentDictionary<SessionId, NetPeer> peersBySessionId, HibernationService hibernationService)
         {
             Session session = await sessionRepository.GetOrCreateSessionAsync(request.RemoteEndPoint.Address.ToString(), (ushort)request.RemoteEndPoint.Port);
             if (session == null)
@@ -195,6 +197,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
                 return;
             }
             peersBySessionId.TryAdd(session.Id, request.Accept());
+            await hibernationService.Resume(); // TODO: Use "session created event" interface instead.
         }
     }
 

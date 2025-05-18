@@ -14,7 +14,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
 {
     private readonly DatabaseService databaseService = databaseService;
     private readonly ILogger<SessionRepository> logger = logger;
-    private OrderedDictionary<int, ISessionCleaner> sessionCleaners;
+    private ISessionCleaner[] sessionCleaners;
 
     public async Task<Session> GetOrCreateSessionAsync(string address, ushort port)
     {
@@ -93,11 +93,12 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
     /// </summary>
     private async Task RunSessionCleanersAsync(Session session)
     {
-        sessionCleaners ??= new OrderedDictionary<int, ISessionCleaner>(sessionCleanersProvider().Select(c => new KeyValuePair<int, ISessionCleaner>(c.SessionCleanPriority, c)));
-        foreach (ISessionCleaner cleaner in sessionCleaners.Values)
+        sessionCleaners ??= sessionCleanersProvider().OrderByDescending(c => c.SessionCleanPriority).ToArray();
+        foreach (ISessionCleaner cleaner in sessionCleaners)
         {
             try
             {
+                logger.ZLogTrace($"Calling session cleaner {cleaner.GetType().Name:@TypeName}");
                 await cleaner.CleanSessionAsync(session);
             }
             catch (Exception ex)

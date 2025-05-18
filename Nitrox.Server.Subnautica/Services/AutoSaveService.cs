@@ -9,16 +9,22 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Auto save service which persists the database.
 /// </summary>
-internal sealed class AutoSaveService(IPersistState state, ILogger<AutoSaveService> logger) : BackgroundService, IHibernate
+internal sealed class AutoSaveService(IPersistState state, ILogger<AutoSaveService> logger) : BackgroundService, IHibernate, IHostedLifecycleService
 {
-    private readonly IPersistState state = state;
     private readonly ILogger<AutoSaveService> logger = logger;
     private readonly PeriodicTimer saveTimer = new(TimeSpan.FromMinutes(5)); // TODO: Use options to set save period.
+    private readonly IPersistState state = state;
     private bool isHibernating;
+    private bool fullyStarted;
 
     public async Task Hibernate()
     {
         Interlocked.Exchange(ref isHibernating, true);
+        if (!fullyStarted)
+        {
+            return;
+        }
+        await Task.Delay(1000);
         await state.PersistState();
     }
 
@@ -49,4 +55,16 @@ internal sealed class AutoSaveService(IPersistState state, ILogger<AutoSaveServi
             }
         }
     }
+
+    public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StartedAsync(CancellationToken cancellationToken)
+    {
+        fullyStarted = true;
+        return Task.CompletedTask;
+    }
+
+    public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
