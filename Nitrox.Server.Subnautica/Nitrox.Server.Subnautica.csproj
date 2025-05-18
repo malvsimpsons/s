@@ -44,10 +44,6 @@
   "GameServer": {
     "PortForward": false,
     "LanDiscovery": false
-  },
-  "Sqlite": {
-    "synchronous": "normal",
-    "locking_mode": "normal"
   }
 }
 ]]>

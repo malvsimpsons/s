@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Database;
+using Nitrox.Server.Subnautica.Database.Core.Interceptors;
 using Nitrox.Server.Subnautica.Models.Administration.Core;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
@@ -85,8 +86,6 @@ internal static partial class ServiceCollectionExtensions
                         _ => options.Seed
                     };
                 });
-        services.AddOptionsWithValidateOnStart<SqliteOptions, SqliteOptions.Validator>()
-                .BindConfiguration("Sqlite");
         return services;
     }
 
@@ -151,21 +150,23 @@ internal static partial class ServiceCollectionExtensions
     public static IServiceCollection AddDatabasePersistence(this IServiceCollection services, ServerStartOptions startOptions, bool enableSensitiveLogging = false)
     {
         // Pool db context as this server demands low-latency queries.
-        return services.AddPooledDbContextFactory<WorldDbContext>(options =>
-                       {
-                           // We use an in-memory cache database so EF tracking cache is redundant. However, change tracking should be enabled on a per-query level when writing to the database.
-                           options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-                           options.EnableThreadSafetyChecks(Debugger.IsAttached);
-                           if (enableSensitiveLogging)
-                           {
-                               options.EnableSensitiveDataLogging();
-                           }
-                           options.UseNitroxExtensions();
-                           options.UseSqlite($"DataSource={Path.Combine(startOptions.GetServerSavePath(), "world.db")}");
-                       })
-                       .AddHostedSingletonService<DatabaseService>()
-                       .AddSingleton<SessionRepository>()
-                       .AddSingleton<PlayerRepository>();
+        return services
+               .AddPooledDbContextFactory<WorldDbContext>(options =>
+               {
+                   // We use an in-memory cache database so EF tracking cache is redundant. However, change tracking should be enabled on a per-query level when writing to the database.
+                   options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                   options.EnableThreadSafetyChecks(Debugger.IsAttached);
+                   if (enableSensitiveLogging)
+                   {
+                       options.EnableSensitiveDataLogging();
+                   }
+                   options.UseNitroxExtensions();
+                   // {Path.Combine(startOptions.GetServerSavePath(), "world.db")}
+                   options.UseSqlite(UseSharedSqliteConnectionInterceptor.Connection);
+               })
+               .AddHostedSingletonService<DatabaseService>()
+               .AddSingleton<SessionRepository>()
+               .AddSingleton<PlayerRepository>();
     }
 
     public static IServiceCollection AddSubnauticaEntityManagement(this IServiceCollection services) =>
@@ -232,10 +233,10 @@ internal static partial class ServiceCollectionExtensions
     private static void AddImplementedAdminFeatures<TImplementation>(this IServiceCollection services) where TImplementation : class, IAdminFeature
     {
         foreach (Type featureInterfaceType in typeof(TImplementation).GetInterfaces()
-                                       .Where(i => typeof(IAdminFeature).IsAssignableFrom(i))
-                                       .Select(i => i.GetGenericArguments())
-                                       .Where(types => types.Length == 1)
-                                       .Select(types => types[0]))
+                                                                     .Where(i => typeof(IAdminFeature).IsAssignableFrom(i))
+                                                                     .Select(i => i.GetGenericArguments())
+                                                                     .Where(types => types.Length == 1)
+                                                                     .Select(types => types[0]))
         {
             services.AddSingleton(featureInterfaceType, provider => provider.GetRequiredService<TImplementation>());
         }

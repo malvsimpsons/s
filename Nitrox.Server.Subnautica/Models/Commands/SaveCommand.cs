@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic;
@@ -15,8 +14,6 @@ internal class SaveCommand(DatabaseService databaseService) : ICommandHandler
     public async Task Execute(ICommandContext context)
     {
         await context.MessageAllAsync("World is saving...");
-        // TODO: Backup config file
-        // TODO: Change this to use options (e.g. MaxBackups)
-        await databaseService.BackupAsync(DateTimeOffset.Now.ToString("O").Replace("T", " "));
+        await databaseService.SaveAs();
     }
 }

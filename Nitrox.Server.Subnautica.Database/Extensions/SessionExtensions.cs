@@ -85,7 +85,7 @@ public static class SessionExtensions
         SqliteConnection connection = db.GetOpenSqliteConnection(); // Don't dispose; managed by EF Core.
         if (sqlite3_prepare_v2(connection.Handle, getSessionSqlUtf8, out sqlite3_stmt stmt) != SQLITE_OK)
         {
-            return null;
+            throw new Exception($"Sqlite error: {sqlite3_errmsg(connection.Handle).utf8_to_string()}");
         }
         using (stmt)
         {
@@ -105,7 +105,7 @@ public static class SessionExtensions
         using SqliteExtensions.SqliteReader reader = connection.Handle.Query(createSessionSqlUtf8, address, port);
         if (!reader.IsValid)
         {
-            return null;
+            throw new Exception($"Sqlite error: {sqlite3_errmsg(connection.Handle).utf8_to_string()}");
         }
         int sessionId = reader.Read<int>(0);
         if (sessionId < 1)

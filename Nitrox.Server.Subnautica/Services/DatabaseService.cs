@@ -1,12 +1,8 @@
 using System;
-using System.Data.Common;
 using System.IO;
-using System.Reflection;
-using System.Text;
 using System.Threading;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database;
@@ -17,14 +13,13 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Initializes the database and provides access to it.
 /// </summary>
-internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<SqliteOptions> optionsProvider, IOptions<ServerStartOptions> startOptionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger)
+internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<ServerStartOptions> startOptionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger)
     : IHostedLifecycleService
 {
     private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
     private readonly TaskCompletionSource dbInit = new();
     private readonly IHostEnvironment hostEnvironment = hostEnvironment;
     private readonly ILogger<DatabaseService> logger = logger;
-    private readonly IOptions<SqliteOptions> optionsProvider = optionsProvider;
     private readonly IOptions<ServerStartOptions> startOptionsProvider = startOptionsProvider;
 
     public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -56,7 +51,10 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
 
     public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public async Task StoppedAsync(CancellationToken cancellationToken)
+    {
+        await SaveAs();
+    }
 
     public async Task<WorldDbContext> GetDbContextAsync()
     {
@@ -64,38 +62,44 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         return await dbContextFactory.CreateDbContextAsync();
     }
 
-    public async Task<bool> BackupAsync(string fileName)
+    public async Task<bool> SaveAs(string fileName = "world.db")
     {
-        Stopwatch sw = Stopwatch.StartNew();
+        logger.ZLogInformation($"Saving database...");
+        ServerStartOptions options = startOptionsProvider.Value;
+        string mainSaveFilePath = Path.Combine(options.GetServerSavePath(), fileName);
         try
         {
-            fileName = fileName.ReplaceInvalidFileNameCharacters();
-            if (Path.GetExtension(fileName).Length > 4)
-            {
-                fileName = fileName.Replace('.', '\'');
-            }
-            fileName = Path.ChangeExtension(fileName, ".db");
-
-            Directory.CreateDirectory(startOptionsProvider.Value.GetServerSaveBackupsPath());
-
             await using WorldDbContext db = await GetDbContextAsync();
-            if (db.Database.GetDbConnection() is SqliteConnection sqlite)
+            if (db.Database.GetDbConnection() is not SqliteConnection sqlite)
             {
-                await sqlite.OpenAsync();
-                SqliteConnectionStringBuilder connectionBuilder = new() { DataSource = Path.Combine(startOptionsProvider.Value.GetServerSaveBackupsPath(), fileName) };
-                await using SqliteConnection destination = new(connectionBuilder.ToString());
-                sqlite.BackupDatabase(destination);
-                return true;
+                return false;
             }
+
+            // Save to server save location.
+            sqlite.Open();
+            await using (SqliteConnection destination = new($"DataSource={mainSaveFilePath};"))
+            {
+                sqlite.BackupDatabase(destination);
+            }
+            logger.ZLogInformation($"Saved database to {mainSaveFilePath.ToSensitive():@FilePath}");
+
+            // Create a copy into backup folder.
+            // TODO: Backup config file
+            // TODO: Change this to use options (e.g. MaxBackups)
+            string backupFileName = DateTimeOffset.Now.ToString("O").Replace("T", " ");
+            backupFileName = backupFileName.ReplaceInvalidFileNameCharacters();
+            if (Path.GetExtension(backupFileName).Length > 4)
+            {
+                backupFileName = backupFileName.Replace('.', '\'');
+            }
+            backupFileName = Path.ChangeExtension(backupFileName, ".db");
+            Directory.CreateDirectory(options.GetServerSaveBackupsPath());
+            File.Copy(mainSaveFilePath, Path.Combine(options.GetServerSaveBackupsPath(), backupFileName));
+            return true;
         }
         catch (Exception ex)
         {
-            logger.ZLogError(ex, $"Error while trying to backup the database");
-        }
-        finally
-        {
-            sw.Stop();
-            logger.ZLogInformation($"Saved backup as \"{fileName}\" which took {Math.Round(sw.Elapsed.TotalMilliseconds, 3)}ms");
+            logger.ZLogError(ex, $"Error while trying to save the database");
         }
 
         return false;
@@ -125,56 +129,6 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         else
         {
             await db.Database.MigrateAsync(cancellationToken);
-        }
-
-        await ExecuteOptionsAsPragma(db, optionsProvider.Value);
-    }
-
-    private async Task ExecuteCommand(WorldDbContext db, string command)
-    {
-        try
-        {
-            logger.ZLogDebug($"Executing database command \"{command:@Command}\"");
-            await using DbConnection connection = db.Database.GetDbConnection();
-            await connection.OpenAsync();
-            await using DbCommand commandObj = connection.CreateCommand();
-            commandObj.CommandText = command;
-            await commandObj.ExecuteNonQueryAsync();
-            await connection.CloseAsync();
-        }
-        catch (Exception ex)
-        {
-            logger.ZLogWarning(ex, $"Unable to execute command {command:@Command}");
-        }
-    }
-
-    private async Task ExecuteOptionsAsPragma(WorldDbContext db, SqliteOptions options)
-    {
-        StringBuilder pragmaBuilder = new();
-        foreach (PropertyInfo property in options.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
-        {
-            ConfigurationKeyNameAttribute configKeyAttr = property.GetCustomAttribute<ConfigurationKeyNameAttribute>();
-            string pragmaKey = configKeyAttr?.Name;
-            if (string.IsNullOrWhiteSpace(pragmaKey))
-            {
-                continue;
-            }
-            string pragmaValue = property.GetValue(options)?.ToString() ?? "";
-            if (string.IsNullOrWhiteSpace(pragmaValue))
-            {
-                continue;
-            }
-
-            pragmaBuilder
-                .Append("PRAGMA ")
-                .Append(pragmaKey)
-                .Append('=')
-                .Append(pragmaValue)
-                .Append(';');
-        }
-        if (pragmaBuilder.Length > 0)
-        {
-            await ExecuteCommand(db, pragmaBuilder.ToString());
         }
     }
 }

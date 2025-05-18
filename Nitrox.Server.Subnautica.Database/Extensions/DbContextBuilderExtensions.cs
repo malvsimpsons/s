@@ -14,7 +14,7 @@ public static class DbContextBuilderExtensions
         {
             infraOptions.AddOrUpdateExtension(new NitroxDbContextOptionsExtension());
         }
-        options.AddInterceptors(new DisableInternalEntityFrameworkPragmaInterceptor(), new AddSqliteFunctionsInterceptor());
+        options.AddInterceptors(new UseSharedSqliteConnectionInterceptor(), new DisableInternalEntityFrameworkPragmaInterceptor());
         options.UseAsyncSeeding(async (context, _, cancellationToken) =>
         {
             foreach (IEntityType entityType in context.Model.GetEntityTypes())

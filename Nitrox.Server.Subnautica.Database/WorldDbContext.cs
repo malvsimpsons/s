@@ -1,4 +1,5 @@
-﻿using Nitrox.Server.Subnautica.Database.Converters;
+﻿using Microsoft.Data.Sqlite;
+using Nitrox.Server.Subnautica.Database.Converters;
 using Nitrox.Server.Subnautica.Database.Models;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.Unity;
