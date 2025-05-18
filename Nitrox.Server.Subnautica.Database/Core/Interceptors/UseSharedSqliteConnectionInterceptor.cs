@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Nitrox.Server.Subnautica.Database.Core.Interceptors;
 
-public class UseSharedSqliteConnectionInterceptor : IDbCommandInterceptor
+internal class UseSharedSqliteConnectionInterceptor : IDbCommandInterceptor
 {
     private static SqliteConnection connection;
 

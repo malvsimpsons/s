@@ -103,7 +103,7 @@ public class Program
                .AddPackets()
                .AddCommands(!startOptions.IsEmbedded)
                // Add APIs - everything else the server will need.
-               .AddDatabasePersistence(startOptions, builder.Environment.IsDevelopment())
+               .AddDatabasePersistence(builder.Environment.IsDevelopment())
                .AddSubnauticaEntityManagement()
                .AddSubnauticaResources()
                .AddHibernation()

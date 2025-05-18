@@ -13,7 +13,6 @@ using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Core.Events;
 using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Database;
-using Nitrox.Server.Subnautica.Database.Core.Interceptors;
 using Nitrox.Server.Subnautica.Models.Administration.Core;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
@@ -148,22 +147,21 @@ internal static partial class ServiceCollectionExtensions
                .AddCommandArgConverters();
     }
 
-    public static IServiceCollection AddDatabasePersistence(this IServiceCollection services, ServerStartOptions startOptions, bool enableSensitiveLogging = false)
+    public static IServiceCollection AddDatabasePersistence(this IServiceCollection services, bool enableSensitiveLogging = false)
     {
         // Pool db context as this server demands low-latency queries.
         return services
                .AddPooledDbContextFactory<WorldDbContext>(options =>
                {
-                   // We use an in-memory cache database so EF tracking cache is redundant. However, change tracking should be enabled on a per-query level when writing to the database.
-                   options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-                   options.EnableThreadSafetyChecks(Debugger.IsAttached);
                    if (enableSensitiveLogging)
                    {
                        options.EnableSensitiveDataLogging();
                    }
-                   options.UseNitroxExtensions();
-                   // {Path.Combine(startOptions.GetServerSavePath(), "world.db")}
-                   options.UseSqlite(UseSharedSqliteConnectionInterceptor.Connection);
+                   // We use an in-memory cache database so EF tracking cache is redundant. However, change tracking should be enabled on a per-query level when writing to the database.
+                   options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                          .EnableThreadSafetyChecks(Debugger.IsAttached)
+                          .UseNitroxExtensions()
+                          .UseInMemorySqlite();
                })
                .AddHostedSingletonService<DatabaseService>()
                .AddDbInitializedListeners()
@@ -248,10 +246,7 @@ internal static partial class ServiceCollectionExtensions
         }
     }
 
-    private static void AddDbInitializedListener<T>(this IServiceCollection services) where T : class, IDbInitializedListener
-    {
-        services.AddSingleton<IDbInitializedListener, T>(provider => provider.GetRequiredService<T>());
-    }
+    private static void AddDbInitializedListener<T>(this IServiceCollection services) where T : class, IDbInitializedListener => services.AddSingleton<IDbInitializedListener, T>(provider => provider.GetRequiredService<T>());
 
     private static void AddHibernator<T>(this IServiceCollection services) where T : class, IHibernate => services.AddSingleton<IHibernate>(provider => provider.GetRequiredService<T>());
 

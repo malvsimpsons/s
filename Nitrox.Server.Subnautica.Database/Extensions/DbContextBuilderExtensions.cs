@@ -8,7 +8,7 @@ namespace Nitrox.Server.Subnautica.Database.Extensions;
 
 public static class DbContextBuilderExtensions
 {
-    public static void UseNitroxExtensions(this DbContextOptionsBuilder options)
+    public static DbContextOptionsBuilder UseNitroxExtensions(this DbContextOptionsBuilder options)
     {
         if (options is IDbContextOptionsBuilderInfrastructure infraOptions)
         {
@@ -31,5 +31,12 @@ public static class DbContextBuilderExtensions
                 }
             }
         });
+        return options;
+    }
+
+    public static DbContextOptionsBuilder UseInMemorySqlite(this DbContextOptionsBuilder options)
+    {
+        options.UseSqlite(UseSharedSqliteConnectionInterceptor.Connection);
+        return options;
     }
 }
