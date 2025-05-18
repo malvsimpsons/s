@@ -12,18 +12,18 @@ namespace Nitrox.Server.Subnautica.Models.Packets.Processors.Workflows;
 /// <summary>
 ///     Handles packets related to the game join process.
 /// </summary>
-internal sealed class JoinWorkflow(SessionRepository sessionRepository, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<JoinWorkflow> logger) :
+internal sealed class JoinWorkflow(SessionRepository sessionRepository, IOptionsMonitor<SubnauticaServerOptions> optionsProvider, ILogger<JoinWorkflow> logger) :
     IAnonPacketProcessor<SessionPolicyRequest>,
     IAnonPacketProcessor<SessionReservationRequest>
 {
     private readonly SessionRepository sessionRepository = sessionRepository;
     private readonly ILogger<JoinWorkflow> logger = logger;
-    private readonly IOptions<SubnauticaServerOptions> optionsProvider = optionsProvider;
+    private readonly IOptionsMonitor<SubnauticaServerOptions> optionsProvider = optionsProvider;
 
     public async Task Process(AnonProcessorContext context, SessionPolicyRequest packet)
     {
         logger.ZLogInformation($"Providing join policies to session #{context.Sender:@SessionId}...");
-        SubnauticaServerOptions options = optionsProvider.Value;
+        SubnauticaServerOptions options = optionsProvider.CurrentValue;
         await context.ReplyToSender(new MultiplayerSessionPolicy(packet.CorrelationId, options.DisableConsole, options.MaxConnections, options.IsPasswordRequired()));
     }
 
@@ -32,9 +32,9 @@ internal sealed class JoinWorkflow(SessionRepository sessionRepository, IOptions
         // TODO: USE DATABASE
         logger.ZLogInformation($"Processing reservation request from session #{context.Sender:@SessionId}");
         AuthenticationContext authenticationContext = packet.AuthenticationContext;
-        SubnauticaServerOptions options = optionsProvider.Value;
+        SubnauticaServerOptions options = optionsProvider.CurrentValue;
 
-        if (await sessionRepository.GetActiveSessionCount() > options.MaxConnections)
+        if (await sessionRepository.GetActiveSessionCount() >= options.MaxConnections)
         {
             SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.SERVER_PLAYER_CAPACITY_REACHED;
             await context.ReplyToSender(new SessionReservation(packet.CorrelationId, rejectedState));

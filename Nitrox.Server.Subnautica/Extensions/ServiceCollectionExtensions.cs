@@ -229,15 +229,15 @@ internal static partial class ServiceCollectionExtensions
 
     private static void AddSessionCleaner<T>(this IServiceCollection services) where T : class, ISessionCleaner => services.AddSingleton<ISessionCleaner>(provider => provider.GetRequiredService<T>());
 
-    private static void AddImplementedAdminFeatures<T>(this IServiceCollection services) where T : class, IAdminFeature
+    private static void AddImplementedAdminFeatures<TImplementation>(this IServiceCollection services) where TImplementation : class, IAdminFeature
     {
-        foreach (Type type in typeof(T).GetInterfaces()
+        foreach (Type featureInterfaceType in typeof(TImplementation).GetInterfaces()
                                        .Where(i => typeof(IAdminFeature).IsAssignableFrom(i))
                                        .Select(i => i.GetGenericArguments())
                                        .Where(types => types.Length == 1)
                                        .Select(types => types[0]))
         {
-            services.AddSingleton(type, provider => provider.GetRequiredService<T>());
+            services.AddSingleton(featureInterfaceType, provider => provider.GetRequiredService<TImplementation>());
         }
     }
 

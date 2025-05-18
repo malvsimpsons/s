@@ -16,7 +16,7 @@ internal sealed class KickCommand(IKickPlayer playerKicker) : ICommandHandler<Co
     public async Task Execute(ICommandContext context, ConnectedPlayerDto playerToKick, string reason = "")
     {
         reason ??= "";
-        if (context.OriginId == playerToKick.Id)
+        if (context.OriginId == playerToKick.SessionId)
         {
             await context.ReplyAsync("You can't kick yourself");
             return;
