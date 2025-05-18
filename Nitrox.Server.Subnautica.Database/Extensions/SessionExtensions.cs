@@ -1,9 +1,7 @@
 using System.Text;
-using Microsoft.Data.Sqlite;
 using Nitrox.Server.Subnautica.Database.Models;
 using NitroxModel.Networking;
 using SQLitePCL;
-using static SQLitePCL.raw;
 
 namespace Nitrox.Server.Subnautica.Database.Extensions;
 
@@ -82,10 +80,10 @@ public static class SessionExtensions
     /// </remarks>
     public static Session GetOrCreateSession(this WorldDbContext db, string address, ushort port)
     {
-        SqliteConnection connection = db.GetOpenSqliteConnection(); // Don't dispose; managed by EF Core.
-        if (sqlite3_prepare_v2(connection.Handle, getSessionSqlUtf8, out sqlite3_stmt stmt) != SQLITE_OK)
+        sqlite3 handle = db.GetSqlite3Handle();
+        if (sqlite3_prepare_v2(handle, getSessionSqlUtf8, out sqlite3_stmt stmt) != SQLITE_OK)
         {
-            throw new Exception($"Sqlite error: {sqlite3_errmsg(connection.Handle).utf8_to_string()}");
+            throw new Exception($"Sqlite error: {sqlite3_errmsg(handle).utf8_to_string()}");
         }
         using (stmt)
         {
@@ -102,10 +100,10 @@ public static class SessionExtensions
         }
 
         // Fallback: create session
-        using SqliteExtensions.SqliteReader reader = connection.Handle.Query(createSessionSqlUtf8, address, port);
+        using SqliteExtensions.SqliteReader reader = handle.Query(createSessionSqlUtf8, address, port);
         if (!reader.IsValid)
         {
-            throw new Exception($"Sqlite error: {sqlite3_errmsg(connection.Handle).utf8_to_string()}");
+            throw new Exception($"Sqlite error: {sqlite3_errmsg(handle).utf8_to_string()}");
         }
         int sessionId = reader.Read<int>(0);
         if (sessionId < 1)

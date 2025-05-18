@@ -14,6 +14,6 @@ internal class SaveCommand(DatabaseService databaseService) : ICommandHandler
     public async Task Execute(ICommandContext context)
     {
         await context.MessageAllAsync("World is saving...");
-        await databaseService.SaveAs();
+        await databaseService.Save();
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Nitrox.Server.Subnautica.Core.Events;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Respositories.Core;
@@ -9,7 +10,7 @@ using Nitrox.Server.Subnautica.Services;
 
 namespace Nitrox.Server.Subnautica.Models.Respositories;
 
-internal class SessionRepository(DatabaseService databaseService, Func<ISessionCleaner[]> sessionCleanersProvider, ILogger<SessionRepository> logger)
+internal class SessionRepository(DatabaseService databaseService, Func<ISessionCleaner[]> sessionCleanersProvider, ILogger<SessionRepository> logger) : IDbInitializedListener
 {
     private readonly DatabaseService databaseService = databaseService;
     private readonly ILogger<SessionRepository> logger = logger;
@@ -52,12 +53,11 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
             {
                 return;
             }
-            db.Connections.Remove(session.Connection);
-            session.Connection = null;
-            if (await db.SaveChangesAsync() < 1)
+            if (session.Connection != null)
             {
-                logger.ZLogWarning($"Failed to set session #{session.Id:@SessionId} inactive");
-                return;
+                db.Connections.Remove(session.Connection);
+                session.Connection = null;
+                await db.SaveChangesAsync();
             }
             await RunSessionCleanersAsync(session);
 
@@ -78,6 +78,15 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
         logger.ZLogTrace($"Session #{sessionId} data has been removed");
     }
 
+    public async Task<SessionId[]> GetSessionIds()
+    {
+        await using WorldDbContext db = await databaseService.GetDbContextAsync();
+        return await db.Sessions
+                       .Include(s => s.Connection)
+                       .Select(s => s.Id)
+                       .ToArrayAsync();
+    }
+
     /// <summary>
     ///     Lets other APIs migrate session data if necessary (e.g. change database or notify other players of necessary
     ///     changes).
@@ -95,6 +104,14 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
             {
                 logger.ZLogError(ex, $"Error occurred during session cleaning in {cleaner.GetType().Name:@TypeName}");
             }
+        }
+    }
+
+    public async Task DatabaseInitialized()
+    {
+        foreach (SessionId sessionId in await GetSessionIds())
+        {
+            await DeleteSessionAsync(sessionId);
         }
     }
 }

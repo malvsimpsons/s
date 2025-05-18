@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Core.Events;
 using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Database.Core.Interceptors;
@@ -165,6 +166,8 @@ internal static partial class ServiceCollectionExtensions
                    options.UseSqlite(UseSharedSqliteConnectionInterceptor.Connection);
                })
                .AddHostedSingletonService<DatabaseService>()
+               .AddDbInitializedListeners()
+               .AddSingletonLazyArrayProvider<IDbInitializedListener>()
                .AddSingleton<SessionRepository>()
                .AddSingleton<PlayerRepository>();
     }
@@ -213,6 +216,9 @@ internal static partial class ServiceCollectionExtensions
     [GenerateServiceRegistrations(AssignableTo = typeof(IRedactor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddRedactors(this IServiceCollection services);
 
+    [GenerateServiceRegistrations(AssignableTo = typeof(IDbInitializedListener), CustomHandler = nameof(AddDbInitializedListener))]
+    private static partial IServiceCollection AddDbInitializedListeners(this IServiceCollection services);
+
     [GenerateServiceRegistrations(AssignableTo = typeof(IGameResource), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
     private static partial IServiceCollection AddGameResources(this IServiceCollection services);
 
@@ -240,6 +246,11 @@ internal static partial class ServiceCollectionExtensions
         {
             services.AddSingleton(featureInterfaceType, provider => provider.GetRequiredService<TImplementation>());
         }
+    }
+
+    private static void AddDbInitializedListener<T>(this IServiceCollection services) where T : class, IDbInitializedListener
+    {
+        services.AddSingleton<IDbInitializedListener, T>(provider => provider.GetRequiredService<T>());
     }
 
     private static void AddHibernator<T>(this IServiceCollection services) where T : class, IHibernate => services.AddSingleton<IHibernate>(provider => provider.GetRequiredService<T>());

@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Threading;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Nitrox.Server.Subnautica.Core.Events;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Configuration;
 
@@ -13,14 +13,14 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Initializes the database and provides access to it.
 /// </summary>
-internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, IOptions<ServerStartOptions> startOptionsProvider, IHostEnvironment hostEnvironment, ILogger<DatabaseService> logger)
+internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, Func<IDbInitializedListener[]> dbInitListeners, IOptions<ServerStartOptions> startOptionsProvider, ILogger<DatabaseService> logger)
     : IHostedLifecycleService
 {
     private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
     private readonly TaskCompletionSource dbInit = new();
-    private readonly IHostEnvironment hostEnvironment = hostEnvironment;
     private readonly ILogger<DatabaseService> logger = logger;
     private readonly IOptions<ServerStartOptions> startOptionsProvider = startOptionsProvider;
+    private readonly Func<IDbInitializedListener[]> dbInitListeners = dbInitListeners;
 
     public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
@@ -43,6 +43,12 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             {
                 throw new Exception("Failed to init database");
             }
+
+            // Cleanup left-over work from previous server instance, if necessary.
+            foreach (IDbInitializedListener listener in dbInitListeners())
+            {
+                await listener.DatabaseInitialized();
+            }
         }, cancellationToken).ContinueWithHandleError(exception => logger.ZLogCritical(exception, $"Database initialization error"));
         return Task.CompletedTask;
     }
@@ -53,7 +59,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
 
     public async Task StoppedAsync(CancellationToken cancellationToken)
     {
-        await SaveAs();
+        await Save();
     }
 
     public async Task<WorldDbContext> GetDbContextAsync()
@@ -62,7 +68,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         return await dbContextFactory.CreateDbContextAsync();
     }
 
-    public async Task<bool> SaveAs(string fileName = "world.db")
+    public async Task<bool> Save(string fileName = "world.db")
     {
         logger.ZLogInformation($"Saving database...");
         ServerStartOptions options = startOptionsProvider.Value;
@@ -70,16 +76,12 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         try
         {
             await using WorldDbContext db = await GetDbContextAsync();
-            if (db.Database.GetDbConnection() is not SqliteConnection sqlite)
-            {
-                return false;
-            }
 
             // Save to server save location.
-            sqlite.Open();
-            await using (SqliteConnection destination = new($"DataSource={mainSaveFilePath};"))
+            if (!db.SqliteSave(mainSaveFilePath))
             {
-                sqlite.BackupDatabase(destination);
+                logger.ZLogCritical($"Failed to save database to {mainSaveFilePath.ToSensitive():@FilePath}");
+                return false;
             }
             logger.ZLogInformation($"Saved database to {mainSaveFilePath.ToSensitive():@FilePath}");
 
@@ -107,28 +109,28 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
 
     private async Task InitDatabase(CancellationToken cancellationToken = default)
     {
-        // Ensure database is up-to-date.
         await using WorldDbContext db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        if (hostEnvironment.IsDevelopment())
+        string databaseFilePath = Path.Combine(startOptionsProvider.Value.GetServerSavePath(), "world.db");
+        try
         {
-            try
+            if (db.SqliteLoad(databaseFilePath))
+            {
+                await db.Database.MigrateAsync(cancellationToken);
+            }
+            else
             {
                 await db.Database.EnsureDeletedAsync(cancellationToken);
                 await db.Database.EnsureCreatedAsync(cancellationToken);
             }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                logger.ZLogError(ex, $"Something is blocking the SQLite database. Check that you do not have it open in your IDE or other database viewer.");
-                throw;
-            }
         }
-        else
+        catch (OperationCanceledException)
         {
-            await db.Database.MigrateAsync(cancellationToken);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.ZLogError(ex, $"Something is blocking the SQLite database. Check that you do not have it open in your IDE or other database viewer.");
+            throw;
         }
     }
 }
