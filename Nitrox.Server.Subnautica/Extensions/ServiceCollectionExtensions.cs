@@ -24,6 +24,7 @@ using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 using Nitrox.Server.Subnautica.Models.Hibernation;
 using Nitrox.Server.Subnautica.Models.Packets;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
+using Nitrox.Server.Subnautica.Models.Persistence;
 using Nitrox.Server.Subnautica.Models.Resources;
 using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using Nitrox.Server.Subnautica.Models.Respositories;
@@ -164,6 +165,7 @@ internal static partial class ServiceCollectionExtensions
                           .UseInMemorySqlite();
                })
                .AddHostedSingletonService<DatabaseService>()
+               .AddSingleton<IPersistState>(provider => provider.GetRequiredService<DatabaseService>())
                .AddDbInitializedListeners()
                .AddSingletonLazyArrayProvider<IDbInitializedListener>()
                .AddSingleton<SessionRepository>()

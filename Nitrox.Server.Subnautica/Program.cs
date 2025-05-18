@@ -111,6 +111,7 @@ public class Program
                .AddSessionCleaners()
                .AddServerStatusService(serverStartStopWatch)
                .AddHostedSingletonService<RestartService>()
+               .AddHostedSingletonService<AutoSaveService>()
                .AddHostedSingletonService<PortForwardService>()
                .AddHostedSingletonService<LanBroadcastService>()
                .AddHostedSingletonService<TimeService>()

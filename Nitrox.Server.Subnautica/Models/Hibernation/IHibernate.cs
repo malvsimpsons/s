@@ -5,6 +5,6 @@ namespace Nitrox.Server.Subnautica.Models.Hibernation;
 /// </summary>
 public interface IHibernate
 {
-    void Hibernate();
-    void Resume();
+    Task Hibernate();
+    Task Resume();
 }

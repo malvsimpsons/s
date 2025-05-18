@@ -25,19 +25,19 @@ internal sealed class HibernationService(IEnumerable<IHibernate> hibernators, IL
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public void Hibernate()
+    public async Task Hibernate()
     {
         foreach (IHibernate hibernator in hibernators)
         {
-            hibernator.Hibernate();
+            await hibernator.Hibernate();
         }
     }
 
-    public void Resume()
+    public async Task Resume()
     {
         foreach (IHibernate hibernator in hibernators)
         {
-            hibernator.Resume();
+            await hibernator.Resume();
         }
     }
 }

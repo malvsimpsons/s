@@ -169,16 +169,17 @@ internal sealed class TimeService(IServerPacketSender packetSender, NtpSyncer nt
         retryTimer.Start();
     }
 
-    public void Hibernate()
+    public Task Hibernate()
     {
         stopWatch.Stop();
         ResyncTimer.Stop();
+        return Task.CompletedTask;
     }
 
-    public void Resume()
+    public async Task Resume()
     {
         stopWatch.Start();
         ResyncTimer.Start();
-        packetSender.SendPacketToAll(MakeTimePacket());
+        await packetSender.SendPacketToAll(MakeTimePacket());
     }
 }

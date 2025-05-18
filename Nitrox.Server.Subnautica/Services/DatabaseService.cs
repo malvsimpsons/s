@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Core.Events;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Persistence;
 
 namespace Nitrox.Server.Subnautica.Services;
 
@@ -14,8 +15,9 @@ namespace Nitrox.Server.Subnautica.Services;
 ///     Initializes the database and provides access to it.
 /// </summary>
 internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, Func<IDbInitializedListener[]> dbInitListeners, IOptions<ServerStartOptions> startOptionsProvider, ILogger<DatabaseService> logger)
-    : IHostedLifecycleService
+    : IHostedLifecycleService, IPersistState
 {
+    private readonly Lock saveLocker = new();
     private readonly IDbContextFactory<WorldDbContext> dbContextFactory = dbContextFactory;
     private readonly TaskCompletionSource dbInit = new();
     private readonly ILogger<DatabaseService> logger = logger;
@@ -78,26 +80,30 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             await using WorldDbContext db = await GetDbContextAsync();
 
             // Save to server save location.
-            if (!db.SqliteSave(mainSaveFilePath))
+            lock (saveLocker)
             {
-                logger.ZLogCritical($"Failed to save database to {mainSaveFilePath.ToSensitive():@FilePath}");
-                return false;
-            }
-            logger.ZLogInformation($"Saved database to {mainSaveFilePath.ToSensitive():@FilePath}");
+                if (!db.SqliteSave(mainSaveFilePath))
+                {
+                    logger.ZLogCritical($"Failed to save database to {mainSaveFilePath.ToSensitive():@FilePath}");
+                    return false;
+                }
 
-            // Create a copy into backup folder.
-            // TODO: Backup config file
-            // TODO: Change this to use options (e.g. MaxBackups)
-            string backupFileName = DateTimeOffset.Now.ToString("O").Replace("T", " ");
-            backupFileName = backupFileName.ReplaceInvalidFileNameCharacters();
-            if (Path.GetExtension(backupFileName).Length > 4)
-            {
-                backupFileName = backupFileName.Replace('.', '\'');
+                logger.ZLogInformation($"Saved database to {mainSaveFilePath.ToSensitive():@FilePath}");
+
+                // Create a copy into backup folder.
+                // TODO: Backup config file
+                // TODO: Change this to use options (e.g. MaxBackups)
+                string backupFileName = DateTimeOffset.Now.ToString("O").Replace("T", " ");
+                backupFileName = backupFileName.ReplaceInvalidFileNameCharacters();
+                if (Path.GetExtension(backupFileName).Length > 4)
+                {
+                    backupFileName = backupFileName.Replace('.', '\'');
+                }
+                backupFileName = Path.ChangeExtension(backupFileName, ".db");
+                Directory.CreateDirectory(options.GetServerSaveBackupsPath());
+                File.Copy(mainSaveFilePath, Path.Combine(options.GetServerSaveBackupsPath(), backupFileName));
+                return true;
             }
-            backupFileName = Path.ChangeExtension(backupFileName, ".db");
-            Directory.CreateDirectory(options.GetServerSaveBackupsPath());
-            File.Copy(mainSaveFilePath, Path.Combine(options.GetServerSaveBackupsPath(), backupFileName));
-            return true;
         }
         catch (Exception ex)
         {
@@ -132,5 +138,10 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             logger.ZLogError(ex, $"Something is blocking the SQLite database. Check that you do not have it open in your IDE or other database viewer.");
             throw;
         }
+    }
+
+    async Task IPersistState.PersistState()
+    {
+        await Save();
     }
 }
