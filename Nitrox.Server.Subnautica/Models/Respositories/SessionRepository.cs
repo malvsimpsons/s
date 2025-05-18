@@ -109,6 +109,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
 
     public async Task DatabaseInitialized()
     {
+        // Cleanup left-over work from previous server instance, if necessary.
         foreach (SessionId sessionId in await GetSessionIds())
         {
             await DeleteSessionAsync(sessionId);

@@ -44,7 +44,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
                 throw new Exception("Failed to init database");
             }
 
-            // Cleanup left-over work from previous server instance, if necessary.
+            // Notify other parts of code that database is ready.
             foreach (IDbInitializedListener listener in dbInitListeners())
             {
                 await listener.DatabaseInitialized();
