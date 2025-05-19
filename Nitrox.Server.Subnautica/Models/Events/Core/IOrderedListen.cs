@@ -1,0 +1,9 @@
+namespace Nitrox.Server.Subnautica.Models.Events.Core;
+
+internal interface IOrderedListen<TSelf, in TContext> : IListen<TSelf, TContext> where TSelf : IListen<TSelf, TContext>
+{
+    /// <summary>
+    ///     Gets the requested priority of the event listener. Higher values are called before lower values.
+    /// </summary>
+    public int EventPriority => 0;
+}

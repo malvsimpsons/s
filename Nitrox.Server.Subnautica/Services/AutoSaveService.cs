@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Nitrox.Server.Subnautica.Models.Hibernation;
+using Nitrox.Server.Subnautica.Models.Events;
 using Nitrox.Server.Subnautica.Models.Persistence;
 
 namespace Nitrox.Server.Subnautica.Services;
@@ -9,7 +9,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Auto save service which persists the database.
 /// </summary>
-internal sealed class AutoSaveService(IPersistState state, ILogger<AutoSaveService> logger) : BackgroundService, IHibernate, IHostedLifecycleService
+internal sealed class AutoSaveService(IPersistState state, ILogger<AutoSaveService> logger) : BackgroundService, ISeeHibernate, ISeeResume, IHostedLifecycleService
 {
     private readonly ILogger<AutoSaveService> logger = logger;
     private readonly PeriodicTimer saveTimer = new(TimeSpan.FromMinutes(5)); // TODO: Use options to set save period.
@@ -17,7 +17,7 @@ internal sealed class AutoSaveService(IPersistState state, ILogger<AutoSaveServi
     private bool isHibernating;
     private bool fullyStarted;
 
-    public async Task Hibernate()
+    public async ValueTask Hibernate()
     {
         Interlocked.Exchange(ref isHibernating, true);
         if (!fullyStarted)
@@ -28,10 +28,10 @@ internal sealed class AutoSaveService(IPersistState state, ILogger<AutoSaveServi
         await state.PersistState();
     }
 
-    public Task Resume()
+    public ValueTask Resume()
     {
         Interlocked.Exchange(ref isHibernating, false);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

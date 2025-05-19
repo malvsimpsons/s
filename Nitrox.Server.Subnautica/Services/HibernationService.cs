@@ -1,35 +1,25 @@
-using System;
-using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Nitrox.Server.Subnautica.Database.Models;
-using Nitrox.Server.Subnautica.Models.Hibernation;
+using Nitrox.Server.Subnautica.Models.Events;
+using Nitrox.Server.Subnautica.Models.Events.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
-using Nitrox.Server.Subnautica.Models.Respositories.Core;
 
 namespace Nitrox.Server.Subnautica.Services;
 
 /// <summary>
 ///     Service which can signal hibernating services to <see cref="Resume" /> or <see cref="Hibernate" />.
 /// </summary>
-internal sealed class HibernationService(Func<IHibernate[]> hibernatorsProvider, SessionRepository sessionRepository, ILogger<HibernationService> logger) : IHostedLifecycleService, ISessionCleaner
+internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hibernators, ITrigger<ISeeResume, object> resumers, SessionRepository sessionRepository, ILogger<HibernationService> logger) : IHostedLifecycleService, ISeeSessionDisconnected
 {
+    private readonly ITrigger<ISeeHibernate, object> hibernators = hibernators;
     private readonly ILogger<HibernationService> logger = logger;
+    private readonly ITrigger<ISeeResume, object> resumers = resumers;
     private readonly SessionRepository sessionRepository = sessionRepository;
-    private IHibernate[] hibernators;
     private bool isHibernating;
-    public int SessionCleanPriority => -1000;
+    public int EventPriority => -1000;
 
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        hibernators ??= hibernatorsProvider();
-        foreach (IHibernate hibernator in hibernators)
-        {
-            logger.ZLogTrace($"Added hibernator {hibernator.GetType().Name:@TypeName}");
-        }
-        logger.ZLogDebug($"{hibernators.Length:@HibernateCount} hibernators found and registered");
-        return Task.CompletedTask;
-    }
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
@@ -40,7 +30,7 @@ internal sealed class HibernationService(Func<IHibernate[]> hibernatorsProvider,
             return;
         }
         logger.ZLogDebug($"Preparing to hibernate");
-        await Task.WhenAll(hibernators.Select(h => h.Hibernate()));
+        await hibernators.Trigger();
         logger.ZLogDebug($"Now hibernating");
     }
 
@@ -51,7 +41,7 @@ internal sealed class HibernationService(Func<IHibernate[]> hibernatorsProvider,
             return;
         }
         logger.ZLogDebug($"Waking up");
-        await Task.WhenAll(hibernators.Select(h => h.Resume()));
+        await resumers.Trigger();
         logger.ZLogDebug($"No longer hibernating");
     }
 
@@ -63,7 +53,7 @@ internal sealed class HibernationService(Func<IHibernate[]> hibernatorsProvider,
 
     public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public async Task CleanSessionAsync(Session disconnectedSession)
+    public async ValueTask HandleSessionDisconnect(Session disconnectedSession)
     {
         if (await sessionRepository.GetActiveSessionCount() > 0)
         {

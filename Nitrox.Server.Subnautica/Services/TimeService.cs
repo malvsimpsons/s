@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
-using Nitrox.Server.Subnautica.Models.Hibernation;
+using Nitrox.Server.Subnautica.Models.Events;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.Networking.Packets;
 using NitroxServer.Helper;
@@ -11,7 +11,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Keeps track of (game) time.
 /// </summary>
-internal sealed class TimeService(IServerPacketSender packetSender, NtpSyncer ntpSyncer) : IHostedService, IHibernate
+internal sealed class TimeService(IServerPacketSender packetSender, NtpSyncer ntpSyncer) : IHostedService, ISeeHibernate, ISeeResume
 {
     public delegate void TimeSkippedEventHandler(double skippedSeconds);
 
@@ -169,14 +169,14 @@ internal sealed class TimeService(IServerPacketSender packetSender, NtpSyncer nt
         retryTimer.Start();
     }
 
-    public Task Hibernate()
+    public ValueTask Hibernate()
     {
         stopWatch.Stop();
         ResyncTimer.Stop();
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public async Task Resume()
+    public async ValueTask Resume()
     {
         stopWatch.Start();
         ResyncTimer.Start();

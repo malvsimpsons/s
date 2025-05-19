@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Nitrox.Server.Subnautica.Database.Models;
+using Nitrox.Server.Subnautica.Models.Events;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
-using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
@@ -11,7 +11,7 @@ using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic;
 
-internal sealed class EntitySimulation : ISessionCleaner
+internal sealed class EntitySimulation : ISeeSessionDisconnected
 {
     private const SimulationLockType DEFAULT_ENTITY_SIMULATION_LOCKTYPE = SimulationLockType.TRANSIENT;
 
@@ -176,7 +176,7 @@ internal sealed class EntitySimulation : ISessionCleaner
         await packetSender.SendPacketToAll(ownershipChangePacket);
     }
 
-    public async Task CleanSessionAsync(Session disconnectedSession)
+    public async ValueTask HandleSessionDisconnect(Session disconnectedSession)
     {
         if (disconnectedSession is not { Player.Id: var playerId })
         {

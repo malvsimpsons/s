@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using AssetsTools.NET.Extra;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,25 +11,24 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
-using Nitrox.Server.Subnautica.Core.Events;
 using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Models.Administration.Core;
 using Nitrox.Server.Subnautica.Models.Commands.ArgConverters.Core;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Events.Core;
+using Nitrox.Server.Subnautica.Models.Events.Triggers;
 using Nitrox.Server.Subnautica.Models.GameLogic;
 using Nitrox.Server.Subnautica.Models.GameLogic.Bases;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities;
 using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
-using Nitrox.Server.Subnautica.Models.Hibernation;
 using Nitrox.Server.Subnautica.Models.Packets;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Persistence;
 using Nitrox.Server.Subnautica.Models.Resources;
 using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using Nitrox.Server.Subnautica.Models.Respositories;
-using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.Helper;
@@ -166,8 +166,6 @@ internal static partial class ServiceCollectionExtensions
                })
                .AddHostedSingletonService<DatabaseService>()
                .AddSingleton<IPersistState>(provider => provider.GetRequiredService<DatabaseService>())
-               .AddDbInitializedListeners()
-               .AddSingletonLazyArrayProvider<IDbInitializedListener>()
                .AddSingleton<SessionRepository>()
                .AddSingleton<PlayerRepository>();
     }
@@ -196,35 +194,21 @@ internal static partial class ServiceCollectionExtensions
             .AddSingleton<IUwePrefabFactory, SubnauticaUwePrefabFactory>()
             .AddTransient<IMonoBehaviourTemplateGenerator, ThreadSafeMonoCecilTempGenerator>();
 
-    /// <summary>
-    ///     Allows the server to go into hibernation when no players are connected.
-    /// </summary>
-    public static IServiceCollection AddHibernation(this IServiceCollection services) =>
-        services.AddHostedSingletonService<HibernationService>()
-                .AddHibernators()
-                .AddSingletonLazyArrayProvider<IHibernate>();
-
-    public static IServiceCollection AddSessionCleaners(this IServiceCollection services) =>
-        services.AddIndividualSessionCleaners()
-                .AddSingletonLazyArrayProvider<ISessionCleaner>();
-
     [GenerateServiceRegistrations(AssignableTo = typeof(IAdminFeature<>), CustomHandler = nameof(AddImplementedAdminFeatures))]
     internal static partial IServiceCollection AddAdminFeatures(this IServiceCollection services);
 
-    [GenerateServiceRegistrations(AssignableTo = typeof(ISessionCleaner), CustomHandler = nameof(AddSessionCleaner))]
-    private static partial IServiceCollection AddIndividualSessionCleaners(this IServiceCollection services);
+    /// <summary>
+    ///     Registers <see cref="IListen" /> types into DI together with an appropriate <see cref="ITrigger{TListen}" /> to
+    ///     trigger the respective event listeners.
+    /// </summary>
+    [GenerateServiceRegistrations(AssignableTo = typeof(IListen<,>), CustomHandler = nameof(AddAppEvent))]
+    internal static partial IServiceCollection AddAppEvents(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IRedactor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddRedactors(this IServiceCollection services);
 
-    [GenerateServiceRegistrations(AssignableTo = typeof(IDbInitializedListener), CustomHandler = nameof(AddDbInitializedListener))]
-    private static partial IServiceCollection AddDbInitializedListeners(this IServiceCollection services);
-
     [GenerateServiceRegistrations(AssignableTo = typeof(IGameResource), Lifetime = ServiceLifetime.Singleton, AsSelf = true, AsImplementedInterfaces = true)]
     private static partial IServiceCollection AddGameResources(this IServiceCollection services);
-
-    [GenerateServiceRegistrations(AssignableTo = typeof(IHibernate), CustomHandler = nameof(AddHibernator))]
-    private static partial IServiceCollection AddHibernators(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(ICommandHandlerBase), CustomHandler = nameof(AddCommandHandler))]
     private static partial IServiceCollection AddCommandHandlers(this IServiceCollection services);
@@ -235,7 +219,83 @@ internal static partial class ServiceCollectionExtensions
     [GenerateServiceRegistrations(AssignableTo = typeof(IPacketProcessor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddPacketProcessors(this IServiceCollection services);
 
-    private static void AddSessionCleaner<T>(this IServiceCollection services) where T : class, ISessionCleaner => services.AddSingleton<ISessionCleaner>(provider => provider.GetRequiredService<T>());
+    private static IServiceCollection AddAppEvent<TListenImpl>(this IServiceCollection services)
+    {
+        Type implementingType = typeof(TListenImpl);
+        Type[] listeningInterfaces = implementingType.GetInterfaces().Where(i =>
+                                                     {
+                                                         if (i.IsGenericType)
+                                                         {
+                                                             return false;
+                                                         }
+                                                         if (GetInterfaceMatchingOpenGeneric(i, typeof(IListen<,>)) is null)
+                                                         {
+                                                             return false;
+                                                         }
+                                                         return true;
+                                                     })
+                                                     .ToArray();
+        foreach (Type listeningInterface in listeningInterfaces)
+        {
+            // Appends the current TListen to an IEnumerable<TListen> when fetched from DI.
+            services.AddSingleton(listeningInterface, provider => provider.GetRequiredService<TListenImpl>());
+
+            TryAddTriggerImplementationForListener(services, listeningInterface);
+        }
+        return services;
+
+        static void TryAddTriggerImplementationForListener(IServiceCollection services, Type listeningInterface)
+        {
+            // Assign a trigger implementation that best matches what the listener expects. Should not add if already registered.
+            Type contextType = listeningInterface.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IListen<,>))?.GetGenericArguments()[1];
+            if (contextType == null)
+            {
+                throw new Exception($"Unknown event context type on {listeningInterface}");
+            }
+            Type triggerInterface = typeof(ITrigger<,>).MakeGenericType(listeningInterface, contextType);
+            if (GetInterfaceMatchingOpenGeneric(listeningInterface, typeof(IOrderedListen<,>)) is not null)
+            {
+                Type triggerImplementor = typeof(OrderedTrigger<,>).MakeGenericType(listeningInterface, contextType);
+                AddTrigger(services, triggerInterface, triggerImplementor);
+            }
+            else if (GetInterfaceMatchingOpenGeneric(listeningInterface, typeof(IParallelListen<,>)) is not null)
+            {
+                Type triggerImplementor = typeof(ParallelTrigger<,>).MakeGenericType(listeningInterface, contextType);
+                AddTrigger(services, triggerInterface, triggerImplementor);
+            }
+            else if (GetInterfaceMatchingOpenGeneric(listeningInterface, typeof(IListen<,>)) is not null)
+            {
+                Type triggerImplementor = typeof(SequentialTrigger<,>).MakeGenericType(listeningInterface, contextType);
+                AddTrigger(services, triggerInterface, triggerImplementor);
+            }
+            else
+            {
+                throw new NotSupportedException($"Unable to assign a trigger implementation to {listeningInterface}");
+            }
+        }
+
+        static Type GetInterfaceMatchingOpenGeneric(Type comparand, Type genericArgType)
+        {
+            foreach (Type i in comparand.GetInterfaces())
+            {
+                if (i.IsGenericType && i.GetGenericTypeDefinition() == genericArgType)
+                {
+                    return i;
+                }
+            }
+            return null;
+        }
+
+        static void AddTrigger(IServiceCollection services, Type triggerInterface, Type triggerImplementor)
+        {
+            int cur = services.Count;
+            services.TryAddSingleton(triggerInterface, triggerImplementor);
+            if (cur != services.Count)
+            {
+                services.TryAddEnumerable(ServiceDescriptor.DescribeKeyed(typeof(IHostedService), null, triggerImplementor, ServiceLifetime.Singleton)); // Simulates "AddHostedService" call.
+            }
+        }
+    }
 
     private static void AddImplementedAdminFeatures<TImplementation>(this IServiceCollection services) where TImplementation : class, IAdminFeature
     {
@@ -248,10 +308,6 @@ internal static partial class ServiceCollectionExtensions
             services.AddSingleton(featureInterfaceType, provider => provider.GetRequiredService<TImplementation>());
         }
     }
-
-    private static void AddDbInitializedListener<T>(this IServiceCollection services) where T : class, IDbInitializedListener => services.AddSingleton<IDbInitializedListener, T>(provider => provider.GetRequiredService<T>());
-
-    private static void AddHibernator<T>(this IServiceCollection services) where T : class, IHibernate => services.AddSingleton<IHibernate>(provider => provider.GetRequiredService<T>());
 
     /// <summary>
     ///     Registers a single command and all of its handlers as can be known by the implemented interfaces.

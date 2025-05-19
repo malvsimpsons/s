@@ -1,20 +1,17 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Nitrox.Server.Subnautica.Core.Events;
 using Nitrox.Server.Subnautica.Database;
 using Nitrox.Server.Subnautica.Database.Models;
-using Nitrox.Server.Subnautica.Models.Respositories.Core;
+using Nitrox.Server.Subnautica.Models.Events;
+using Nitrox.Server.Subnautica.Models.Events.Core;
 using Nitrox.Server.Subnautica.Services;
 
 namespace Nitrox.Server.Subnautica.Models.Respositories;
 
-internal class SessionRepository(DatabaseService databaseService, Func<ISessionCleaner[]> sessionCleanersProvider, ILogger<SessionRepository> logger) : IDbInitializedListener
+internal class SessionRepository(DatabaseService databaseService, ITrigger<ISeeSessionDisconnected, Session> sessionDisconnectedTrigger, ILogger<SessionRepository> logger) : ISeeDbInitialized
 {
     private readonly DatabaseService databaseService = databaseService;
     private readonly ILogger<SessionRepository> logger = logger;
-    private ISessionCleaner[] sessionCleaners;
 
     public async Task<Session> GetOrCreateSessionAsync(string address, ushort port)
     {
@@ -59,7 +56,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
                 session.Connection = null;
                 await db.SaveChangesAsync();
             }
-            await RunSessionCleanersAsync(session);
+            await sessionDisconnectedTrigger.Trigger(session);
 
             // Now delete the session and its data (the latter happens through FOREIGN KEY CASCADE DELETE on session id)
             db.TimeLockedTableIds.Add(new TimeLockedTableIds
@@ -87,28 +84,7 @@ internal class SessionRepository(DatabaseService databaseService, Func<ISessionC
                        .ToArrayAsync();
     }
 
-    /// <summary>
-    ///     Lets other APIs migrate session data if necessary (e.g. change database or notify other players of necessary
-    ///     changes).
-    /// </summary>
-    private async Task RunSessionCleanersAsync(Session session)
-    {
-        sessionCleaners ??= sessionCleanersProvider().OrderByDescending(c => c.SessionCleanPriority).ToArray();
-        foreach (ISessionCleaner cleaner in sessionCleaners)
-        {
-            try
-            {
-                logger.ZLogTrace($"Calling session cleaner {cleaner.GetType().Name:@TypeName}");
-                await cleaner.CleanSessionAsync(session);
-            }
-            catch (Exception ex)
-            {
-                logger.ZLogError(ex, $"Error occurred during session cleaning in {cleaner.GetType().Name:@TypeName}");
-            }
-        }
-    }
-
-    public async Task DatabaseInitialized()
+    public async ValueTask HandleDatabaseInitialized()
     {
         // Cleanup left-over work from previous server instance, if necessary.
         foreach (SessionId sessionId in await GetSessionIds())

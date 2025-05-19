@@ -14,11 +14,11 @@ using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Administration;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Events;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
-using Nitrox.Server.Subnautica.Models.Respositories.Core;
 using NitroxModel.Networking.Packets;
 using NitroxModel.Networking.Packets.Core;
 
@@ -28,7 +28,7 @@ namespace Nitrox.Server.Subnautica.Services;
 ///     Opens the LiteNetLib channel and starts sending incoming messages to <see cref="packetRegistryService" /> for
 ///     processing.
 /// </summary>
-internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISessionCleaner, IKickPlayer
+internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeSessionDisconnected, IKickPlayer
 {
     private readonly NetDataWriter dataWriter = new();
     private readonly IHostEnvironment hostEnvironment;
@@ -42,7 +42,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
     private readonly SessionRepository sessionRepository;
     private readonly HibernationService hibernationService;
     private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
-    public int SessionCleanPriority => -100;
+    public int EventPriority => -100;
 
     public LiteNetLibService(PacketRegistryService packetRegistryService, PacketSerializationService packetSerializationService, SessionRepository sessionRepository, HibernationService hibernationService, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
     {
@@ -101,11 +101,11 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
         return ValueTask.CompletedTask;
     }
 
-    public Task CleanSessionAsync(Session disconnectedSession)
+    public ValueTask HandleSessionDisconnect(Session disconnectedSession)
     {
         if (!peersBySessionId.TryRemove(disconnectedSession.Id, out NetPeer peer))
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
         if (disconnectedSession is { Player.Id: var playerId, Player.Name: { } playerName })
         {
@@ -124,7 +124,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISess
             }
             SendPacket(disconnectPacket, pair.Value);
         }
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

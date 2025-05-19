@@ -103,12 +103,11 @@ public class Program
                .AddPackets()
                .AddCommands(!startOptions.IsEmbedded)
                // Add APIs - everything else the server will need.
+               .AddAppEvents()
                .AddDatabasePersistence(builder.Environment.IsDevelopment())
                .AddSubnauticaEntityManagement()
                .AddSubnauticaResources()
-               .AddHibernation()
                .AddAdminFeatures()
-               .AddSessionCleaners()
                .AddServerStatusService(serverStartStopWatch)
                .AddHostedSingletonService<RestartService>()
                .AddHostedSingletonService<AutoSaveService>()
@@ -118,6 +117,7 @@ public class Program
                .AddHostedSingletonService<StoryTimingService>() // TODO: Merge story services together?
                .AddHostedSingletonService<StoryScheduleService>()
                .AddHostedSingletonService<FmodService>()
+               .AddHostedSingletonService<HibernationService>()
                .AddSingleton(_ => GameInfo.Subnautica)
                .AddSingleton<SessionSettings>()
                .AddSingleton<SubnauticaServerProtoBufSerializer>()

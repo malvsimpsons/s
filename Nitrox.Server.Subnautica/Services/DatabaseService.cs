@@ -4,9 +4,11 @@ using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Nitrox.Server.Subnautica.Core.Events;
 using Nitrox.Server.Subnautica.Database;
+using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Events;
+using Nitrox.Server.Subnautica.Models.Events.Core;
 using Nitrox.Server.Subnautica.Models.Persistence;
 
 namespace Nitrox.Server.Subnautica.Services;
@@ -14,7 +16,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Initializes the database and provides access to it.
 /// </summary>
-internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, Func<IDbInitializedListener[]> dbInitListeners, IOptions<ServerStartOptions> startOptionsProvider, ILogger<DatabaseService> logger)
+internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContextFactory, ITrigger<ISeeDbInitialized, object> dbInitTrigger, IOptions<ServerStartOptions> startOptionsProvider, ILogger<DatabaseService> logger)
     : IHostedLifecycleService, IPersistState
 {
     private readonly Lock saveLocker = new();
@@ -22,7 +24,6 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
     private readonly TaskCompletionSource dbInit = new();
     private readonly ILogger<DatabaseService> logger = logger;
     private readonly IOptions<ServerStartOptions> startOptionsProvider = startOptionsProvider;
-    private readonly Func<IDbInitializedListener[]> dbInitListeners = dbInitListeners;
 
     public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
@@ -47,10 +48,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
             }
 
             // Notify other parts of code that database is ready.
-            foreach (IDbInitializedListener listener in dbInitListeners())
-            {
-                await listener.DatabaseInitialized();
-            }
+            await dbInitTrigger.Trigger();
         }, cancellationToken).ContinueWithHandleError(exception => logger.ZLogCritical(exception, $"Database initialization error"));
         return Task.CompletedTask;
     }
