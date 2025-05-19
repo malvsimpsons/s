@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging.Console;
-using Nitrox.Server.Subnautica.Models.Redaction.Redactors.Core;
+using Nitrox.Server.Subnautica.Models.Logging.Redaction.Redactors.Core;
 
 namespace Nitrox.Server.Subnautica.Models.Configuration;
 

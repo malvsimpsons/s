@@ -1,6 +1,6 @@
 using System;
 
-namespace Nitrox.Server.Subnautica.Models.Redaction.Redactors.Core;
+namespace Nitrox.Server.Subnautica.Models.Logging.Redaction.Redactors.Core;
 
 internal readonly ref struct RedactResult
 {

@@ -1,7 +1,7 @@
 using System;
 using System.Net;
 using Nitrox.Server.Subnautica.Models.Commands.Core;
-using Nitrox.Server.Subnautica.Models.Redaction;
+using Nitrox.Server.Subnautica.Models.Logging.Redaction;
 
 namespace Nitrox.Server.Subnautica.Extensions;
 

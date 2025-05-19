@@ -1,7 +1,7 @@
 using System;
-using Nitrox.Server.Subnautica.Models.Redaction.Redactors.Core;
+using Nitrox.Server.Subnautica.Models.Logging.Redaction.Redactors.Core;
 
-namespace Nitrox.Server.Subnautica.Models.Redaction.Redactors;
+namespace Nitrox.Server.Subnautica.Models.Logging.Redaction.Redactors;
 
 internal sealed class PathRedactor : IRedactor
 {

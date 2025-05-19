@@ -5,8 +5,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging.Console;
 using Nitrox.Server.Subnautica.Models.Configuration;
-using Nitrox.Server.Subnautica.Models.Redaction;
-using Nitrox.Server.Subnautica.Models.Redaction.Redactors.Core;
+using Nitrox.Server.Subnautica.Models.Logging.Redaction;
+using Nitrox.Server.Subnautica.Models.Logging.Redaction.Redactors.Core;
 
 namespace Nitrox.Server.Subnautica.Models.Logging;
 

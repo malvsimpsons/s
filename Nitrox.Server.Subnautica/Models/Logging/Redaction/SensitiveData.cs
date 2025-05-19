@@ -1,4 +1,4 @@
-namespace Nitrox.Server.Subnautica.Models.Redaction;
+namespace Nitrox.Server.Subnautica.Models.Logging.Redaction;
 
 internal readonly record struct SensitiveData<T>(T Data) : ISensitiveData
 {
