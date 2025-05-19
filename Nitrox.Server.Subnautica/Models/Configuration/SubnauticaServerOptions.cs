@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -25,6 +26,9 @@ public sealed partial class SubnauticaServerOptions
     public string ServerPassword { get; set; } = "";
 
     public SubnauticaGameMode GameMode { get; set; }
+
+    [PropertyDescription("Measured in milliseconds. Values less than 1 second will disable auto saving.")]
+    public int SaveInterval { get; set; } = (int)TimeSpan.FromMinutes(5).TotalMilliseconds;
 
     [Range(30001, int.MaxValue)]
     public int InitialSyncTimeout { get; set; } = 300000;

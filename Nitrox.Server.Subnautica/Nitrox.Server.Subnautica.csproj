@@ -42,7 +42,8 @@
 {
   "GameServer": {
     "PortForward": false,
-    "LanDiscovery": false
+    "LanDiscovery": false,
+    "SaveInterval": 0
   }
 }
 ]]>

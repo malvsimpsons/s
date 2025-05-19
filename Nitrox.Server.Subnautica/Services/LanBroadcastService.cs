@@ -71,18 +71,15 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
 
     private void UpdateServiceState(SubnauticaServerOptions options, bool runAsUser = false)
     {
-        if (runAsUser)
-        {
-            logger.ZLogDebug($"Adjusting to configuration...");
-        }
         if (options.LanDiscovery)
         {
             if (!StartListening())
             {
                 return;
             }
+            bool change = (int)pollTimer.Period.TotalMilliseconds != ACTIVE_POLL_INTERVAL_MS;
             pollTimer.Period = TimeSpan.FromMilliseconds(ACTIVE_POLL_INTERVAL_MS);
-            if (runAsUser)
+            if (runAsUser && change)
             {
                 logger.ZLogInformation($"enabled");
             }
@@ -91,8 +88,9 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
         else
         {
             server.Stop();
+            bool change = (int)pollTimer.Period.TotalMilliseconds != INACTIVE_POLL_INTERVAL_MS;
             pollTimer.Period = TimeSpan.FromMilliseconds(INACTIVE_POLL_INTERVAL_MS);
-            if (runAsUser)
+            if (runAsUser && change)
             {
                 logger.ZLogInformation($"disabled");
             }
