@@ -12,6 +12,7 @@ internal class SessionRepository(DatabaseService databaseService, ITrigger<ISeeS
 {
     private readonly DatabaseService databaseService = databaseService;
     private readonly ILogger<SessionRepository> logger = logger;
+    private readonly ITrigger<ISeeSessionDisconnected, Session> sessionDisconnectedTrigger = sessionDisconnectedTrigger;
 
     public async Task<Session> GetOrCreateSessionAsync(string address, ushort port)
     {

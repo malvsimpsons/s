@@ -7,7 +7,6 @@ using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.Networking.Packets;
-using NitroxServer.GameLogic.Entities;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic;
 
@@ -18,10 +17,10 @@ internal sealed class EntitySimulation : ISeeSessionDisconnected
     private readonly EntityRegistry entityRegistry;
     private readonly WorldEntityManager worldEntityManager;
     private readonly IServerPacketSender packetSender;
-    private readonly ISimulationWhitelist simulationWhitelist;
+    private readonly Entities.ISimulationWhitelist simulationWhitelist;
     private readonly SimulationOwnershipData simulationOwnershipData;
 
-    public EntitySimulation(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, SimulationOwnershipData simulationOwnershipData, IServerPacketSender packetSender, ISimulationWhitelist simulationWhitelist)
+    public EntitySimulation(EntityRegistry entityRegistry, WorldEntityManager worldEntityManager, SimulationOwnershipData simulationOwnershipData, IServerPacketSender packetSender, Entities.ISimulationWhitelist simulationWhitelist)
     {
         this.entityRegistry = entityRegistry;
         this.worldEntityManager = worldEntityManager;

@@ -14,8 +14,4 @@
             <HintPath>..\Nitrox.Assets.Subnautica\protobuf-net.dll</HintPath>
         </Reference>
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="ConsoleCommands\" />
-    </ItemGroup>
 </Project>

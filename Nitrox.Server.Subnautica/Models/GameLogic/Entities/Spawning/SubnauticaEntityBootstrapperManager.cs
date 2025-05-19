@@ -3,8 +3,6 @@ using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Model.Subnautica.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
-using NitroxServer.GameLogic.Entities.Spawning;
-using NitroxServer.Helper;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 

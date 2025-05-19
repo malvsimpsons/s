@@ -2,9 +2,9 @@ using System;
 using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Nitrox.Server.Subnautica.Models.Events;
+using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using NitroxModel.Networking.Packets;
-using NitroxServer.Helper;
 
 namespace Nitrox.Server.Subnautica.Services;
 

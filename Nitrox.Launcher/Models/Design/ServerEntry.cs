@@ -21,8 +21,6 @@ using NitroxModel.Helper;
 using NitroxModel.Logger;
 using NitroxModel.Serialization;
 using NitroxModel.Server;
-using NitroxServer.Serialization;
-using NitroxServer.Serialization.World;
 
 namespace Nitrox.Launcher.Models.Design;
 
@@ -147,11 +145,12 @@ public partial class ServerEntry : ObservableObject
             _ => throw new NotImplementedException()
         };
 
-        Version version;
-        using (FileStream stream = new(Path.Combine(saveDir, $"Version.{fileEnding}"), FileMode.Open, FileAccess.Read, FileShare.Read))
-        {
-            version = new ServerJsonSerializer().Deserialize<SaveFileVersion>(stream)?.Version ?? NitroxEnvironment.Version;
-        }
+        // TODO: USE DATABASE - Get version from save file location.
+        Version version = NitroxEnvironment.Version;
+        // using (FileStream stream = new(Path.Combine(saveDir, $"Version.{fileEnding}"), FileMode.Open, FileAccess.Read, FileShare.Read))
+        // {
+        //     version = new ServerJsonSerializer().Deserialize<SaveFileVersion>(stream)?.Version ?? NitroxEnvironment.Version;
+        // }
 
         Name = Path.GetFileName(saveDir);
         ServerIcon = serverIcon;

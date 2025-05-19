@@ -30,7 +30,6 @@
         <ProjectReference Include="..\NitroxModel\NitroxModel.csproj" />
         <ProjectReference Include="..\NitroxPatcher\NitroxPatcher.csproj" />
         <ProjectReference Include="..\Nitrox.Server.Subnautica\Nitrox.Server.Subnautica.csproj" />
-        <ProjectReference Include="..\NitroxServer\NitroxServer.csproj" />
     </ItemGroup>
 
     <Target Name="MoveNitroxAssetsToTestOutput" AfterTargets="Build">

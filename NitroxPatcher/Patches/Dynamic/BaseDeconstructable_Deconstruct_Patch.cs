@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
+using Nitrox.Model.Subnautica.Packets;
 using NitroxClient.Communication.Abstract;
 using NitroxClient.GameLogic.Bases;
 using NitroxClient.GameLogic.Spawning.Bases;
@@ -10,7 +11,6 @@ using NitroxModel.DataStructures.GameLogic.Bases;
 using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 using NitroxModel.Helper;
 using NitroxModel.Networking.Packets;
-using NitroxModel.Packets;
 using NitroxPatcher.PatternMatching;
 using UnityEngine;
 using static System.Reflection.Emit.OpCodes;

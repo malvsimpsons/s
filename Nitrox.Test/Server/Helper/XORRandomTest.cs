@@ -1,4 +1,4 @@
-using NitroxServer.Helper;
+using Nitrox.Server.Subnautica.Models.Helper;
 
 namespace Nitrox.Test.Server.Helper;
 

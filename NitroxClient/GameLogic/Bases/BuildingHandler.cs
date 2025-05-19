@@ -14,8 +14,8 @@ using NitroxModel.DataStructures.GameLogic.Bases;
 using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 using NitroxModel.DataStructures.Util;
 using Nitrox.Model.Subnautica.DataStructures;
+using Nitrox.Model.Subnautica.Packets;
 using NitroxModel.Networking.Packets;
-using NitroxModel.Packets;
 using UnityEngine;
 
 namespace NitroxClient.GameLogic.Bases;

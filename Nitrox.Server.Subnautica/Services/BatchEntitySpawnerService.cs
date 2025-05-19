@@ -4,6 +4,8 @@ using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.GameLogic.Entities;
+using Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Resources;
 using Nitrox.Server.Subnautica.Models.Resources.Parsers;
@@ -11,10 +13,6 @@ using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Unity;
-using NitroxServer.GameLogic.Entities;
-using NitroxServer.GameLogic.Entities.Spawning;
-using NitroxServer.Helper;
-using NitroxServer.Resources;
 
 namespace Nitrox.Server.Subnautica.Services;
 
@@ -355,7 +353,7 @@ internal class BatchEntitySpawnerService(
     /// <returns>If this Entity is a PrefabPlaceholdersGroup</returns>
     private bool TryCreatePrefabPlaceholdersGroupWithChildren(ref WorldEntity entity, string classId, DeterministicGenerator deterministicBatchGenerator)
     {
-        if (!prefabResources.PrefabPlaceholdersGroupPaths.TryGetValue(classId, out PrefabPlaceholdersGroupAsset groupAsset))
+        if (!prefabResources.PrefabPlaceholdersGroupPaths.TryGetValue(classId, out Models.Resources.PrefabPlaceholdersGroupAsset groupAsset))
         {
             return false;
         }
@@ -366,10 +364,10 @@ internal class BatchEntitySpawnerService(
         for (int i = 0; i < groupAsset.PrefabAssets.Length; i++)
         {
             // Fix positioning of children
-            IPrefabAsset prefabAsset = groupAsset.PrefabAssets[i];
+            Models.Resources.IPrefabAsset prefabAsset = groupAsset.PrefabAssets[i];
 
             // Two cases, either the PrefabPlaceholder holds a visible GameObject or an EntitySlot (a MB which has a chance of spawning a prefab)
-            if (prefabAsset is PrefabPlaceholderAsset placeholderAsset && placeholderAsset.EntitySlot.HasValue)
+            if (prefabAsset is Models.Resources.PrefabPlaceholderAsset placeholderAsset && placeholderAsset.EntitySlot.HasValue)
             {
                 WorldEntity spawnedEntity = SpawnPrefabAssetInEntitySlot(placeholderAsset.Transform, placeholderAsset.EntitySlot.Value, deterministicBatchGenerator, entity.AbsoluteEntityCell, entity);
 
@@ -391,7 +389,7 @@ internal class BatchEntitySpawnerService(
             {
                 // Regular visible GameObject
                 string prefabClassId = prefabAsset.ClassId;
-                if (prefabAsset is PrefabPlaceholderRandomAsset randomAsset && randomAsset.ClassIds.Count > 0)
+                if (prefabAsset is Models.Resources.PrefabPlaceholderRandomAsset randomAsset && randomAsset.ClassIds.Count > 0)
                 {
                     int randomIndex = random.NextIntRange(0, randomAsset.ClassIds.Count);
                     prefabClassId = randomAsset.ClassIds[randomIndex];
@@ -399,7 +397,7 @@ internal class BatchEntitySpawnerService(
 
                 EntitySpawnPoint esp = new(entity.AbsoluteEntityCell, prefabAsset.Transform.LocalPosition, prefabAsset.Transform.LocalRotation, prefabAsset.Transform.LocalScale, prefabClassId);
                 WorldEntity spawnedEntity = (WorldEntity)SpawnEntitiesStatically(esp, deterministicBatchGenerator, entity).First();
-                if (prefabAsset is PrefabPlaceholdersGroupAsset)
+                if (prefabAsset is Models.Resources.PrefabPlaceholdersGroupAsset)
                 {
                     spawnedEntity = new PlaceholderGroupWorldEntity(spawnedEntity, i);
                 }

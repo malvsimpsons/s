@@ -8,12 +8,11 @@ using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Nitrox.Server.Subnautica.Models.GameLogic.Entities;
 using Nitrox.Server.Subnautica.Models.Resources.Catalog;
 using Nitrox.Server.Subnautica.Models.Resources.Helper;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.Helper;
-using NitroxServer.GameLogic.Entities;
-using NitroxServer.Resources;
 
 namespace Nitrox.Server.Subnautica.Models.Resources.Parsers;
 

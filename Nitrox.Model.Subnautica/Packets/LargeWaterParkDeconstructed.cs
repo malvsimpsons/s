@@ -5,7 +5,7 @@ using NitroxModel.DataStructures.GameLogic.Bases;
 using NitroxModel.DataStructures.GameLogic.Entities.Bases;
 using NitroxModel.Networking.Packets;
 
-namespace NitroxModel.Packets;
+namespace Nitrox.Model.Subnautica.Packets;
 
 [Serializable]
 public sealed record LargeWaterParkDeconstructed : PieceDeconstructed

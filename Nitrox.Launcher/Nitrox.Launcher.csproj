@@ -45,7 +45,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\NitroxModel\NitroxModel.csproj" />
-        <ProjectReference Include="..\NitroxServer\NitroxServer.csproj" />
     </ItemGroup>
 
     <!-- Project references not to be code-linked with app, but are used by app as content files. See https://github.com/dotnet/msbuild/issues/4795#issuecomment-1443879474  -->

@@ -10,7 +10,6 @@ using CommunityToolkit.Mvvm.Input;
 using Nitrox.Launcher.Models.Design;
 using Nitrox.Launcher.Models.Validators;
 using Nitrox.Launcher.ViewModels.Abstract;
-using NitroxServer.Serialization.World;
 
 namespace Nitrox.Launcher.ViewModels;
 
@@ -50,38 +49,40 @@ public partial class BackupRestoreViewModel : ModalViewModelBase
 
     private static IEnumerable<BackupItem> GetBackups(string saveDirectory)
     {
-        IEnumerable<string> GetBackupFilePaths(string backupRootDir) =>
-            Directory.EnumerateFiles(backupRootDir, "*.zip")
-                     .Where(file =>
-                     {
-                         // Verify file name format of "Backup - {DateTime:BACKUP_DATE_TIME_FORMAT}.zip"
-                         string fileName = Path.GetFileNameWithoutExtension(file);
-                         if (!fileName.StartsWith("Backup - "))
-                         {
-                             return false;
-                         }
-
-                         string dateTimePart = fileName["Backup - ".Length..];
-                         return DateTime.TryParseExact(dateTimePart, WorldPersistence.BACKUP_DATE_TIME_FORMAT, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
-                     });
-
-        if (saveDirectory == null)
-        {
-            yield break;
-        }
-        string backupDir = Path.Combine(saveDirectory, "Backups");
-        if (!Directory.Exists(backupDir))
-        {
-            yield break;
-        }
-
-        foreach (string backupPath in GetBackupFilePaths(backupDir))
-        {
-            if (!DateTime.TryParseExact(Path.GetFileNameWithoutExtension(backupPath)["Backup - ".Length..], WorldPersistence.BACKUP_DATE_TIME_FORMAT, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime backupDate))
-            {
-                backupDate = File.GetCreationTime(backupPath);
-            }
-            yield return new BackupItem(backupDate, backupPath);
-        }
+        return [];
+        // TODO: REDO BACKUPS TO CHECK DATABASE FILES
+        // IEnumerable<string> GetBackupFilePaths(string backupRootDir) =>
+        //     Directory.EnumerateFiles(backupRootDir, "*.zip")
+        //              .Where(file =>
+        //              {
+        //                  // Verify file name format of "Backup - {DateTime:BACKUP_DATE_TIME_FORMAT}.zip"
+        //                  string fileName = Path.GetFileNameWithoutExtension(file);
+        //                  if (!fileName.StartsWith("Backup - "))
+        //                  {
+        //                      return false;
+        //                  }
+        //
+        //                  string dateTimePart = fileName["Backup - ".Length..];
+        //                  return DateTime.TryParseExact(dateTimePart, WorldPersistence.BACKUP_DATE_TIME_FORMAT, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+        //              });
+        //
+        // if (saveDirectory == null)
+        // {
+        //     yield break;
+        // }
+        // string backupDir = Path.Combine(saveDirectory, "Backups");
+        // if (!Directory.Exists(backupDir))
+        // {
+        //     yield break;
+        // }
+        //
+        // foreach (string backupPath in GetBackupFilePaths(backupDir))
+        // {
+        //     if (!DateTime.TryParseExact(Path.GetFileNameWithoutExtension(backupPath)["Backup - ".Length..], WorldPersistence.BACKUP_DATE_TIME_FORMAT, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime backupDate))
+        //     {
+        //         backupDate = File.GetCreationTime(backupPath);
+        //     }
+        //     yield return new BackupItem(backupDate, backupPath);
+        // }
     }
 }

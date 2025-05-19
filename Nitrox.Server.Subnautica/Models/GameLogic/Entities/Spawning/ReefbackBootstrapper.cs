@@ -3,8 +3,6 @@ using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Unity;
-using NitroxServer.GameLogic.Entities.Spawning;
-using NitroxServer.Helper;
 using static Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning.ReefbackSpawnData;
 
 namespace Nitrox.Server.Subnautica.Models.GameLogic.Entities.Spawning;

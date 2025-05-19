@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using Microsoft.Extensions.Options;
 using NitroxModel.DataStructures.Unity;
-using NitroxServer.Helper;
 
 namespace Nitrox.Server.Subnautica.Models.Helper;
 

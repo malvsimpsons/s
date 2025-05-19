@@ -1,13 +1,12 @@
 using Nitrox.Model.Subnautica.DataStructures.Surrogates;
 using NitroxModel.DataStructures.Unity;
-using NitroxServer.Serialization;
 using UnityEngine;
 
 namespace Nitrox.Server.Subnautica.Models.Serialization;
 
 public class SubnauticaServerProtoBufSerializer : ServerProtoBufSerializer
 {
-    public SubnauticaServerProtoBufSerializer() : base("Assembly-CSharp", "Assembly-CSharp-firstpass", "NitroxModel", "Nitrox.Model.Subnautica")
+    public SubnauticaServerProtoBufSerializer(ILogger<SubnauticaServerProtoBufSerializer> logger) : base(logger, "Assembly-CSharp", "Assembly-CSharp-firstpass", "NitroxModel", "Nitrox.Model.Subnautica")
     {
         RegisterHardCodedTypes();
     }
@@ -24,6 +23,6 @@ public class SubnauticaServerProtoBufSerializer : ServerProtoBufSerializer
         Model.Add(typeof(Quaternion), false).SetSurrogate(typeof(QuaternionSurrogate));
         Model.Add(typeof(NitroxQuaternion), false).SetSurrogate(typeof(QuaternionSurrogate));
         Model.Add(typeof(Transform), false).SetSurrogate(typeof(NitroxTransform));
-        Model.Add(typeof(GameObject), false).SetSurrogate(typeof(NitroxServer.UnityStubs.GameObject));
+        Model.Add(typeof(GameObject), false).SetSurrogate(typeof(UnityStubs.GameObject));
     }
 }

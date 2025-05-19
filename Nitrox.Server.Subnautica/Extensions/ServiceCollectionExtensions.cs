@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using AssetsTools.NET.Extra;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,8 +32,6 @@ using Nitrox.Server.Subnautica.Services;
 using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.Helper;
 using NitroxModel.Networking.Packets.Processors.Core;
-using NitroxServer.GameLogic.Entities;
-using NitroxServer.GameLogic.Entities.Spawning;
 using ServiceScan.SourceGenerator;
 using ZLogger.Providers;
 
@@ -183,7 +180,7 @@ internal static partial class ServiceCollectionExtensions
             .AddSingleton<BatchEntitySpawnerService>()
             .AddSingleton<EntitySpawnPointFactory, SubnauticaEntitySpawnPointFactory>()
             .AddSingleton<IUweWorldEntityFactory, SubnauticaUweWorldEntityFactory>()
-            .AddSingleton<ISimulationWhitelist, SimulationWhitelist>();
+            .AddSingleton<Models.GameLogic.Entities.ISimulationWhitelist, SimulationWhitelist>();
 
     public static IServiceCollection AddSubnauticaResources(this IServiceCollection services) =>
         services
@@ -201,7 +198,7 @@ internal static partial class ServiceCollectionExtensions
     ///     Registers <see cref="IListen" /> types into DI together with an appropriate <see cref="ITrigger{TListen}" /> to
     ///     trigger the respective event listeners.
     /// </summary>
-    [GenerateServiceRegistrations(AssignableTo = typeof(IListen<,>), CustomHandler = nameof(AddAppEvent))]
+    [GenerateServiceRegistrations(AssignableTo = typeof(IListen<,>), CustomHandler = nameof(AddImplementedAppEvents))]
     internal static partial IServiceCollection AddAppEvents(this IServiceCollection services);
 
     [GenerateServiceRegistrations(AssignableTo = typeof(IRedactor), Lifetime = ServiceLifetime.Singleton)]
@@ -219,7 +216,7 @@ internal static partial class ServiceCollectionExtensions
     [GenerateServiceRegistrations(AssignableTo = typeof(IPacketProcessor), Lifetime = ServiceLifetime.Singleton)]
     private static partial IServiceCollection AddPacketProcessors(this IServiceCollection services);
 
-    private static IServiceCollection AddAppEvent<TListenImpl>(this IServiceCollection services)
+    private static IServiceCollection AddImplementedAppEvents<TListenImpl>(this IServiceCollection services)
     {
         Type implementingType = typeof(TListenImpl);
         Type[] listeningInterfaces = implementingType.GetInterfaces().Where(i =>

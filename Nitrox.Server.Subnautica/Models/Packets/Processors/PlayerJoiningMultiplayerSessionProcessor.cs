@@ -97,23 +97,23 @@ internal class PlayerJoiningMultiplayerSessionProcessor(
         // player.SendPacket(initialPlayerSync);
     }
 
-    private PlayerWorldEntity SetupPlayerEntity(NitroxServer.Player player)
-    {
-        NitroxTransform transform = new(player.Position, player.Rotation, NitroxVector3.One);
-
-        PlayerWorldEntity playerEntity = new(transform, 0, null, false, player.GameObjectId, NitroxTechType.None, null, null, new List<Entity>());
-        entityRegistry.AddOrUpdate(playerEntity);
-        worldEntityManager.TrackEntityInTheWorld(playerEntity);
-        return playerEntity;
-    }
-
-    private PlayerWorldEntity RespawnExistingEntity(NitroxServer.Player player)
-    {
-        if (entityRegistry.TryGetEntityById(player.PlayerContext.PlayerNitroxId, out PlayerWorldEntity playerWorldEntity))
-        {
-            return playerWorldEntity;
-        }
-        logger.ZLogError($"Unable to find player entity for {player.Name}. Re-creating one");
-        return SetupPlayerEntity(player);
-    }
+    // private PlayerWorldEntity SetupPlayerEntity(NitroxServer.Player player)
+    // {
+    //     NitroxTransform transform = new(player.Position, player.Rotation, NitroxVector3.One);
+    //
+    //     PlayerWorldEntity playerEntity = new(transform, 0, null, false, player.GameObjectId, NitroxTechType.None, null, null, new List<Entity>());
+    //     entityRegistry.AddOrUpdate(playerEntity);
+    //     worldEntityManager.TrackEntityInTheWorld(playerEntity);
+    //     return playerEntity;
+    // }
+    //
+    // private PlayerWorldEntity RespawnExistingEntity(NitroxServer.Player player)
+    // {
+    //     if (entityRegistry.TryGetEntityById(player.PlayerContext.PlayerNitroxId, out PlayerWorldEntity playerWorldEntity))
+    //     {
+    //         return playerWorldEntity;
+    //     }
+    //     logger.ZLogError($"Unable to find player entity for {player.Name}. Re-creating one");
+    //     return SetupPlayerEntity(player);
+    // }
 }

@@ -69,9 +69,9 @@ public class Program
 
     private static async Task StartServerAsync(string[] args)
     {
-        // TODO: Investigate Entity Framework query pre-compiling and other SQL optimizations.
-
         // TODO: Add "log once" behavior
+
+        // TODO: Implement SubnauticaWorldModifier
 
         HostApplicationBuilder builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
         {
