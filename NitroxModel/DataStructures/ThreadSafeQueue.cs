@@ -15,7 +15,7 @@ public class ThreadSafeQueue<T> : IReadOnlyCollection<T>, ICollection
 {
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     [IgnoreDataMember]
-    private readonly LockObject locker = new();
+    private readonly object locker = new();
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     [JsonProperty, ProtoIgnore]
