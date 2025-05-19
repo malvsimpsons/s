@@ -1,17 +1,7 @@
 ﻿using System;
 using NitroxModel.Networking.Session;
 
-namespace NitroxModel.Networking.Packets
-{
-    [Serializable]
-    public record SessionReservationRequest : CorrelatedPacket    {
-        public PlayerSettings PlayerSettings { get; }
-        public AuthenticationContext AuthenticationContext { get; }
+namespace NitroxModel.Networking.Packets;
 
-        public SessionReservationRequest(string correlationId, PlayerSettings playerSettings, AuthenticationContext authenticationContext) : base(correlationId)
-        {
-            PlayerSettings = playerSettings;
-            AuthenticationContext = authenticationContext;
-        }
-    }
-}
+[Serializable]
+public record SessionReservationRequest(PlayerSettings PlayerSettings, AuthenticationContext AuthenticationContext) : Packet;

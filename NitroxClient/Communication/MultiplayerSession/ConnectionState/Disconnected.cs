@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using NitroxClient.Communication.Abstract;
 using NitroxClient.Communication.Exceptions;
 using NitroxModel.Helper;
@@ -63,13 +62,9 @@ namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
 
         private static void EstablishSessionPolicy(IMultiplayerSessionConnectionContext sessionConnectionContext, IClient client)
         {
-            string policyRequestCorrelationId = Guid.NewGuid().ToString();
+            client.Send(new SessionPolicyRequest());
 
-            SessionPolicyRequest requestPacket = new(policyRequestCorrelationId);
-            client.Send(requestPacket);
-
-            EstablishingSessionPolicy nextState = new(policyRequestCorrelationId);
-            sessionConnectionContext.UpdateConnectionState(nextState);
+            sessionConnectionContext.UpdateConnectionState(new EstablishingSessionPolicy());
         }
 
         public void JoinSession(IMultiplayerSessionConnectionContext sessionConnectionContext)

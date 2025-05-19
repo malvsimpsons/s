@@ -11,7 +11,7 @@ namespace NitroxClient.Communication.Abstract
         event MultiplayerSessionConnectionStateChangedEventHandler ConnectionStateChanged;
 
         Task ConnectAsync(string ipAddress, int port);
-        void ProcessSessionPolicy(MultiplayerSessionPolicy policy);
+        void ProcessSessionPolicy(SessionPolicy policy);
         void RequestSessionReservation(PlayerSettings playerSettings, AuthenticationContext authenticationContext);
         void ProcessReservationResponsePacket(SessionReservation reservation);
         void JoinSession();

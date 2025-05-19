@@ -1,68 +1,47 @@
 ﻿using System;
-using System.Threading.Tasks;
 using NitroxClient.Communication.Abstract;
 using NitroxModel.Helper;
-using NitroxModel.Networking.Packets.Core;
 
-namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
+namespace NitroxClient.Communication.MultiplayerSession.ConnectionState;
+
+public class EstablishingSessionPolicy : ConnectionNegotiatingState
 {
-    public class EstablishingSessionPolicy : ConnectionNegotiatingState
+    public override MultiplayerSessionConnectionStage CurrentStage => MultiplayerSessionConnectionStage.ESTABLISHING_SERVER_POLICY;
+
+    public override Task NegotiateReservationAsync(IMultiplayerSessionConnectionContext sessionConnectionContext)
     {
-        private readonly string policyRequestCorrelationId;
-
-        public EstablishingSessionPolicy(string policyRequestCorrelationId)
+        try
         {
-            Validate.NotNull(policyRequestCorrelationId);
-            this.policyRequestCorrelationId = policyRequestCorrelationId;
+            ValidateState(sessionConnectionContext);
+            AwaitReservationCredentials(sessionConnectionContext);
         }
-
-        public override MultiplayerSessionConnectionStage CurrentStage => MultiplayerSessionConnectionStage.ESTABLISHING_SERVER_POLICY;
-
-        public override Task NegotiateReservationAsync(IMultiplayerSessionConnectionContext sessionConnectionContext)
+        catch (Exception)
         {
-            try
-            {
-                ValidateState(sessionConnectionContext);
-                AwaitReservationCredentials(sessionConnectionContext);
-            }
-            catch (Exception)
-            {
-                Disconnect(sessionConnectionContext);
-                throw;
-            }
-            return Task.CompletedTask;
+            Disconnect(sessionConnectionContext);
+            throw;
         }
+        return Task.CompletedTask;
+    }
 
-        private void ValidateState(IMultiplayerSessionConnectionContext sessionConnectionContext)
-        {
-            SessionPolicyIsNotNull(sessionConnectionContext);
-            SessionPolicyPacketCorrelation(sessionConnectionContext);
-        }
+    private void ValidateState(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        SessionPolicyIsNotNull(sessionConnectionContext);
+    }
 
-        private static void SessionPolicyIsNotNull(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    private static void SessionPolicyIsNotNull(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        try
         {
-            try
-            {
-                Validate.NotNull(sessionConnectionContext.SessionPolicy);
-            }
-            catch (ArgumentNullException ex)
-            {
-                throw new InvalidOperationException("The context is missing a session policy.", ex);
-            }
+            Validate.NotNull(sessionConnectionContext.SessionPolicy);
         }
+        catch (ArgumentNullException ex)
+        {
+            throw new InvalidOperationException("The context is missing a session policy.", ex);
+        }
+    }
 
-        private void SessionPolicyPacketCorrelation(IMultiplayerSessionConnectionContext sessionConnectionContext)
-        {
-            if (!policyRequestCorrelationId.Equals(sessionConnectionContext.SessionPolicy.CorrelationId))
-            {
-                throw new UncorrelatedPacketException(sessionConnectionContext.SessionPolicy, policyRequestCorrelationId);
-            }
-        }
-
-        private void AwaitReservationCredentials(IMultiplayerSessionConnectionContext sessionConnectionContext)
-        {
-            AwaitingReservationCredentials nextState = new AwaitingReservationCredentials();
-            sessionConnectionContext.UpdateConnectionState(nextState);
-        }
+    private void AwaitReservationCredentials(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        sessionConnectionContext.UpdateConnectionState(new AwaitingReservationCredentials());
     }
 }

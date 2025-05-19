@@ -40,12 +40,13 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeS
     private readonly PacketSerializationService packetSerializationService;
     private readonly ConcurrentDictionary<SessionId, NetPeer> peersBySessionId = [];
     private readonly NetManager server;
-    private readonly SessionRepository sessionRepository;
     private readonly ITrigger<ISeeSessionCreated, Session> sessionCreatedTrigger;
+    private readonly SessionRepository sessionRepository;
     private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
     public int EventPriority => -100;
 
-    public LiteNetLibService(PacketRegistryService packetRegistryService, PacketSerializationService packetSerializationService, SessionRepository sessionRepository, ITrigger<ISeeSessionCreated, Session> sessionCreatedTrigger, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
+    public LiteNetLibService(PacketRegistryService packetRegistryService, PacketSerializationService packetSerializationService, SessionRepository sessionRepository, ITrigger<ISeeSessionCreated, Session> sessionCreatedTrigger,
+                             IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
     {
         this.packetRegistryService = packetRegistryService;
         this.packetSerializationService = packetSerializationService;
@@ -212,7 +213,13 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeS
                 sessionId = pair.Key;
             }
         }
-        if (!sessionId.HasValue || !taskChannel.Writer.TryWrite(sessionRepository.DeleteSessionAsync(sessionId.Value)))
+
+        if (!sessionId.HasValue)
+        {
+            logger.ZLogWarning($"Disconnected peer id {peer.Id} did not have an associated session id!");
+            return;
+        }
+        if (!taskChannel.Writer.TryWrite(sessionRepository.DeleteSessionAsync(sessionId.Value)))
         {
             logger.ZLogWarning($"Failed to queue client disconnect task for {(peer as EndPoint).ToSensitive():@EndPoint}");
         }
@@ -320,12 +327,15 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeS
         int bytesWritten = (int)(stream.Position - startPos);
         Span<byte> packetData = stream.GetBuffer().AsSpan().Slice(startPos, bytesWritten);
 
-        dataWriter.Reset();
-        dataWriter.Put(packetData.Length);
-        dataWriter.ResizeIfNeed(packetData.Length + 4);
-        packetData.CopyTo(dataWriter.Data.AsSpan().Slice(4));
-        dataWriter.SetPosition(packetData.Length + 4);
-        peer.Send(dataWriter, (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
+        lock (dataWriter)
+        {
+            dataWriter.Reset();
+            dataWriter.Put(packetData.Length);
+            dataWriter.ResizeIfNeed(packetData.Length + 4);
+            packetData.CopyTo(dataWriter.Data.AsSpan().Slice(4));
+            dataWriter.SetPosition(packetData.Length + 4);
+            peer.Send(dataWriter, (byte)packet.UdpChannel, NitroxDeliveryMethod.ToLiteNetLib(packet.DeliveryMethod));
+        }
 
         // Cleanup pooled data.
         stream.Position = 0;

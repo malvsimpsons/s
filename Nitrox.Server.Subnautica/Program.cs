@@ -74,6 +74,8 @@ public class Program
 
         // TODO: Fix launcher backups to support new server save files.
 
+        // TODO: SEND LOGIN KEY TO CLIENT ON NEW PLAYER DATA.
+
         HostApplicationBuilder builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
         {
             DisableDefaults = true,

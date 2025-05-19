@@ -1,24 +1,21 @@
 ﻿using System;
 using NitroxModel.Networking.Session;
 
-namespace NitroxModel.Networking.Packets
-{
-    [Serializable]
-    public record SessionReservation : CorrelatedPacket    {
-        public ushort PlayerId { get; }
-        public string ReservationKey { get; }
-        public SessionReservationState ReservationState { get; }
+namespace NitroxModel.Networking.Packets;
 
-        public SessionReservation(string correlationId, SessionReservationState reservationState) : base(correlationId)
-        {
-            ReservationState = reservationState;
-        }
-        
-        public SessionReservation(string correlationId, ushort playerId, string reservationKey, 
-                                             SessionReservationState reservationState = SessionReservationState.RESERVED) : this(correlationId, reservationState)
-        {
-            PlayerId = playerId;
-            ReservationKey = reservationKey;
-        }
+[Serializable]
+public record SessionReservation : Packet
+{
+    public SessionReservation(SessionReservationState reservationState)
+    {
+        ReservationState = reservationState;
     }
+
+    public SessionReservation(string reservationKey, SessionReservationState reservationState = SessionReservationState.RESERVED) : this(reservationState)
+    {
+        ReservationKey = reservationKey;
+    }
+
+    public string ReservationKey { get; }
+    public SessionReservationState ReservationState { get; }
 }

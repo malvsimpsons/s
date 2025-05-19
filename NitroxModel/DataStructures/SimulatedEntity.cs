@@ -15,20 +15,20 @@ namespace NitroxModel.DataStructures
         /// </summary>
         public bool ChangesPosition { get; }
         public NitroxId Id { get; }
-        public PeerId PlayerId { get; }
+        public SessionId SessionId { get; }
         public SimulationLockType LockType { get; }
 
-        public SimulatedEntity(NitroxId id, PeerId playerId, bool changesPosition, SimulationLockType lockType)
+        public SimulatedEntity(NitroxId id, SessionId sessionId, bool changesPosition, SimulationLockType lockType)
         {
             Id = id;
-            PlayerId = playerId;
+            SessionId = sessionId;
             ChangesPosition = changesPosition;
             LockType = lockType;
         }
 
         public override string ToString()
         {
-            return $"[SimulatedEntity Id: {Id}, PlayerId: {PlayerId}, ChangesPosition: {ChangesPosition}, LockType: {LockType}]";
+            return $"[SimulatedEntity Id: {Id}, PlayerId: {SessionId}, ChangesPosition: {ChangesPosition}, LockType: {LockType}]";
         }
     }
 }

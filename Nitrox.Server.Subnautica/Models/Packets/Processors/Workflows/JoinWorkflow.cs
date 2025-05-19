@@ -1,30 +1,32 @@
 using System;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
 using Nitrox.Server.Subnautica.Models.Respositories;
+using NitroxModel.Helper;
 using NitroxModel.Networking.Packets;
 using NitroxModel.Networking.Session;
+using static NitroxModel.Networking.Session.SessionReservationState;
 
 namespace Nitrox.Server.Subnautica.Models.Packets.Processors.Workflows;
 
 /// <summary>
-///     Handles packets related to the game join process.
+///     This handles packets related to the game join process.
 /// </summary>
 internal sealed class JoinWorkflow(SessionRepository sessionRepository, IOptionsMonitor<SubnauticaServerOptions> optionsProvider, ILogger<JoinWorkflow> logger) :
     IAnonPacketProcessor<SessionPolicyRequest>,
     IAnonPacketProcessor<SessionReservationRequest>
 {
-    private readonly SessionRepository sessionRepository = sessionRepository;
     private readonly ILogger<JoinWorkflow> logger = logger;
     private readonly IOptionsMonitor<SubnauticaServerOptions> optionsProvider = optionsProvider;
+    private readonly SessionRepository sessionRepository = sessionRepository;
 
     public async Task Process(AnonProcessorContext context, SessionPolicyRequest packet)
     {
         logger.ZLogInformation($"Providing join policies to session #{context.Sender:@SessionId}...");
         SubnauticaServerOptions options = optionsProvider.CurrentValue;
-        await context.ReplyToSender(new MultiplayerSessionPolicy(packet.CorrelationId, options.DisableConsole, options.MaxConnections, options.IsPasswordRequired()));
+        // TODO: Provide a server ID that is globally unique for clients to identify which server they speak to.
+        await context.ReplyToSender(new SessionPolicy(context.Sender, options.DisableConsole, options.MaxConnections, options.IsPasswordRequired()));
     }
 
     public async Task Process(AnonProcessorContext context, SessionReservationRequest packet)
@@ -36,21 +38,17 @@ internal sealed class JoinWorkflow(SessionRepository sessionRepository, IOptions
 
         if (await sessionRepository.GetActiveSessionCount() >= options.MaxConnections)
         {
-            SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.SERVER_PLAYER_CAPACITY_REACHED;
-            await context.ReplyToSender(new SessionReservation(packet.CorrelationId, rejectedState));
+            await context.ReplyToSender(new SessionReservation(REJECTED | SERVER_PLAYER_CAPACITY_REACHED));
             return;
         }
         if (!string.IsNullOrEmpty(options.ServerPassword) && (!authenticationContext.ServerPassword.HasValue || authenticationContext.ServerPassword.Value != options.ServerPassword))
         {
-            SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.AUTHENTICATION_FAILED;
-            await context.ReplyToSender(new SessionReservation(packet.CorrelationId, rejectedState));
+            await context.ReplyToSender(new SessionReservation(REJECTED | AUTHENTICATION_FAILED));
             return;
         }
-        //https://regex101.com/r/eTWiEs/2/
-        if (!Regex.IsMatch(authenticationContext.Username, @"^[a-zA-Z0-9._-]{3,25}$")) // TODO: Allow player names with spaces.
+        if (!PlayerNameHelper.IsValidPlayerName(packet.PlayerSettings.Username))
         {
-            SessionReservationState rejectedState = SessionReservationState.REJECTED | SessionReservationState.INCORRECT_USERNAME;
-            await context.ReplyToSender(new SessionReservation(packet.CorrelationId, rejectedState));
+            await context.ReplyToSender(new SessionReservation(REJECTED | INCORRECT_USERNAME));
             return;
         }
 
@@ -103,7 +101,7 @@ internal sealed class JoinWorkflow(SessionRepository sessionRepository, IOptions
         // InitialSyncTimerData timerData = new(connection, authenticationContext, serverConfig.InitialSyncTimeout);
         // initialSyncTimer = new Timer(InitialSyncTimerElapsed, timerData, 0, 200);
 
-        SessionReservation reservation = new(packet.CorrelationId, 1, Guid.NewGuid().ToString()); // TODO: Change player id!
+        SessionReservation reservation = new(Guid.NewGuid().ToString());
         logger.ZLogInformation($"Reservation processed successfully for session #{context.Sender} - {reservation}");
         await context.ReplyToSender(reservation);
     }

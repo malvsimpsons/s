@@ -9,11 +9,11 @@ namespace NitroxModel.Networking.Packets
     {
         public List<SimulatedEntity> Entities { get; }
 
-        public SimulationOwnershipChange(NitroxId id, PeerId owningPlayerId, SimulationLockType lockType, bool changesPosition = false)
+        public SimulationOwnershipChange(NitroxId id, SessionId owningSessionId, SimulationLockType lockType, bool changesPosition = false)
         {
             Entities = new List<SimulatedEntity>
             {
-                new(id, owningPlayerId, changesPosition, lockType)
+                new(id, owningSessionId, changesPosition, lockType)
             };
         }
 

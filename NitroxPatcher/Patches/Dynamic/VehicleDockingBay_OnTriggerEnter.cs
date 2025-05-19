@@ -35,7 +35,7 @@ public sealed partial class VehicleDockingBay_OnTriggerEnter : NitroxPatch, IDyn
             Resolve<SimulationOwnership>().HasAnyLockType(vehicleId))
         {
             Vehicles.EngagePlayerMovementSuppressor(interpolatingVehicle);
-            Resolve<IPacketSender>().Send(new VehicleDocking(vehicleId, dockId, Resolve<IMultiplayerSession>().Reservation.PlayerId));
+            Resolve<IPacketSender>().Send(new VehicleDocking(vehicleId, dockId, Resolve<IMultiplayerSession>().SessionPolicy.SessionId));
         }
     }
 }

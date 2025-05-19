@@ -1,74 +1,54 @@
 ﻿using System;
-using System.Threading.Tasks;
 using NitroxClient.Communication.Abstract;
 using NitroxModel.Helper;
-using NitroxModel.Networking.Packets.Core;
 using NitroxModel.Networking.Session;
 
-namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
+namespace NitroxClient.Communication.MultiplayerSession.ConnectionState;
+
+public class AwaitingSessionReservation : ConnectionNegotiatingState
 {
-    public class AwaitingSessionReservation : ConnectionNegotiatingState
+    public override MultiplayerSessionConnectionStage CurrentStage => MultiplayerSessionConnectionStage.AWAITING_SESSION_RESERVATION;
+
+    public override Task NegotiateReservationAsync(IMultiplayerSessionConnectionContext sessionConnectionContext)
     {
-        private readonly string reservationCorrelationId;
-
-        public AwaitingSessionReservation(string reservationCorrelationId)
+        try
         {
-            Validate.NotNull(reservationCorrelationId);
-            this.reservationCorrelationId = reservationCorrelationId;
+            ValidateState(sessionConnectionContext);
+            HandleReservation(sessionConnectionContext);
         }
-
-        public override MultiplayerSessionConnectionStage CurrentStage => MultiplayerSessionConnectionStage.AWAITING_SESSION_RESERVATION;
-
-        public override Task NegotiateReservationAsync(IMultiplayerSessionConnectionContext sessionConnectionContext)
+        catch (Exception)
         {
-            try
-            {
-                ValidateState(sessionConnectionContext);
-                HandleReservation(sessionConnectionContext);
-            }
-            catch (Exception)
-            {
-                Disconnect(sessionConnectionContext);
-                throw;
-            }
-            return Task.CompletedTask;
+            Disconnect(sessionConnectionContext);
+            throw;
         }
+        return Task.CompletedTask;
+    }
 
-        private static void HandleReservation(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    private static void HandleReservation(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        IMultiplayerSessionConnectionState nextState = sessionConnectionContext.Reservation.ReservationState switch
         {
-            IMultiplayerSessionConnectionState nextState = sessionConnectionContext.Reservation.ReservationState switch
-            {
-                SessionReservationState.RESERVED => new SessionReserved(),
-                _ => new SessionReservationRejected(),
-            };
+            SessionReservationState.RESERVED => new SessionReserved(),
+            _ => new SessionReservationRejected(),
+        };
 
-            sessionConnectionContext.UpdateConnectionState(nextState);
+        sessionConnectionContext.UpdateConnectionState(nextState);
+    }
+
+    private void ValidateState(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        ReservationIsNotNull(sessionConnectionContext);
+    }
+
+    private static void ReservationIsNotNull(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        try
+        {
+            Validate.NotNull(sessionConnectionContext.Reservation);
         }
-
-        private void ValidateState(IMultiplayerSessionConnectionContext sessionConnectionContext)
+        catch (ArgumentNullException ex)
         {
-            ReservationIsNotNull(sessionConnectionContext);
-            ReservationPacketIsCorrelated(sessionConnectionContext);
-        }
-
-        private static void ReservationIsNotNull(IMultiplayerSessionConnectionContext sessionConnectionContext)
-        {
-            try
-            {
-                Validate.NotNull(sessionConnectionContext.Reservation);
-            }
-            catch (ArgumentNullException ex)
-            {
-                throw new InvalidOperationException("The context does not have a reservation.", ex);
-            }
-        }
-
-        private void ReservationPacketIsCorrelated(IMultiplayerSessionConnectionContext sessionConnectionContext)
-        {
-            if (!reservationCorrelationId.Equals(sessionConnectionContext.Reservation.CorrelationId))
-            {
-                throw new UncorrelatedPacketException(sessionConnectionContext.Reservation, reservationCorrelationId);
-            }
+            throw new InvalidOperationException("The context does not have a reservation.", ex);
         }
     }
 }

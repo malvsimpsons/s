@@ -3,7 +3,7 @@ using NitroxModel.Networking.Packets;
 
 namespace NitroxClient.Communication.Packets.Processors
 {
-    public class MultiplayerSessionPolicyProcessor : IClientPacketProcessor<MultiplayerSessionPolicy>
+    public class MultiplayerSessionPolicyProcessor : IClientPacketProcessor<SessionPolicy>
     {
         private readonly IMultiplayerSession multiplayerSession;
 
@@ -12,7 +12,7 @@ namespace NitroxClient.Communication.Packets.Processors
             this.multiplayerSession = multiplayerSession;
         }
 
-        public Task Process(IPacketProcessContext context, MultiplayerSessionPolicy packet)
+        public Task Process(IPacketProcessContext context, SessionPolicy packet)
         {
             Log.Info($"Processing session policy {packet}");
             multiplayerSession.ProcessSessionPolicy(packet);

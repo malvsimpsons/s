@@ -20,8 +20,7 @@ internal sealed class PickupItemPacketProcessor(EntityRegistry entityRegistry, W
         NitroxId id = packet.Item.Id;
         if (simulationOwnershipData.RevokeOwnerOfId(id))
         {
-            ushort serverId = ushort.MaxValue;
-            SimulationOwnershipChange simulationOwnershipChange = new(id, serverId, SimulationLockType.TRANSIENT);
+            SimulationOwnershipChange simulationOwnershipChange = new(id, SessionId.SERVER_ID, SimulationLockType.TRANSIENT);
             await context.ReplyToAll(simulationOwnershipChange);
         }
 

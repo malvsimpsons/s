@@ -14,7 +14,7 @@ internal sealed class PlaceBaseProcessor(BuildingManager buildingManager, Entity
     {
         if (buildingManager.CreateBase(packet))
         {
-            await entitySimulation.ClaimBuildPiece(packet.BuildEntity, context.Sender.PlayerId);
+            await entitySimulation.ClaimBuildPiece(packet.BuildEntity, context.Sender.SessionId);
             packet.Deflate();
             await context.ReplyToOthers(packet);
         }

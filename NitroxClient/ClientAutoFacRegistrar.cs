@@ -20,13 +20,11 @@ using NitroxClient.GameLogic.Settings;
 using NitroxClient.GameLogic.Spawning.Metadata;
 using NitroxClient.GameLogic.Spawning.Metadata.Extractor.Abstract;
 using NitroxClient.GameLogic.Spawning.Metadata.Processor.Abstract;
-using NitroxClient.Helpers;
 using NitroxModel;
 using NitroxModel.Core;
 using NitroxModel.GameLogic.FMOD;
 using NitroxModel.Helper;
 using NitroxModel.Networking;
-using NitroxModel.Networking.Packets.Processors.Core;
 
 namespace NitroxClient
 {

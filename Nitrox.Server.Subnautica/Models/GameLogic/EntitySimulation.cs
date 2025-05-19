@@ -29,17 +29,17 @@ internal sealed class EntitySimulation : ISeeSessionDisconnected
         this.simulationWhitelist = simulationWhitelist;
     }
 
-    public List<SimulatedEntity> GetSimulationChangesForCell(PeerId player, AbsoluteEntityCell cell)
+    public List<SimulatedEntity> GetSimulationChangesForCell(SessionId sessionId, AbsoluteEntityCell cell)
     {
         List<WorldEntity> entities = worldEntityManager.GetEntities(cell);
-        List<WorldEntity> addedEntities = FilterSimulatableEntities(player, entities);
+        List<WorldEntity> addedEntities = FilterSimulatableEntities(sessionId, entities);
 
         List<SimulatedEntity> ownershipChanges = new();
 
         foreach (WorldEntity entity in addedEntities)
         {
             bool doesEntityMove = ShouldSimulateEntityMovement(entity);
-            ownershipChanges.Add(new SimulatedEntity(entity.Id, player, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE));
+            ownershipChanges.Add(new SimulatedEntity(entity.Id, sessionId, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE));
         }
 
         return ownershipChanges;
@@ -74,29 +74,29 @@ internal sealed class EntitySimulation : ISeeSessionDisconnected
         return ownershipChanges;
     }
 
-    public SimulatedEntity AssignNewEntityToPlayer(Entity entity, PeerId player, bool shouldEntityMove = true)
+    public SimulatedEntity AssignNewEntityToPlayer(Entity entity, SessionId sessionId, bool shouldEntityMove = true)
     {
-        if (simulationOwnershipData.TryToAcquire(entity.Id, player, DEFAULT_ENTITY_SIMULATION_LOCKTYPE))
+        if (simulationOwnershipData.TryToAcquire(entity.Id, sessionId, DEFAULT_ENTITY_SIMULATION_LOCKTYPE))
         {
             bool doesEntityMove = shouldEntityMove && entity is WorldEntity worldEntity && ShouldSimulateEntityMovement(worldEntity);
-            return new SimulatedEntity(entity.Id, player, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE);
+            return new SimulatedEntity(entity.Id, sessionId, doesEntityMove, DEFAULT_ENTITY_SIMULATION_LOCKTYPE);
         }
 
         throw new Exception($"New entity was already being simulated by someone else: {entity.Id}");
     }
 
-    public List<SimulatedEntity> AssignGlobalRootEntitiesAndGetData(PeerId player)
+    public List<SimulatedEntity> AssignGlobalRootEntitiesAndGetData(SessionId sessionId)
     {
         List<SimulatedEntity> simulatedEntities = new();
         foreach (GlobalRootEntity entity in worldEntityManager.GetGlobalRootEntities())
         {
-            simulationOwnershipData.TryToAcquire(entity.Id, player, SimulationLockType.TRANSIENT);
+            simulationOwnershipData.TryToAcquire(entity.Id, sessionId, SimulationLockType.TRANSIENT);
             if (!simulationOwnershipData.TryGetLock(entity.Id, out SimulationOwnershipData.PlayerLock playerLock))
             {
                 continue;
             }
             bool doesEntityMove = ShouldSimulateEntityMovement(entity);
-            SimulatedEntity simulatedEntity = new(entity.Id, playerLock.PlayerId, doesEntityMove, playerLock.LockType);
+            SimulatedEntity simulatedEntity = new(entity.Id, playerLock.SessionId, doesEntityMove, playerLock.LockType);
             simulatedEntities.Add(simulatedEntity);
         }
         return simulatedEntities;
@@ -137,7 +137,7 @@ internal sealed class EntitySimulation : ISeeSessionDisconnected
         return false;
     }
 
-    private List<WorldEntity> FilterSimulatableEntities(PeerId player, List<WorldEntity> entities)
+    private List<WorldEntity> FilterSimulatableEntities(SessionId sessionId, List<WorldEntity> entities)
     {
         return [];
 
@@ -168,7 +168,7 @@ internal sealed class EntitySimulation : ISeeSessionDisconnected
         simulationOwnershipData.RevokeOwnerOfId(id);
     }
 
-    public async Task ClaimBuildPiece(Entity entity, PeerId player)
+    public async Task ClaimBuildPiece(Entity entity, SessionId player)
     {
         SimulatedEntity simulatedEntity = AssignNewEntityToPlayer(entity, player, false);
         SimulationOwnershipChange ownershipChangePacket = new(simulatedEntity);

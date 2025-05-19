@@ -20,7 +20,7 @@ public sealed partial class SubnauticaServerOptions
 
     [ConfigurationKeyName("port")]
     [Range(1, ushort.MaxValue)]
-    public ushort ServerPort { get; set; } = 11000;
+    public ushort ServerPort { get; set; } = ServerConstants.DEFAULT_PORT;
 
     [RegularExpression(@"\w+")]
     public string ServerPassword { get; set; } = "";

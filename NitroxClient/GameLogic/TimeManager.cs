@@ -132,10 +132,12 @@ public partial class TimeManager
 
         // We don't want to have a big DeltaTime when processing a time skip so we calculate it beforehands
         float deltaTimeBefore = DeltaTime;
-        DayNightCycle.main.timePassedAsDouble = CalculateCurrentTime();
-        DeltaTime = deltaTimeBefore;
-
-        DayNightCycle.main.StopSkipTimeMode();
+        if (DayNightCycle.main)
+        {
+            DayNightCycle.main.timePassedAsDouble = CalculateCurrentTime();
+            DeltaTime = deltaTimeBefore;
+            DayNightCycle.main.StopSkipTimeMode();
+        }
     }
 
     /// <remarks>
@@ -144,6 +146,12 @@ public partial class TimeManager
     /// <returns>The newly calculated time from <see cref="CurrentTime"/></returns>
     public double CalculateCurrentTime()
     {
+        // TODO: VERIFY RETURNING 0 IS FINE!
+        if (!DayNightCycle.main)
+        {
+            return 0;
+        }
+
         double currentTime = CurrentTime;
         DeltaTime = (float)(currentTime - DayNightCycle.main.timePassedAsDouble);
         // DeltaTime = 0 might end up causing a divide by 0 => NaN in some scripts

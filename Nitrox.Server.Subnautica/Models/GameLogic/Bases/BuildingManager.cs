@@ -157,7 +157,7 @@ internal class BuildingManager(EntityRegistry entityRegistry, WorldEntityManager
 
     public bool UpdateBase(PeerId player, UpdateBase updateBase, out int operationId)
     {
-        // TODO: MADE THIS ASYNC SO CAN FETCH PLAYER NAME FOR LOG!
+        // TODO: MAKE THIS ASYNC TO FETCH PLAYER NAME FOR LOG!
         operationId = -1;
         return true;
 

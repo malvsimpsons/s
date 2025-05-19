@@ -29,7 +29,7 @@ internal class QueryCommand(EntityRegistry entityRegistry, SimulationOwnershipDa
         }
         if (simulationOwnershipData.TryGetLock(entityId, out SimulationOwnershipData.PlayerLock playerLock))
         {
-            await context.ReplyAsync($"Lock owner player id: {playerLock.PlayerId}");
+            await context.ReplyAsync($"Lock owner player id: {playerLock.SessionId}");
         }
         else
         {

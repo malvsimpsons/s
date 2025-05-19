@@ -24,7 +24,7 @@ namespace NitroxClient.Communication.MultiplayerSession
         public IClient Client { get; }
         public string IpAddress { get; private set; }
         public int ServerPort { get; private set; }
-        public MultiplayerSessionPolicy SessionPolicy { get; private set; }
+        public SessionPolicy SessionPolicy { get; private set; }
         public PlayerSettings PlayerSettings { get; private set; }
         public AuthenticationContext AuthenticationContext { get; private set; }
 
@@ -64,7 +64,7 @@ namespace NitroxClient.Communication.MultiplayerSession
             await CurrentState.NegotiateReservationAsync(this);
         }
 
-        public void ProcessSessionPolicy(MultiplayerSessionPolicy policy)
+        public void ProcessSessionPolicy(SessionPolicy policy)
         {
             SessionPolicy = policy;
             NitroxConsole.DisableConsole = SessionPolicy.DisableConsole;
@@ -88,6 +88,7 @@ namespace NitroxClient.Communication.MultiplayerSession
                     return;
             }
 
+            Log.Info($"Session id of client is #{policy.SessionId}");
             CurrentState.NegotiateReservationAsync(this);
         }
 
@@ -146,7 +147,7 @@ namespace NitroxClient.Communication.MultiplayerSession
         {
             Validate.NotNull(sessionConnectionState);
 
-            string username = AuthenticationContext == null ? "" : AuthenticationContext.Username;
+            string username = PlayerSettings == null ? "" : PlayerSettings.Username;
             CurrentState = sessionConnectionState;
 
             // Last connection state changed will not have any handlers
@@ -154,6 +155,10 @@ namespace NitroxClient.Communication.MultiplayerSession
 
             if (sessionConnectionState.CurrentStage == MultiplayerSessionConnectionStage.SESSION_RESERVED)
             {
+                if (string.IsNullOrWhiteSpace(username))
+                {
+                    Console.WriteLine("Player name was not provided but session is reserved");
+                }
                 Log.PlayerName = username;
             }
         }

@@ -27,14 +27,14 @@ public static class JoinServerBackend
     private static string serverIp;
     private static int serverPort;
 
-    public static void RequestSessionReservation(string playerName, Color playerColor)
+    public static void RequestSessionReservation(byte[] playerLoginKey, string playerName, Color playerColor)
     {
         preferencesManager.SetPreference(serverIp, new PlayerPreference(playerName, playerColor));
 
         Optional<string> opPassword = MainMenuEnterPasswordPanel.LastEnteredPassword;
-        AuthenticationContext authenticationContext = new(playerName, opPassword);
+        AuthenticationContext authenticationContext = new(playerLoginKey, opPassword);
 
-        multiplayerSession.RequestSessionReservation(new PlayerSettings(playerColor.ToDto()), authenticationContext);
+        multiplayerSession.RequestSessionReservation(new PlayerSettings(playerName, playerColor.ToDto()), authenticationContext);
     }
 
     private static void SessionConnectionStateChangedHandler(IMultiplayerSessionConnectionState state)

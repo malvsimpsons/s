@@ -1,15 +1,14 @@
 ﻿using System;
 
-namespace NitroxModel.Networking.Packets
-{
-    [Serializable]
-    public record PlayerJoiningMultiplayerSession : CorrelatedPacket    {
-        public string ReservationKey { get; }
+namespace NitroxModel.Networking.Packets;
 
-        public PlayerJoiningMultiplayerSession(string correlationId, string reservationKey) : base(correlationId)
-        {
-            CorrelationId = correlationId;
-            ReservationKey = reservationKey;
-        }
+[Serializable]
+public record PlayerJoiningMultiplayerSession : Packet
+{
+    public PlayerJoiningMultiplayerSession(string reservationKey)
+    {
+        ReservationKey = reservationKey;
     }
+
+    public string ReservationKey { get; }
 }

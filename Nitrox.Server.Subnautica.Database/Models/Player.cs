@@ -31,16 +31,6 @@ public record Player
     public string Name { get; set; }
 
     /// <summary>
-    ///     Permissions as granted by the server. Defaults to <see cref="Perms.DEFAULT" />.
-    /// </summary>
-    public Perms Permissions { get; set; }
-
-    /// <summary>
-    ///     The game mode this player is playing in. Can be different for other players in the same world.
-    /// </summary>
-    public SubnauticaGameMode GameMode { get; set; }
-
-    /// <summary>
     ///     If true, player will have to start over when they die.
     /// </summary>
     public bool IsPermaDeath { get; set; }
@@ -63,10 +53,26 @@ public record Player
     public NitroxId SavedSubRootID { get; set; }
 
     /// <summary>
+    ///     Permissions as granted by the server. Defaults to <see cref="Perms.DEFAULT" />.
+    /// </summary>
+    public Perms Permissions { get; set; }
+
+    /// <summary>
+    ///     The game mode this player is playing in. Can be different for other players in the same world.
+    /// </summary>
+    public SubnauticaGameMode GameMode { get; set; }
+
+    /// <summary>
     ///     The real-world time when the player first started playing on the server.
     /// </summary>
     [Required]
     public DateTimeOffset Created { get; set; } = DateTimeOffset.Now;
+
+    /// <summary>
+    ///     The login key that the client so give to the server to (re)use this player data.
+    /// </summary>
+    [Required]
+    public byte[] LoginKey { get; set; }
 
     // TODO: Store this
     // public List<NitroxTechType> UsedItems { get; set; } = [];

@@ -18,7 +18,7 @@ public class PlayerManager
     private readonly PlayerModelManager playerModelManager;
     private readonly PlayerVitalsManager playerVitalsManager;
     private readonly FmodWhitelist fmodWhitelist;
-    private readonly Dictionary<SessionId, RemotePlayer> playersById = new();
+    private readonly Dictionary<SessionId, RemotePlayer> playersBySessionId = new();
 
     public OnCreateDelegate OnCreate;
     public OnRemoveDelegate OnRemove;
@@ -30,17 +30,17 @@ public class PlayerManager
         this.fmodWhitelist = fmodWhitelist;
     }
 
-    public Optional<RemotePlayer> Find(SessionId playerId)
+    public Optional<RemotePlayer> Find(SessionId sessionId)
     {
-        playersById.TryGetValue(playerId, out RemotePlayer player);
+        playersBySessionId.TryGetValue(sessionId, out RemotePlayer player);
         return Optional.OfNullable(player);
     }
 
-    public bool TryFind(SessionId playerId, out RemotePlayer remotePlayer) => playersById.TryGetValue(playerId, out remotePlayer);
+    public bool TryFind(SessionId playerId, out RemotePlayer remotePlayer) => playersBySessionId.TryGetValue(playerId, out remotePlayer);
 
     public Optional<RemotePlayer> Find(NitroxId playerNitroxId)
     {
-        RemotePlayer remotePlayer = playersById.Select(idToPlayer => idToPlayer.Value)
+        RemotePlayer remotePlayer = playersBySessionId.Select(idToPlayer => idToPlayer.Value)
                                                .FirstOrDefault(player => player.PlayerContext.PlayerNitroxId == playerNitroxId);
 
         return Optional.OfNullable(remotePlayer);
@@ -48,7 +48,7 @@ public class PlayerManager
 
     public IEnumerable<RemotePlayer> GetAll()
     {
-        return playersById.Values;
+        return playersBySessionId.Values;
     }
 
     public HashSet<GameObject> GetAllPlayerObjects()
@@ -61,11 +61,11 @@ public class PlayerManager
     public RemotePlayer Create(PlayerContext playerContext)
     {
         Validate.NotNull(playerContext);
-        Validate.IsFalse(playersById.ContainsKey(playerContext.PlayerId));
+        Validate.IsFalse(playersBySessionId.ContainsKey(playerContext.PlayerId));
 
             RemotePlayer remotePlayer = new(playerContext, playerModelManager, playerVitalsManager, fmodWhitelist);
             
-            playersById.Add(remotePlayer.PlayerId, remotePlayer);
+            playersBySessionId.Add(remotePlayer.PlayerId, remotePlayer);
             OnCreate(remotePlayer.PlayerId, remotePlayer);
 
         DiscordClient.UpdatePartySize(GetTotalPlayerCount());
@@ -73,20 +73,20 @@ public class PlayerManager
         return remotePlayer;
     }
 
-    public void RemovePlayer(SessionId playerId)
+    public void RemovePlayer(SessionId sessionId)
     {
-        if (playersById.TryGetValue(playerId, out RemotePlayer player))
+        if (playersBySessionId.TryGetValue(sessionId, out RemotePlayer player))
         {
             player.Destroy();
-            playersById.Remove(playerId);
-            OnRemove(playerId, player);
+            playersBySessionId.Remove(sessionId);
+            OnRemove(sessionId, player);
             DiscordClient.UpdatePartySize(GetTotalPlayerCount());
         }
     }
 
     /// <returns>Remote players + You => X + 1</returns>
-    public int GetTotalPlayerCount() => playersById.Count + 1;
+    public int GetTotalPlayerCount() => playersBySessionId.Count + 1;
 
-    public delegate void OnCreateDelegate(SessionId playerId, RemotePlayer remotePlayer);
-    public delegate void OnRemoveDelegate(SessionId playerId, RemotePlayer remotePlayer);
+    public delegate void OnCreateDelegate(SessionId sessionId, RemotePlayer remotePlayer);
+    public delegate void OnRemoveDelegate(SessionId sessionId, RemotePlayer remotePlayer);
 }

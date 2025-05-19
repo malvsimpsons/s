@@ -45,7 +45,6 @@ public class LiteNetLibClient : IClient
             LatencyUpdateCallback?.Invoke(peer.RemoteTimeDelta);
         };
 
-
         client = new NetManager(listener)
         {
             UpdateTime = 15,

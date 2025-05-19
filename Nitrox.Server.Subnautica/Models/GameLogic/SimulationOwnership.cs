@@ -9,29 +9,29 @@ public class SimulationOwnershipData
     private readonly Lock locker = new();
     private readonly Dictionary<NitroxId, PlayerLock> playerLocksById = [];
 
-    public bool TryToAcquire(NitroxId id, PeerId player, SimulationLockType requestedLock)
+    public bool TryToAcquire(NitroxId id, SessionId sessionId, SimulationLockType requestedLock)
     {
         lock (locker)
         {
             // If no one is simulating then aquire a lock for this player
             if (!playerLocksById.TryGetValue(id, out PlayerLock playerLock))
             {
-                playerLocksById[id] = new PlayerLock(player, requestedLock);
+                playerLocksById[id] = new PlayerLock(sessionId, requestedLock);
                 return true;
             }
 
             // If this player owns the lock then they are already simulating
-            if (playerLock.PlayerId == player)
+            if (playerLock.SessionId == sessionId)
             {
                 // update the lock type in case they are attempting to downgrade
-                playerLocksById[id] = new PlayerLock(player, requestedLock);
+                playerLocksById[id] = new PlayerLock(sessionId, requestedLock);
                 return true;
             }
 
             // If the current lock owner has a transient lock then only override if we are requesting exclusive access
             if (playerLock.LockType == SimulationLockType.TRANSIENT && requestedLock == SimulationLockType.EXCLUSIVE)
             {
-                playerLocksById[id] = new PlayerLock(player, requestedLock);
+                playerLocksById[id] = new PlayerLock(sessionId, requestedLock);
                 return true;
             }
 
@@ -45,7 +45,7 @@ public class SimulationOwnershipData
     {
         lock (locker)
         {
-            if (playerLocksById.TryGetValue(id, out PlayerLock playerLock) && playerLock.PlayerId == player)
+            if (playerLocksById.TryGetValue(id, out PlayerLock playerLock) && playerLock.SessionId == player)
             {
                 playerLocksById.Remove(id);
                 return true;
@@ -63,7 +63,7 @@ public class SimulationOwnershipData
 
             foreach (KeyValuePair<NitroxId, PlayerLock> idWithPlayerLock in playerLocksById)
             {
-                if (idWithPlayerLock.Value.PlayerId == player)
+                if (idWithPlayerLock.Value.SessionId == player)
                 {
                     revokedIds.Add(idWithPlayerLock.Key);
                 }
@@ -86,13 +86,13 @@ public class SimulationOwnershipData
         }
     }
 
-    public PeerId? GetPlayerForLock(NitroxId id)
+    public SessionId? GetPlayerForLock(NitroxId id)
     {
         lock (locker)
         {
             if (playerLocksById.TryGetValue(id, out PlayerLock playerLock))
             {
-                return playerLock.PlayerId;
+                return playerLock.SessionId;
             }
         }
         return null;
@@ -106,9 +106,9 @@ public class SimulationOwnershipData
         }
     }
 
-    public struct PlayerLock(PeerId playerId, SimulationLockType lockType)
+    public struct PlayerLock(SessionId sessionId, SimulationLockType lockType)
     {
-        public PeerId PlayerId { get; } = playerId;
+        public SessionId SessionId { get; } = sessionId;
         public SimulationLockType LockType { get; set; } = lockType;
     }
 }

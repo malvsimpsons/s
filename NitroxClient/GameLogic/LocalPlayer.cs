@@ -8,6 +8,7 @@ using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.Util;
 using Nitrox.Model.Subnautica.DataStructures;
+using NitroxModel.Networking;
 using NitroxModel.Networking.Packets;
 using NitroxModel.Networking.Session;
 using UnityEngine;
@@ -31,11 +32,11 @@ public class LocalPlayer : ILocalNitroxPlayer
 
     public GameObject BodyPrototype => bodyPrototype.Value;
 
-    public string PlayerName => multiplayerSession.AuthenticationContext.Username;
+    public string PlayerName => multiplayerSession.PlayerSettings.Username;
     /// <summary>
     ///     Gets the player id. The session is lost on disconnect so this can return null.
     /// </summary>
-    public ushort? PlayerId => multiplayerSession?.Reservation?.PlayerId;
+    public SessionId? PlayerId => multiplayerSession?.SessionPolicy?.SessionId;
     public PlayerSettings PlayerSettings => multiplayerSession.PlayerSettings;
 
     public Perms Permissions { get; set; }

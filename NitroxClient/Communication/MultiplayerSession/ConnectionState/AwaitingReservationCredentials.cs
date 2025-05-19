@@ -1,87 +1,82 @@
 ﻿using System;
-using System.Threading.Tasks;
 using NitroxClient.Communication.Abstract;
 using NitroxModel.Helper;
 using NitroxModel.Networking.Packets;
 using NitroxModel.Networking.Session;
 
-namespace NitroxClient.Communication.MultiplayerSession.ConnectionState
+namespace NitroxClient.Communication.MultiplayerSession.ConnectionState;
+
+public class AwaitingReservationCredentials : ConnectionNegotiatingState
 {
-    public class AwaitingReservationCredentials : ConnectionNegotiatingState
+    public override MultiplayerSessionConnectionStage CurrentStage => MultiplayerSessionConnectionStage.AWAITING_RESERVATION_CREDENTIALS;
+
+    public override Task NegotiateReservationAsync(IMultiplayerSessionConnectionContext sessionConnectionContext)
     {
-        public override MultiplayerSessionConnectionStage CurrentStage => MultiplayerSessionConnectionStage.AWAITING_RESERVATION_CREDENTIALS;
-
-        public override Task NegotiateReservationAsync(IMultiplayerSessionConnectionContext sessionConnectionContext)
+        try
         {
-            try
-            {
-                ValidateState(sessionConnectionContext);
+            ValidateState(sessionConnectionContext);
 
-                string reservationCorrelationId = Guid.NewGuid().ToString();
-                RequestSessionReservation(sessionConnectionContext, reservationCorrelationId);
-                AwaitSessionReservation(sessionConnectionContext, reservationCorrelationId);
-            }
-            catch (Exception)
-            {
-                Disconnect(sessionConnectionContext);
-                throw;
-            }
-            return Task.CompletedTask;
+            RequestSessionReservation(sessionConnectionContext);
+            AwaitSessionReservation(sessionConnectionContext);
         }
-
-        private void RequestSessionReservation(IMultiplayerSessionConnectionContext sessionConnectionContext, string reservationCorrelationId)
+        catch (Exception)
         {
-            IClient client = sessionConnectionContext.Client;
-            PlayerSettings playerSettings = sessionConnectionContext.PlayerSettings;
-            AuthenticationContext authenticationContext = sessionConnectionContext.AuthenticationContext;
-
-            SessionReservationRequest requestPacket = new(reservationCorrelationId, playerSettings, authenticationContext);
-            client.Send(requestPacket);
+            Disconnect(sessionConnectionContext);
+            throw;
         }
+        return Task.CompletedTask;
+    }
 
-        private void AwaitSessionReservation(IMultiplayerSessionConnectionContext sessionConnectionContext, string reservationCorrelationId)
+    private void RequestSessionReservation(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        IClient client = sessionConnectionContext.Client;
+        PlayerSettings playerSettings = sessionConnectionContext.PlayerSettings;
+        AuthenticationContext authenticationContext = sessionConnectionContext.AuthenticationContext;
+
+        client.Send(new SessionReservationRequest(playerSettings, authenticationContext));
+    }
+
+    private void AwaitSessionReservation(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        sessionConnectionContext.UpdateConnectionState(new AwaitingSessionReservation());
+    }
+
+    private static void ValidateState(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        ClientIsConnected(sessionConnectionContext);
+        PlayerSettingsIsNotNull(sessionConnectionContext);
+        AuthenticationContextIsNotNull(sessionConnectionContext);
+    }
+
+    private static void ClientIsConnected(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        if (!sessionConnectionContext.Client.IsConnected)
         {
-            AwaitingSessionReservation nextState = new AwaitingSessionReservation(reservationCorrelationId);
-            sessionConnectionContext.UpdateConnectionState(nextState);
+            throw new InvalidOperationException("The client is not connected.");
         }
+    }
 
-        private static void ValidateState(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    private static void PlayerSettingsIsNotNull(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        try
         {
-            ClientIsConnected(sessionConnectionContext);
-            PlayerSettingsIsNotNull(sessionConnectionContext);
-            AuthenticationContextIsNotNull(sessionConnectionContext);
+            Validate.NotNull(sessionConnectionContext.PlayerSettings);
         }
-
-        private static void ClientIsConnected(IMultiplayerSessionConnectionContext sessionConnectionContext)
+        catch (ArgumentNullException ex)
         {
-            if (!sessionConnectionContext.Client.IsConnected)
-            {
-                throw new InvalidOperationException("The client is not connected.");
-            }
+            throw new InvalidOperationException("The context does not contain player settings.", ex);
         }
+    }
 
-        private static void PlayerSettingsIsNotNull(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    private static void AuthenticationContextIsNotNull(IMultiplayerSessionConnectionContext sessionConnectionContext)
+    {
+        try
         {
-            try
-            {
-                Validate.NotNull(sessionConnectionContext.PlayerSettings);
-            }
-            catch (ArgumentNullException ex)
-            {
-                throw new InvalidOperationException("The context does not contain player settings.", ex);
-            }
+            Validate.NotNull(sessionConnectionContext.AuthenticationContext);
         }
-
-        private static void AuthenticationContextIsNotNull(IMultiplayerSessionConnectionContext sessionConnectionContext)
+        catch (ArgumentNullException ex)
         {
-            try
-            {
-                Validate.NotNull(sessionConnectionContext.AuthenticationContext);
-            }
-            catch (ArgumentNullException ex)
-            {
-                throw new InvalidOperationException("The context does not contain an authentication context.", ex);
-            }
+            throw new InvalidOperationException("The context does not contain an authentication context.", ex);
         }
     }
 }

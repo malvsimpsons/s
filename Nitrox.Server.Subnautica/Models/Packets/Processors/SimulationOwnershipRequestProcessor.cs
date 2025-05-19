@@ -13,11 +13,11 @@ internal sealed class SimulationOwnershipRequestProcessor(IServerPacketSender pa
 
     public async Task Process(AuthProcessorContext context, SimulationOwnershipRequest ownershipRequest)
     {
-        bool acquiredLock = simulationOwnershipData.TryToAcquire(ownershipRequest.Id, context.Sender.PlayerId, ownershipRequest.LockType);
+        bool acquiredLock = simulationOwnershipData.TryToAcquire(ownershipRequest.Id, context.Sender.SessionId, ownershipRequest.LockType);
         if (acquiredLock)
         {
             bool shouldEntityMove = entitySimulation.ShouldSimulateEntityMovement(ownershipRequest.Id);
-            SimulationOwnershipChange simulationOwnershipChange = new(ownershipRequest.Id, context.Sender.PlayerId, ownershipRequest.LockType, shouldEntityMove);
+            SimulationOwnershipChange simulationOwnershipChange = new(ownershipRequest.Id, context.Sender.SessionId, ownershipRequest.LockType, shouldEntityMove);
             await packetSender.SendPacketToOthers(simulationOwnershipChange, context.Sender.SessionId);
         }
 

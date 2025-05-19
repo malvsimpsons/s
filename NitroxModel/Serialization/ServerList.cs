@@ -4,13 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using NitroxModel.Helper;
+using NitroxModel.Server;
 
 namespace NitroxModel.Serialization;
 
 public class ServerList
 {
     private const string SERVERS_FILE_NAME = "servers";
-    public const ushort DEFAULT_PORT = 11000;
+    public const ushort DEFAULT_PORT = ServerConstants.DEFAULT_PORT;
     private static ServerList instance;
     private readonly List<Entry> entries = new();
     public static ServerList Instance => instance ??= Refresh();

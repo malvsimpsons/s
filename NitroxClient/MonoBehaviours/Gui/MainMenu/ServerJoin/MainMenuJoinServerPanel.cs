@@ -1,15 +1,15 @@
+using System;
 using System.Collections;
 using System.Linq;
-using System.Text.RegularExpressions;
 using FMODUnity;
 using NitroxClient.MonoBehaviours.Gui.MainMenu.ServersList;
 using NitroxClient.Unity.Helper;
+using NitroxModel.Helper;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
-using UWE;
 
 namespace NitroxClient.MonoBehaviours.Gui.MainMenu.ServerJoin;
 
@@ -110,16 +110,15 @@ public class MainMenuJoinServerPanel : MonoBehaviour, uGUI_INavigableIconGrid, u
 
     private void OnJoinClick()
     {
-        string playerName = playerNameInputField.text;
-
-        //https://regex101.com/r/eTWiEs/2/
-        if (!Regex.IsMatch(playerName, "^[a-zA-Z0-9._-]{3,25}$"))
+        string playerName = PlayerNameHelper.CleanPlayerName(playerNameInputField.text);
+        if (!PlayerNameHelper.IsValidPlayerName(playerName))
         {
             MainMenuNotificationPanel.ShowMessage(Language.main.Get("Nitrox_InvalidUserName"), NAME);
             return;
         }
 
-        JoinServerBackend.RequestSessionReservation(playerName, colorPicker.currentColor);
+        // TODO: STORE LOGIN KEY AND READ IT HERE
+        JoinServerBackend.RequestSessionReservation(Guid.NewGuid().ToByteArray(), playerName, colorPicker.currentColor);
     }
 
     private static void OnCancelClick()

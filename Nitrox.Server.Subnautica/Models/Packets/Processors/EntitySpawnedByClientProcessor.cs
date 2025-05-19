@@ -29,7 +29,7 @@ internal class EntitySpawnedByClientProcessor(EntityRegistry entityRegistry, Wor
 
             if (packet.RequireSimulation)
             {
-                simulatedEntity = entitySimulation.AssignNewEntityToPlayer(entity, context.Sender.PlayerId);
+                simulatedEntity = entitySimulation.AssignNewEntityToPlayer(entity, context.Sender.SessionId);
 
                 await context.ReplyToAll(new SimulationOwnershipChange(simulatedEntity));
             }

@@ -140,7 +140,7 @@ internal class LanBroadcastService(IOptionsMonitor<SubnauticaServerOptions> opti
         }
 
         ushort port = optionsProvider.CurrentValue.ServerPort;
-        logger.ZLogDebug($"Broadcasting server port {port:@Port} over LAN...");
+        logger.ZLogTrace($"Broadcasting server port {port:@Port} over LAN...");
         NetDataWriter writer = new();
         writer.Put(LANDiscoveryConstants.BROADCAST_RESPONSE_STRING);
         writer.Put(port);

@@ -6,7 +6,7 @@ using NitroxModel.Networking.Packets;
 
 namespace Nitrox.Server.Subnautica.Services;
 
-public sealed class PacketSerializationService : BackgroundService
+internal sealed class PacketSerializationService : BackgroundService
 {
     private readonly TaskCompletionSource init;
     private readonly ILogger<PacketSerializationService> logger;

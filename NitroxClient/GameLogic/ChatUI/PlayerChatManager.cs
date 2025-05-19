@@ -106,7 +106,7 @@ namespace NitroxClient.GameLogic.ChatUI
             }
 
             // We shouldn't add the message to the local chat instantly but instead let the server tell us if this message is added or not
-            multiplayerSession.Send(new ChatMessage(multiplayerSession.Reservation.PlayerId, trimmedInput));
+            multiplayerSession.Send(new ChatMessage(multiplayerSession.SessionPolicy.SessionId, trimmedInput));
             playerChat.InputText = "";
             playerChat.Select();
         }

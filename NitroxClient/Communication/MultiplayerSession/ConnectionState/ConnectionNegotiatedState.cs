@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using NitroxClient.Communication.Abstract;
 
 namespace NitroxClient.Communication.MultiplayerSession.ConnectionState

@@ -59,7 +59,7 @@ public class Terrain
         {
             if (cellsPendingSync)
             {
-                CellVisibilityChanged cellsChanged = new(multiplayerSession.Reservation.PlayerId, addedCells.ToArray(), removedCells.ToArray());
+                CellVisibilityChanged cellsChanged = new(multiplayerSession.SessionPolicy.SessionId, addedCells.ToArray(), removedCells.ToArray());
                 packetSender.Send(cellsChanged);
 
                 addedCells.Clear();

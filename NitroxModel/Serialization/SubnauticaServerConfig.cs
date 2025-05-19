@@ -25,7 +25,7 @@ namespace NitroxModel.Serialization
         [PropertyDescription("Leave blank for a random spawn position")]
         public string Seed { get; set; }
 
-        public int ServerPort { get; set; } = ServerList.DEFAULT_PORT;
+        public int ServerPort { get; set; } = ServerConstants.DEFAULT_PORT;
 
         [PropertyDescription("Prevents players from losing items on death")]
         public bool KeepInventoryOnDeath { get; set; } = false;

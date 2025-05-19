@@ -22,10 +22,10 @@ public class ClockSyncInitialSyncProcessor : InitialSyncProcessor
         this.ntpSyncer = ntpSyncer;
         liteNetLibClient = (LiteNetLibClient)client;
 
-        AddStep(initialSync => NTPSync(initialSync.TimeData.TimePacket));
+        AddStep(initialSync => NtpSync(initialSync.TimeData.TimePacket));
     }
 
-    public IEnumerator NTPSync(TimeChange timeData)
+    public IEnumerator NtpSync(TimeChange timeData)
     {
         timeManager.SetServerCorrectionData(timeData.OnlineMode, timeData.UtcCorrectionTicks);
 

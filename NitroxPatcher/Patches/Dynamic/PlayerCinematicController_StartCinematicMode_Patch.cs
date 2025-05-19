@@ -34,6 +34,6 @@ public sealed partial class PlayerCinematicController_StartCinematicMode_Patch :
         multiplayerCinematicController.CallAllCinematicModeEnd();
 
         int identifier = MultiplayerCinematicReference.GetCinematicControllerIdentifier(__instance.gameObject, entity.gameObject);
-        Resolve<PlayerCinematics>().StartCinematicMode(Resolve<IMultiplayerSession>().Reservation.PlayerId, entity.Id, identifier, __instance.playerViewAnimationName);
+        Resolve<PlayerCinematics>().StartCinematicMode(Resolve<IMultiplayerSession>().SessionPolicy.SessionId, entity.Id, identifier, __instance.playerViewAnimationName);
     }
 }

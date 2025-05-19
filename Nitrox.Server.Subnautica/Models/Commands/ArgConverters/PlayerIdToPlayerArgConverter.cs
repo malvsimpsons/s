@@ -13,6 +13,10 @@ internal class PlayerIdToPlayerArgConverter(PlayerRepository playerRepository) :
 
     public async Task<ConvertResult> ConvertAsync(ushort playerId)
     {
+        if (playerId < 1)
+        {
+            return ConvertResult.Fail("Player ID must start with 1");
+        }
         ConnectedPlayerDto player = await playerRepository.GetConnectedPlayerBySessionIdAsync(playerId);
         if (player == null)
         {

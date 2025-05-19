@@ -1,17 +1,15 @@
 ﻿#if DEBUG
 using System;
 using System.Net;
-using System.Numerics;
 using System.Reflection;
 using HarmonyLib;
 using NitroxClient.Communication.Abstract;
 using NitroxClient.Communication.MultiplayerSession;
 using NitroxClient.MonoBehaviours.Gui.MainMenu.ServerJoin;
-using NitroxModel;
-using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
 using NitroxModel.Helper;
 using NitroxModel.Networking.Session;
+using NitroxModel.Server;
 
 namespace NitroxPatcher.Patches.Persistent;
 
@@ -38,8 +36,8 @@ public sealed partial class uGUI_MainMenu_Start_Patch : NitroxPatch, IPersistent
             if (args[i].Equals("--instantlaunch", StringComparison.OrdinalIgnoreCase) && args.Length > i + 1)
             {
                 playerName = args[i + 1];
-                Log.Info($"Detected instant launch, connecting to 127.0.0.1:11000 as {playerName}");
-                _ = JoinServerBackend.StartDetachedMultiplayerClientAsync(IPAddress.Loopback, 11000, SessionConnectionStateChangedHandler);
+                Log.Info($"Detected instant launch, connecting to 127.0.0.1:{ServerConstants.DEFAULT_PORT} as {playerName}");
+                _ = JoinServerBackend.StartDetachedMultiplayerClientAsync(IPAddress.Loopback, ServerConstants.DEFAULT_PORT, SessionConnectionStateChangedHandler);
             }
         }
     }
@@ -57,15 +55,8 @@ public sealed partial class uGUI_MainMenu_Start_Patch : NitroxPatch, IPersistent
                     break;
                 }
 
-                NitroxColor playerColor = new(1,1,1);
-                byte[] nameHash = playerName.AsMd5Hash();
-                if (nameHash.Length >= 8)
-                {
-                    float hue = BitConverter.ToUInt64([nameHash[0], nameHash[1], nameHash[2], nameHash[3], nameHash[4], nameHash[5], nameHash[6], nameHash[7]], 0) / (float)ulong.MaxValue;
-                    playerColor = NitroxColor.FromHsb(hue);
-                }
-                PlayerSettings playerSettings = new(playerColor);
-                AuthenticationContext authenticationContext = new(playerName, Optional.Empty);
+                PlayerSettings playerSettings = new(playerName, PlayerNameHelper.GenerateColorByName(playerName));
+                AuthenticationContext authenticationContext = new(Optional.Empty, Optional.Empty);
                 Resolve<IMultiplayerSession>().RequestSessionReservation(playerSettings, authenticationContext);
                 break;
 
