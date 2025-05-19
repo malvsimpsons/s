@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using Nitrox.Server.Subnautica.Core.Configuration.Validators;
+using Nitrox.Server.Subnautica.Models.Configuration.Validators;
 
 namespace Nitrox.Server.Subnautica.Models.Configuration;
 

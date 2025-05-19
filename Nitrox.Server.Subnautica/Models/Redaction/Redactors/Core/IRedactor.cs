@@ -1,6 +1,6 @@
 using System;
 
-namespace Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
+namespace Nitrox.Server.Subnautica.Models.Redaction.Redactors.Core;
 
 internal interface IRedactor
 {

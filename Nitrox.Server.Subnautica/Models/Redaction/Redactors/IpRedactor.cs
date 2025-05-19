@@ -1,9 +1,9 @@
 using System;
 using System.Net;
-using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
+using Nitrox.Server.Subnautica.Models.Redaction.Redactors.Core;
 using NitroxModel.Helper;
 
-namespace Nitrox.Server.Subnautica.Core.Redaction.Redactors;
+namespace Nitrox.Server.Subnautica.Models.Redaction.Redactors;
 
 internal sealed class IpRedactor : IRedactor
 {

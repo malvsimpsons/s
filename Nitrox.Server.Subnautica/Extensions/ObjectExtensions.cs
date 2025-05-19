@@ -1,4 +1,4 @@
-using Nitrox.Server.Subnautica.Core.Redaction;
+using Nitrox.Server.Subnautica.Models.Redaction;
 
 namespace Nitrox.Server.Subnautica.Extensions;
 

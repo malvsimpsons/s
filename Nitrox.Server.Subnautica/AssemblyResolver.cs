@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Nitrox.Server.Subnautica.Core;
+namespace Nitrox.Server.Subnautica;
 
 internal static class AssemblyResolver
 {

@@ -3,7 +3,7 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using NitroxModel.Serialization;
 
-namespace Nitrox.Server.Subnautica.Core.Configuration.Providers;
+namespace Nitrox.Server.Subnautica.Models.Configuration.Providers;
 
 internal sealed class NitroxConfigurationProvider(NitroxConfigurationSource source) : FileConfigurationProvider(source)
 {

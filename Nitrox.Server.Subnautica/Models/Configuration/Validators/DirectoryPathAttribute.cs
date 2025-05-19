@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 
-namespace Nitrox.Server.Subnautica.Core.Configuration.Validators;
+namespace Nitrox.Server.Subnautica.Models.Configuration.Validators;
 
 /// <summary>
 ///     Validates the value is a valid and accessible directory.

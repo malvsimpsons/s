@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
-using Nitrox.Server.Subnautica.Core.Configuration.Providers;
+using Nitrox.Server.Subnautica.Models.Configuration.Providers;
 using NitroxModel.Serialization;
 
 namespace Nitrox.Server.Subnautica.Extensions;

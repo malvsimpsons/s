@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.Text;
 
-namespace Nitrox.Server.Subnautica.Core.Formatters;
+namespace Nitrox.Server.Subnautica.Extensions;
 
 internal static class BufferWriterExtensions
 {

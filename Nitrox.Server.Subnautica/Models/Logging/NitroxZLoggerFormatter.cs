@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging.Console;
-using Nitrox.Server.Subnautica.Core.Configuration;
-using Nitrox.Server.Subnautica.Core.Redaction;
-using Nitrox.Server.Subnautica.Core.Redaction.Redactors.Core;
+using Nitrox.Server.Subnautica.Models.Configuration;
+using Nitrox.Server.Subnautica.Models.Redaction;
+using Nitrox.Server.Subnautica.Models.Redaction.Redactors.Core;
 
-namespace Nitrox.Server.Subnautica.Core.Formatters;
+namespace Nitrox.Server.Subnautica.Models.Logging;
 
 internal partial class NitroxZLoggerFormatter : IZLoggerFormatter
 {

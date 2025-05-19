@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
-namespace Nitrox.Server.Subnautica.Core.Configuration.Providers;
+namespace Nitrox.Server.Subnautica.Models.Configuration.Providers;
 
 internal sealed class NitroxConfigurationSource : FileConfigurationSource
 {
