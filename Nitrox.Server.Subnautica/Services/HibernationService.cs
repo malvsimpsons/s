@@ -10,7 +10,7 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Service which can signal hibernating services to <see cref="Resume" /> or <see cref="Hibernate" />.
 /// </summary>
-internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hibernators, ITrigger<ISeeResume, object> resumers, SessionRepository sessionRepository, ILogger<HibernationService> logger) : IHostedLifecycleService, ISeeSessionDisconnected
+internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hibernators, ITrigger<ISeeResume, object> resumers, SessionRepository sessionRepository, ILogger<HibernationService> logger) : IHostedLifecycleService, ISeeSessionCreated, ISeeSessionDisconnected
 {
     private readonly ITrigger<ISeeHibernate, object> hibernators = hibernators;
     private readonly ILogger<HibernationService> logger = logger;
@@ -61,4 +61,6 @@ internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hiberna
         }
         _ = Task.Delay(250).ContinueWith(async _ => await Hibernate()).ContinueWithHandleError(ex => logger.ZLogError(ex, $"Error while trying to hibernate"));
     }
+
+    public async ValueTask HandleSessionCreated(Session createdSession) => await Resume();
 }

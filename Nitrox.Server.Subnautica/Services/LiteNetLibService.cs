@@ -15,6 +15,7 @@ using Nitrox.Server.Subnautica.Database.Models;
 using Nitrox.Server.Subnautica.Models.Administration;
 using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Events;
+using Nitrox.Server.Subnautica.Models.Events.Core;
 using Nitrox.Server.Subnautica.Models.Helper;
 using Nitrox.Server.Subnautica.Models.Packets.Core;
 using Nitrox.Server.Subnautica.Models.Packets.Processors.Core;
@@ -40,18 +41,18 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeS
     private readonly ConcurrentDictionary<SessionId, NetPeer> peersBySessionId = [];
     private readonly NetManager server;
     private readonly SessionRepository sessionRepository;
-    private readonly HibernationService hibernationService;
+    private readonly ITrigger<ISeeSessionCreated, Session> sessionCreatedTrigger;
     private readonly Channel<Task> taskChannel = Channel.CreateUnbounded<Task>();
     public int EventPriority => -100;
 
-    public LiteNetLibService(PacketRegistryService packetRegistryService, PacketSerializationService packetSerializationService, SessionRepository sessionRepository, HibernationService hibernationService, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
+    public LiteNetLibService(PacketRegistryService packetRegistryService, PacketSerializationService packetSerializationService, SessionRepository sessionRepository, ITrigger<ISeeSessionCreated, Session> sessionCreatedTrigger, IHostEnvironment hostEnvironment, IOptions<SubnauticaServerOptions> optionsProvider, ILogger<LiteNetLibService> logger)
     {
         this.packetRegistryService = packetRegistryService;
         this.packetSerializationService = packetSerializationService;
         this.optionsProvider = optionsProvider;
         this.hostEnvironment = hostEnvironment;
         this.sessionRepository = sessionRepository;
-        this.hibernationService = hibernationService;
+        this.sessionCreatedTrigger = sessionCreatedTrigger;
         this.logger = logger;
         listener = new EventBasedNetListener();
         server = new NetManager(listener);
@@ -182,12 +183,12 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeS
             return;
         }
 
-        if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request, peersBySessionId, hibernationService)))
+        if (!taskChannel.Writer.TryWrite(ProcessConnectionRequestAsync(sessionRepository, request, peersBySessionId, sessionCreatedTrigger)))
         {
             logger.ZLogWarning($"Failed to queue client connect request task for {request.RemoteEndPoint.ToSensitive():@EndPoint}");
         }
 
-        static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request, ConcurrentDictionary<SessionId, NetPeer> peersBySessionId, HibernationService hibernationService)
+        static async Task ProcessConnectionRequestAsync(SessionRepository sessionRepository, ConnectionRequest request, ConcurrentDictionary<SessionId, NetPeer> peersBySessionId, ITrigger<ISeeSessionCreated, Session> sessionCreatedTrigger)
         {
             Session session = await sessionRepository.GetOrCreateSessionAsync(request.RemoteEndPoint.Address.ToString(), (ushort)request.RemoteEndPoint.Port);
             if (session == null)
@@ -197,7 +198,7 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeS
                 return;
             }
             peersBySessionId.TryAdd(session.Id, request.Accept());
-            await hibernationService.Resume(); // TODO: Use "session created event" interface instead.
+            await sessionCreatedTrigger.Trigger(session);
         }
     }
 
