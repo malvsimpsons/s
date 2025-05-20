@@ -166,7 +166,8 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeS
                 SendPacket(serverStopped, peer);
             }
             await Task.Delay(500, CancellationToken.None); // TODO: Need async function to wait for all packets to be sent away.
-            server.Stop();
+            logger.LogDebug("Waiting for LiteNetLib to stop...");
+            await Task.Run(() => server.Stop(), CancellationToken.None);
             logger.ZLogDebug($"stopped");
             listener.ClearPeerConnectedEvent();
             listener.ClearPeerDisconnectedEvent();
