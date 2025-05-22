@@ -1,60 +1,62 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 
-namespace NitroxModel.Core
+namespace NitroxModel.Core;
+
+/// <summary>
+///     Environment helper for getting meta data about where and how Nitrox is running.
+/// </summary>
+public static class NitroxEnvironment
 {
-    /// <summary>
-    ///     Environment helper for getting meta data about where and how Nitrox is running.
-    /// </summary>
-    public static class NitroxEnvironment
+    private static bool hasSet;
+    public static string ReleasePhase => IsReleaseMode ? "Alpha" : "InDev";
+    public static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
+    public static DateTime BuildDate => File.GetCreationTimeUtc(Assembly.GetExecutingAssembly().Location);
+
+    public static Types Type { get; private set; } = Types.NORMAL;
+    public static bool IsTesting => Type == Types.TESTING;
+    public static bool IsNormal => Type == Types.NORMAL;
+
+    public static int CurrentProcessId
     {
-        public static string ReleasePhase => IsReleaseMode ? "Alpha" : "InDev";
-        public static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
-        public static DateTime BuildDate => File.GetCreationTimeUtc(Assembly.GetExecutingAssembly().Location);
-
-        public static Types Type { get; private set; } = Types.NORMAL;
-        public static bool IsTesting => Type == Types.TESTING;
-        public static bool IsNormal => Type == Types.NORMAL;
-
-        public static int CurrentProcessId
+        get
         {
-            get
-            {
-                using Process process = Process.GetCurrentProcess();
-                return process.Id;
-            }
+#if NET9_0_OR_GREATER
+            return Environment.ProcessId;
+#else
+            using System.Diagnostics.Process process = System.Diagnostics.Process.GetCurrentProcess();
+            return process.Id;
+#endif
         }
+    }
 
-        public static bool IsReleaseMode
+    public static bool IsReleaseMode
+    {
+        get
         {
-            get
-            {
 #if RELEASE
                 return true;
 #else
-                return false;
+            return false;
 #endif
-            }
         }
+    }
 
-        private static bool hasSet;
-        public static void Set(Types value)
+    public static void Set(Types value)
+    {
+        if (hasSet)
         {
-            if (hasSet)
-            {
-                throw new Exception("Environment type can only be set once");
-            }
-
-            Type = value;
-            hasSet = true;
+            throw new Exception("Environment type can only be set once");
         }
 
-        public enum Types
-        {
-            NORMAL,
-            TESTING
-        }
+        Type = value;
+        hasSet = true;
+    }
+
+    public enum Types
+    {
+        NORMAL,
+        TESTING
     }
 }

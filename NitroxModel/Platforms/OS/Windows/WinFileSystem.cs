@@ -10,7 +10,7 @@ using NitroxModel.Platforms.OS.Windows.Internal;
 namespace NitroxModel.Platforms.OS.Windows;
 
 
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
 internal class WinFileSystem : FileSystem

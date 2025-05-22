@@ -232,7 +232,7 @@ public static class Extensions
     public static bool IsHardcore(this SubnauticaServerConfig config) => config.GameMode == SubnauticaGameMode.HARDCORE;
     public static bool IsPasswordRequired(this SubnauticaServerConfig config) => config.ServerPassword != "";
 
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
     public static bool EqualsAny(this ReadOnlySpan<char> input, StringComparison comparison = StringComparison.Ordinal, params ReadOnlySpan<string> compares)
     {
         foreach (string compare in compares)

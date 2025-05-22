@@ -102,7 +102,7 @@ internal sealed class JoinWorkflow(SessionRepository sessionRepository, IOptions
         // initialSyncTimer = new Timer(InitialSyncTimerElapsed, timerData, 0, 200);
 
         SessionReservation reservation = new(Guid.NewGuid().ToString());
-        logger.ZLogInformation($"Reservation processed successfully for session #{context.Sender} - {reservation}");
+        logger.ZLogInformation($"Reservation processed successfully for session #{context.Sender:@SessionId} - {reservation}");
         await context.ReplyToSender(reservation);
     }
 }

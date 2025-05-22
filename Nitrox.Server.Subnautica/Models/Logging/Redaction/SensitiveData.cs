@@ -7,6 +7,7 @@ internal readonly record struct SensitiveData<T>(T Data) : ISensitiveData
         Data switch
         {
             string s => s,
+            null => "",
             _ => Data.ToString() ?? ""
         };
 }

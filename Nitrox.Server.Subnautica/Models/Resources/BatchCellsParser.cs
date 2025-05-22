@@ -145,7 +145,7 @@ internal class BatchCellsParser(EntitySpawnPointFactory entitySpawnPointFactory,
 
             Validate.NotNull(type, $"No type or surrogate found for {componentHeader.TypeName}!");
 
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
             object component = RuntimeHelpers.GetUninitializedObject(type);
 #else
             object component = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);

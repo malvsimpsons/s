@@ -29,7 +29,7 @@ namespace Nitrox.Server.Subnautica.Services;
 ///     Opens the LiteNetLib channel and starts sending incoming messages to <see cref="packetRegistryService" /> for
 ///     processing.
 /// </summary>
-internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeSessionDisconnected, IKickPlayer
+internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeSessionDisconnected, ISeeSessionCreated, IKickPlayer
 {
     private readonly NetDataWriter dataWriter = new();
     private readonly IHostEnvironment hostEnvironment;
@@ -347,5 +347,10 @@ internal class LiteNetLibService : BackgroundService, IServerPacketSender, ISeeS
         INVALID,
         ANONYMOUS,
         AUTHENTICATED
+    }
+
+    public ValueTask HandleSessionCreated(Session createdSession)
+    {
+        return ValueTask.CompletedTask;
     }
 }

@@ -3,7 +3,7 @@ using NitroxModel.Helper;
 
 namespace NitroxModel.Platforms.OS.Windows;
 
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
 public class RegistryKeyValueStore : IKeyValueStore

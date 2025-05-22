@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using NitroxModel.Networking.Packets.Processors.Core;
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
 using System.Collections.Frozen;
 #endif
 
@@ -13,7 +13,7 @@ namespace NitroxModel.Networking.Packets.Core;
 
 public sealed class PacketProcessorsInvoker
 {
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
     private readonly FrozenDictionary<Type, Entry> packetTypeToProcessorEntry;
 #else
     private readonly Dictionary<Type, Entry> packetTypeToProcessorEntry;
@@ -53,7 +53,7 @@ public sealed class PacketProcessorsInvoker
 
             lookup[entry.PacketType] = new Entry(entry.Processor, entry.InterfaceType, entry.PacketType);
         }
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
         packetTypeToProcessorEntry = lookup.ToFrozenDictionary();
 #else
         packetTypeToProcessorEntry = lookup;

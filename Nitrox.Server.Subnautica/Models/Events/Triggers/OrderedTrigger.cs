@@ -16,11 +16,11 @@ internal sealed class OrderedTrigger<TListen, TContext>(IServiceProvider provide
 
     public async ValueTask Trigger(TContext context = default)
     {
-        foreach (TListen evt in EventListeners)
+        foreach (TListen listener in EventListeners)
         {
             try
             {
-                await evt.HandleEvent(context);
+                await listener.HandleEvent(context);
             }
             catch (Exception ex)
             {

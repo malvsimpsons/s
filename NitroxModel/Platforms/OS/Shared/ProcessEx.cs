@@ -84,7 +84,7 @@ public class ProcessEx : IDisposable
         return new ProcessEx(process);
     }
 
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
     public static Process StartProcessDetached(ProcessStartInfo startInfo)
     {
         if (!string.IsNullOrWhiteSpace(startInfo.Arguments))
@@ -266,7 +266,7 @@ public class ProcessModuleEx
     public int ModuleMemorySize { get; set; }
 }
 
-#if NET5_0_OR_GREATER
+#if NET9_0_OR_GREATER
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
 public class WindowsProcessEx : ProcessExBase
