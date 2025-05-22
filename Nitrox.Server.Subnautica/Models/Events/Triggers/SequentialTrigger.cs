@@ -16,6 +16,7 @@ internal sealed class SequentialTrigger<TListen, TContext>(IServiceProvider prov
 
     public async ValueTask Trigger(TContext context = default)
     {
+        logger.LogEventTriggering(typeof(TListen).Name, EventListeners.Length);
         foreach (TListen listener in EventListeners)
         {
             try

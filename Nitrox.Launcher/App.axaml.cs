@@ -12,7 +12,6 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using ConsoleAppFramework;
 using Microsoft.Extensions.DependencyInjection;
-using Nitrox.Launcher.Models.Utils;
 using Nitrox.Launcher.Models.Validators;
 using Nitrox.Launcher.ViewModels;
 using Nitrox.Launcher.Views;

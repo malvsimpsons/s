@@ -10,6 +10,7 @@ using Nitrox.Server.Subnautica.Models.Configuration;
 using Nitrox.Server.Subnautica.Models.Events;
 using Nitrox.Server.Subnautica.Models.Events.Core;
 using Nitrox.Server.Subnautica.Models.Persistence;
+using NitroxModel.Helper;
 
 namespace Nitrox.Server.Subnautica.Services;
 
@@ -57,10 +58,7 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
 
     public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public async Task StoppedAsync(CancellationToken cancellationToken)
-    {
-        await Save();
-    }
+    public Task StoppedAsync(CancellationToken cancellationToken) => InnerSave();
 
     public async Task<WorldDbContext> GetDbContextAsync()
     {
@@ -68,7 +66,27 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         return await dbContextFactory.CreateDbContextAsync();
     }
 
-    public async Task<bool> Save(string fileName = "world.db")
+    public async Task<bool> Save(string fileName = "world.db", bool throttle = true)
+    {
+        if (!throttle)
+        {
+            return await InnerSave(fileName);
+        }
+        ThrottleHelper.Throttle(TimeSpan.FromSeconds(15), async void () =>
+        {
+            try
+            {
+                await InnerSave(fileName);
+            }
+            catch (Exception e)
+            {
+                logger.ZLogError(e, $"");
+            }
+        });
+        return true;
+    }
+
+    private async Task<bool> InnerSave(string fileName = "world.db")
     {
         logger.ZLogInformation($"Saving database...");
         ServerStartOptions options = startOptionsProvider.Value;
@@ -138,8 +156,5 @@ internal sealed class DatabaseService(IDbContextFactory<WorldDbContext> dbContex
         }
     }
 
-    async Task IPersistState.PersistState()
-    {
-        await Save();
-    }
+    Task IPersistState.PersistState() => Save();
 }

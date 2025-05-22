@@ -59,7 +59,7 @@ internal sealed record PlayerToServerCommandContext : ICommandContext
             return;
         }
         await packetSender.SendPacketToOthers(new ChatMessage(SessionId.SERVER_ID, message), OriginId);
-        Logger.ZLogInformation($"Player {Player.Name:@PlayerName} #{Player.Id:@PlayerId} sent a message to everyone:{message:@ChatMessage}");
+        Logger.ZLogInformation($"Player {Player.Name:@PlayerName} #{Player.SessionId:@SessionId} sent a message to everyone:{message:@ChatMessage}");
     }
 
     public async ValueTask SendAsync<T>(T data, SessionId sessionId)

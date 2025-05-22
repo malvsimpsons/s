@@ -27,4 +27,7 @@ internal static partial class LoggerExtensions
     
     [ZLoggerMessage(Level = LogLevel.Trace, Message = "Adding {handler}")]
     public static partial void LogCommandHandlerAdded(this ILogger logger, CommandHandlerEntry handler);
+    
+    [ZLoggerMessage(Level = LogLevel.Trace, Message = "Triggering event {TypeName} for {ListenersCount} listeners")]
+    public static partial void LogEventTriggering(this ILogger logger, string typeName, int listenersCount);
 }

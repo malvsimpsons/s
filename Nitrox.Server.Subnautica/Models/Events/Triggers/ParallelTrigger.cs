@@ -16,6 +16,7 @@ internal sealed class ParallelTrigger<TListen, TContext>(IServiceProvider provid
 
     public async ValueTask Trigger(TContext context = default)
     {
+        logger.LogEventTriggering(typeof(TListen).Name, EventListeners.Length);
         List<ValueTask> tasks = [];
         foreach (TListen listener in EventListeners)
         {

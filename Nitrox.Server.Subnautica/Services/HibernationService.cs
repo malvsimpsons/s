@@ -10,10 +10,9 @@ namespace Nitrox.Server.Subnautica.Services;
 /// <summary>
 ///     Service which can signal hibernating services to <see cref="Resume" /> or <see cref="Hibernate" />.
 /// </summary>
-internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hibernators, ITrigger<ISeeResume, object> resumers, SessionRepository sessionRepository, ILogger<HibernationService> logger) : IHostedLifecycleService, ISeeSessionCreated, ISeeSessionDisconnected
+internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hibernators, ITrigger<ISeeResume, object> resumers, SessionRepository sessionRepository) : IHostedLifecycleService, ISeeSessionCreated, ISeeSessionDisconnected
 {
     private readonly ITrigger<ISeeHibernate, object> hibernators = hibernators;
-    private readonly ILogger<HibernationService> logger = logger;
     private readonly ITrigger<ISeeResume, object> resumers = resumers;
     private readonly SessionRepository sessionRepository = sessionRepository;
     private bool isHibernating;
@@ -29,9 +28,7 @@ internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hiberna
         {
             return;
         }
-        logger.ZLogDebug($"Preparing to hibernate");
         await hibernators.Trigger();
-        logger.ZLogDebug($"Now hibernating");
     }
 
     public async Task Resume()
@@ -40,9 +37,7 @@ internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hiberna
         {
             return;
         }
-        logger.ZLogDebug($"Waking up");
         await resumers.Trigger();
-        logger.ZLogDebug($"No longer hibernating");
     }
 
     public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -59,7 +54,7 @@ internal sealed class HibernationService(ITrigger<ISeeHibernate, object> hiberna
         {
             return;
         }
-        _ = Task.Delay(250).ContinueWith(async _ => await Hibernate()).ContinueWithHandleError(ex => logger.ZLogError(ex, $"Error while trying to hibernate"));
+        await Hibernate();
     }
 
     public async ValueTask HandleSessionCreated(Session createdSession) => await Resume();
